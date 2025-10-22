@@ -145,7 +145,7 @@ yarn dev
 |`yarn build`|	Compile TypeScript to JavaScript (dist/)|
 |`yarn start`|	Run compiled server from `dist/`|
 |`yarn prisma:migrate`|	Run database migrations|
-|`yarn prisma:generate|	Generate Prisma client|
+|`yarn prisma:generate`|	Generate Prisma client|
 |`yarn prisma:studio`|	Launch Prisma Studio (DB GUI)|
 |`yarn lint`|	Check TypeScript errors|
 ---
@@ -186,7 +186,7 @@ Logs:
 
 ---
 
-📜 License
+## 📜 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
@@ -196,7 +196,7 @@ Thanks to all the open-source community!
 
 ---
 
-💬 Author
+## 💬 Author
 -Snehasish Das
 Developer • Cyber Security Enthusiast • NeuroViz Project Member
 
