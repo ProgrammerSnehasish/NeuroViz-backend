@@ -2,7 +2,7 @@
 # 🧠 NeuroViz Backend
 
 Welcome to the **NeuroViz Backend**, the server-side component of the NeuroViz platform — a neuro-assistive mind mapping and visualization application.  
-This backend is built with **[Node.js]**(https://nodejs.org/en), **[TypeScript]**(https://www.typescriptlang.rog/), **[Express]**(https://expressjs.com/), and **[Prisma ORM]**(https://www.prisma.io/), powered by **[PostgreSQL]**(https://www.postgresql.org/) (hosted on *[NeonDB]*(https://neon.com/)).
+This backend is built with [Node.js](https://nodejs.org/en), [TypeScript](https://www.typescriptlang.rog/), [Express](https://expressjs.com/), and [Prisma ORM](https://www.prisma.io/), powered by [PostgreSQL](https://www.postgresql.org/) (hosted on [NeonDB](https://neon.com/)).
 
 ---
 
