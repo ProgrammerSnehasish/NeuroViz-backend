@@ -60,7 +60,7 @@ npm install -g yarn
 ---
 
 ## 📁 Project Structure
-
+```bash
 NeuroViz-backend/
 ├── prisma/
 │ ├── schema.prisma # Prisma schema for DB models
@@ -108,7 +108,7 @@ NeuroViz-backend/
 ├── tsconfig.json
 ├── yarn.lock
 └── README.md
-
+```
 ---
 
 ## 🚀 Project Setup
@@ -123,11 +123,66 @@ cd NeuroViz-backend
 ```bash
 yarn install
 ```
+**to initialize Prisma**
+```bash
+yarn prisma:migrate
+#and
+yarn prisma:generate
+```
+**to compile the project, use**
+```bash
+yarn build
+```
 **and then to start the development server, just enter**
 
 ```bash
 yarn dev
 ```
+## 🧰 Scripts
+|**Command**|	**Description**|
+|:------|:-------------|
+|`yarn dev`|	Start dev server using ts-node-dev|
+|`yarn build`|	Compile TypeScript to JavaScript (dist/)|
+|`yarn start`|	Run compiled server from `dist/`|
+|`yarn prisma:migrate`|	Run database migrations|
+|`yarn prisma:generate|	Generate Prisma client|
+|`yarn prisma:studio`|	Launch Prisma Studio (DB GUI)|
+|`yarn lint`|	Check TypeScript errors|
+---
+## 🌐 API Endpoints
+|**Method**|**Route**|**Endpoint Description**|
+|:---------|:--------|:-----------------------|
+|POST| `/api/auth/signup`| Creating new user / signup|
+|POST| `/api/auth/signin`| Signin / Login |
+|GET|`/api/user/:email`| Get user by email |
+|GET|`/api/user/:id` | Get user by id |
+|PUT|`/api/user/update`| Update user details|
+|DELETE|`/api/user/delete/:id`| Delete User by id.|
+
+## 🧹 Graceful Shutdown
+
+On **`Ctrl+C`** or stop signal:
+
+Prisma disconnects cleanly.
+
+Server closes connections gracefully.
+
+Logs:
+
+🛑 Shutting down gracefully...
+🧹 Prisma disconnected and server closed.
+
+## 🧭 Future Enhancements
+
+- JWT-based authentication
+
+- Role-based access control (RBAC)
+
+- AI-based mindmap generation
+
+- Caching and performance optimization
+
+- GraphQL API support
 
 ---
 
@@ -150,4 +205,98 @@ Developer • Cyber Security Enthusiast • NeuroViz Project Lead
 
 ---
 
-## 🧩 NeuroViz — Empowering neurodivergent learners with intelligent visualization.
+# 🧩 NeuroViz — Empowering neurodivergent learners with intelligent visualization.
+#### Adaptive Visual Learning Companion for Neurodivergent Students
+
+*NeuroViz* is an AI-powered adaptive visual learning system designed to support *neurodivergent learners* (e.g., students with ADHD, Autism, Dyslexia, etc.) by transforming educational content into interactive visual formats — such as *mind maps, infographics, and visual flows* — tailored to individual cognitive and emotional profiles.
+
+NeuroViz focuses on enhancing comprehension, retention, and engagement through *adaptive visualization*.  
+The system analyzes a student’s behavior, emotional state, and learning preferences to dynamically adjust how educational content is presented.
+
+---
+
+## 🧩 System Architecture (Flow Summary)
+
+### 1. *User Registration / Profile*
+- Collects user details: Name, neuro-type, and learning preferences.  
+- Initializes a personalized learning session.
+
+---
+
+### 2. *Cognitive Profiling Module*
+- Tracks *eye/cursor movement* and *attention span*.  
+- Detects engagement levels.  
+- Builds an initial *neuro-learning profile* for each user.
+
+---
+
+### 3. *Content Input Module*
+- Accepts learning content (text, notes, documents, etc.).  
+- Automatically:
+  - Summarizes key points.
+  - Extracts keywords and relationships.
+  - Sends structured data to the Visual Mapping Engine.
+
+---
+
+### 4. *Adaptive Visual Mapping Engine*
+- Converts summarized content into *visual representations*:
+  - Mind maps, infographics, or flow diagrams.
+- Adapts visual elements based on user profile:
+  - Color themes, complexity levels, and layout styles.
+
+---
+
+### 5. *Visual Learning Interface (Frontend)*
+- Displays interactive visualizations.
+- Supports *drag-and-drop, **color customization, and **TTS/ST-assistive tools* for accessibility.
+- Provides a user-friendly experience optimized for different neuro-types.
+
+---
+
+### 6. *Emotion & Focus Detection Module*
+- Uses *webcam or cursor tracking* to monitor:
+  - Fatigue, distraction, and emotional cues.
+- Sends real-time feedback to the adaptation system for live adjustments.
+
+---
+
+### 7. *Feedback Collection Module*
+- Gathers user feedback based on:
+  - Ratings, engagement, and performance data.
+- Dynamically updates the *Neuro–Learning Profile* for continuous personalization.
+
+---
+
+## 🧠 Core Features
+
+- Adaptive visualization based on learning type.
+- Emotion-aware and attention-responsive interface.
+- AI summarization and keyword extraction.
+- Continuous personalization via user feedback.
+- Multi-format visual outputs (mind map, infographic, flowchart).
+- Accessibility tools: *Text-to-Speech (TTS)* and *Speech-to-Text (ST)*.
+
+---
+
+## 🎯 Objectives
+
+1. Support neurodivergent learners through tailored visual learning.  
+2. Reduce cognitive overload by adapting visual complexity.  
+3. Enhance focus and retention using emotion-aware feedback loops.  
+4. Build an inclusive, assistive educational platform.
+
+---
+
+## 📈 Future Enhancements
+
+- Integration with Learning Management Systems (LMS).
+- Gamified learning dashboards and analytics.
+- Multi-language and voice-assistive support.
+- Advanced emotion tracking via micro-expressions.
+
+---
+
+## 💡 Inspiration
+
+Inspired by the need for *inclusive educational technologies, NeuroViz bridges the gap between cognitive diversity and modern learning — ensuring that **every mind learns visually, effectively, and confidently*.
