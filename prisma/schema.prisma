@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/* ─────────────────────────────
+   ENUMS (core types)
+────────────────────────────── */
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  NOT_MENTIONED
+}
+
+enum NeuroProblemType {
+  ADHD
+  AUTISM
+  DYSLEXIA
+  DYSPRAXIA
+  OCD
+  TOURETTE_SYNDROME
+  ANXIETY_DISORDER
+  DEPRESSION
+  BIPOLAR_DISORDER
+  NOT_MENTIONED
+}
+
+enum Education {
+  CLASS_1
+  CLASS_2
+  CLASS_3
+  CLASS_4
+  CLASS_5
+  CLASS_6
+  CLASS_7
+  CLASS_8
+  CLASS_9
+  CLASS_10
+  CLASS_11
+  CLASS_12
+  NOT_MENTIONED
+}
+
+enum Affiliation {
+  WBBSE
+  WBCHSE
+  CBSE
+  NOT_MENTIONED
+}
+
+enum Qualification {
+  B_TECH
+  B_A
+  B_SC
+  B_COM
+  M_TECH
+  M_A
+  M_SC
+  M_COM
+  M_PHIL
+  PHD
+  NOT_MENTIONED
+}
+
+/* ─────────────────────────────
+   BASE USER MODEL
+────────────────────────────── */
+model User {
+  id               String    @id @default(uuid())
+  firstName        String
+  middleName       String?   @default("")
+  lastName         String
+  dob              DateTime?
+  email            String    @unique
+  password         String
+  homeTown         String?   @default("Not mentioned yet.")
+  currentCity      String?   @default("Not mentioned yet.")
+  gender           Gender    @default(NOT_MENTIONED)
+  role             Role      @default(STUDENT)
+  isActive         Boolean   @default(true)
+  createdBy        String?   @default("")
+  updatedBy        String?   @default("")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  // Relations
+  studentProfile   StudentProfile?
+  teacherProfile   TeacherProfile?
+  mindmaps         Mindmap[]
+}
+
+/* ─────────────────────────────
+   STUDENT PROFILE MODEL
+────────────────────────────── */
+model StudentProfile {
+  id               String           @id @default(uuid())
+  userId           String           @unique
+  user             User             @relation(fields: [userId], references: [id])
+  neuroProblemType NeuroProblemType @default(NOT_MENTIONED)
+  education        Education        @default(NOT_MENTIONED)
+  affiliation      Affiliation      @default(NOT_MENTIONED)
+  instituteName    String?          @default("Not mentioned yet.")
+  guardianName     String?          @default("Not mentioned yet.")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+/* ─────────────────────────────
+   TEACHER PROFILE MODEL
+────────────────────────────── */
+model TeacherProfile {
+  id               String         @id @default(uuid())
+  userId           String         @unique
+  user             User           @relation(fields: [userId], references: [id])
+  qualification    Qualification  @default(NOT_MENTIONED)
+  experience       Int?
+  specialization   String?        @default("Not mentioned yet.")
+  instituteName    String?        @default("Not mentioned yet.")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+/* ─────────────────────────────
+   MINDMAP MODEL
+────────────────────────────── */
+model Mindmap {
+  id         String   @id @default(uuid())
+  title      String
+  structure  Json
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
