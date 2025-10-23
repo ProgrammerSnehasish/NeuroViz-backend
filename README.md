@@ -92,6 +92,12 @@ NeuroViz-backend/
 │ │ ├── user.interface.ts
 │ │ └── user.routes.ts
 │ │
+│ │ └── mindmap/
+│ │ ├── mindmap.controller.ts
+│ │ ├── mindmap.service.ts
+│ │ ├── mindmap.dto.ts
+│ │ ├── mindmap.type.ts
+│ │ └── mindmap.routes.ts
 │ │
 │ ├── middlewares/
 │ │ ├── errorHandler.ts # Global error handling middleware
@@ -152,12 +158,15 @@ yarn dev
 ## 🌐 API Endpoints
 |**Method**|**Route**|**Endpoint Description**|
 |:---------|:--------|:-----------------------|
+|Authentication|
 |POST| `/api/auth/signup`| Creating new user / signup|
 |POST| `/api/auth/signin`| Signin / Login |
+|User|
 |GET|`/api/users/email/:email`| Get user by email |
 |GET|`/api/users/:id` | Get user by id |
 |PUT|`/api/users/update`| Update user details|
 |DELETE|`/api/users/delete/:id`| Delete User by id.|
+|Mindmap|
 |POST|`/api/mindmaps/create`| Create Mindmap|
 |GET|`/api/mindmaps/:mindmapId`| Get Mindmap by Mindmap id|
 |GET|`/api/mindmaps/user/:userId`| Get Mindmaps by user id|
