@@ -93,6 +93,9 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?
+  profilePhoto     String?   @default("")      // URL or Base64-encoded image
+  cursorMovement   Json?                       // optional JSON data
+  eyeTrackingData  Json?                       // optional JSON data
 
   // Relations
   studentProfile   StudentProfile?

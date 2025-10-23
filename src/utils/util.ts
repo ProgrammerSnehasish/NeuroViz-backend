@@ -21,6 +21,9 @@ export function getUserResponse(
     currentCity: (user as any).currentCity ?? "",
     gender: (user as any).gender ?? "",
     role: user.role as Role,
+    profilePhoto: user.profilePhoto ?? "",
+    cursorMovement: user.cursorMovement ?? {},
+    eyeTrackingData: user.eyeTrackingData ?? {},
 
     // include full objects now
     studentProfile: user.studentProfile ?? null,

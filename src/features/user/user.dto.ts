@@ -55,6 +55,16 @@ export class UpdateUserDto {
   @IsOptional()
   gender?: Gender;
 
+   @IsOptional()
+  @IsString()
+  profilePhoto?: string; // webcam snapshot or uploaded file URL
+
+  @IsOptional()
+  cursorMovement?: Record<string, any>; // raw JSON data of cursor coords or path
+
+  @IsOptional()
+  eyeTrackingData?: Record<string, any>; // raw JSON data for gaze tracking
+
   // nested student/teacher DTOs will be validated separately
   @IsOptional()
   studentProfile?: UpdateStudentProfileDto;
