@@ -28,38 +28,45 @@ export class UserService {
   }
 
   async updateUser(data: UpdateUserDto, userId: string): Promise<IUserDetails> {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user === null) throw createHttpError(400, "User does not exist");
-    if (user.id !== userId) {
-      throw createHttpError(400, "User not authorized to update");
-    }
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw createHttpError(404, "User does not exist");
 
-    let updateData: Record<string, any> = {
-      updatedBy: userId,
-    };
+  // optional: check ownership/authorization (if needed)
+  if (user.id !== userId) throw createHttpError(403, "Not authorized to update this user");
 
-    if (data.firstName) updateData["firstName"] = data.firstName;
-    if (data.middleName) updateData["middleName"] = data.middleName;
-    if (data.lastName) updateData["lastName"] = data.lastName;
-    if (data.dob) updateData["dob"] = data.dob;
-    if (data.education) updateData["education"] = data.education;
-    if (data.email) updateData["email"] = data.email;
-    if (data.homeTown) updateData["homeTown"] = data.homeTown;
-    if (data.password) updateData["password"] = await hash(data.password, 10);
-    if (data.currentCity) updateData["currentCity"] = data.currentCity;
+  // prepare data to update
+  const updateData: Record<string, any> = {
+    updatedBy: userId,
+  };
 
-    if (Object.keys(updateData).length === 1) {
-      throw createHttpError(400, "Give some information to update profile");
-    }
+  if (data.firstName) updateData.firstName = data.firstName;
+  if (data.middleName) updateData.middleName = data.middleName;
+  if (data.lastName) updateData.lastName = data.lastName;
+  if (data.dob) updateData.dob = data.dob;
+  if (data.education) updateData.education = data.education;
+  if (data.email) updateData.email = data.email;
+  if (data.homeTown) updateData.homeTown = data.homeTown;
+  if (data.currentCity) updateData.currentCity = data.currentCity;
+  if (data.gender) updateData.gender = data.gender;
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-    });
-
-    const updatedUser = await prisma.user.findUnique({ where: { id: userId } });
-    return getUserResponse(updatedUser!);
+  if (data.password) {
+    updateData.password = await hash(data.password, 10);
   }
+
+  // check if any fields (except updatedBy) are being updated
+  if (Object.keys(updateData).length === 1) {
+    throw createHttpError(400, "No valid fields provided to update profile");
+  }
+
+  // ✅ prisma.update returns the updated record
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+  });
+
+  return getUserResponse(updatedUser);
+}
+
 
   async deleteUser(userId: string): Promise<void> {
     const user = await prisma.user.findUnique({where: {id: userId}});

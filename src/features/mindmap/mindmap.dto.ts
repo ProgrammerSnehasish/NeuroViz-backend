@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator";
 
 export class CreateMindmapDto {
   @IsString()
@@ -9,9 +9,9 @@ export class CreateMindmapDto {
   @IsOptional()
   description?: string;
 
-  @IsString()
+  @IsObject()
   @IsNotEmpty()
-  structure: string; // could be JSON string or node structure
+  structure: Record<string, any>; // could be JSON string or node structure
 
   @IsString()
   @IsNotEmpty()
@@ -27,7 +27,7 @@ export class UpdateMindmapDto {
   @IsOptional()
   description?: string;
 
-  @IsString()
+  @IsObject()
   @IsOptional()
-  structure?: string;
+  structure?: Record<string, any>;
 }

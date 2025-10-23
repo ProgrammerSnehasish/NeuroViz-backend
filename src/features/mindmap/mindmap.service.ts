@@ -1,6 +1,7 @@
 import createHttpError from "http-errors";
 import prisma from "../../config/database";
 import { CreateMindmapDto, UpdateMindmapDto } from "./mindmap.dto";
+import { Prisma } from "@prisma/client";
 
 export class MindmapService {
   async createMindmap(data: CreateMindmapDto) {
@@ -9,8 +10,19 @@ export class MindmapService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw createHttpError(404, "User not found.");
 
+    // ✅ Ensure structure is a plain JSON object
+    const safeStructure: Prisma.InputJsonValue =
+      typeof structure === "string"
+        ? JSON.parse(structure)
+        : (structure as unknown as Prisma.InputJsonValue);
+
     return await prisma.mindmap.create({
-      data: { title, description, structure, userId },
+      data: {
+        title,
+        description,
+        structure: safeStructure,
+        userId,
+      },
     });
   }
 

@@ -154,10 +154,15 @@ yarn dev
 |:---------|:--------|:-----------------------|
 |POST| `/api/auth/signup`| Creating new user / signup|
 |POST| `/api/auth/signin`| Signin / Login |
-|GET|`/api/user/:email`| Get user by email |
-|GET|`/api/user/:id` | Get user by id |
-|PUT|`/api/user/update`| Update user details|
-|DELETE|`/api/user/delete/:id`| Delete User by id.|
+|GET|`/api/users/email/:email`| Get user by email |
+|GET|`/api/users/:id` | Get user by id |
+|PUT|`/api/users/update`| Update user details|
+|DELETE|`/api/users/delete/:id`| Delete User by id.|
+|POST|`/api/mindmaps/create`| Create Mindmap|
+|GET|`/api/mindmaps/:mindmapId`| Get Mindmap by Mindmap id|
+|GET|`/api/mindmaps/user/:userId`| Get Mindmaps by user id|
+|PUT|`/api/mindmaps/update/:mindmapId`| Update mindmap by mindmap id|
+|DELETE|`/api/mindmaps/delete/:mindmapId`| Delete Mindmap by mindmap id|
 
 ## 🧹 Graceful Shutdown
 

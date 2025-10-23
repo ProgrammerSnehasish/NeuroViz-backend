@@ -60,7 +60,7 @@ userRouter.delete(
         throw createHttpError("Missing path paramter: userId")
       }
       await userController.deleteUser(req.params["userId"])
-      res.status(200).send({message: "User deleted successfully"})
+      res.status(200).send({success: true, message: "User deleted successfully"})
     }catch(err){
       next(err)
     }

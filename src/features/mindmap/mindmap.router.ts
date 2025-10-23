@@ -79,7 +79,7 @@ mindmapRouter.delete(
       if (!mindmapId) throw createHttpError("Missing path parameter: mindmapId");
       const userId = req.body.token.userId;
       await controller.deleteMindmap(mindmapId, userId);
-      res.status(200).json({ message: "Mindmap deleted successfully" });
+      res.status(200).json({Success:true, message: "Mindmap deleted successfully" });
     } catch (err) {
       next(err);
     }
