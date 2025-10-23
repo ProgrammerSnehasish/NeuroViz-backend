@@ -137,6 +137,7 @@ model TeacherProfile {
 model Mindmap {
   id         String   @id @default(uuid())
   title      String
+  description String? @default("No description provided.")
   structure  Json
   userId     String
   user       User     @relation(fields: [userId], references: [id])
