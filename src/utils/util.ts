@@ -1,23 +1,29 @@
-import { User, Role } from "@prisma/client";
+import { User, Role, StudentProfile, TeacherProfile } from "@prisma/client";
 import { IUserDetails } from "../features/user/user.interface";
 
-export function getUserResponse(user: User): IUserDetails {
+export function getUserResponse(
+  user: User & { studentProfile?: StudentProfile | null; teacherProfile?: TeacherProfile | null }
+): IUserDetails {
   return {
     id: user.id,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
-    deletedAt: user.deletedAt ?? new Date(0), // ✅ fallback if null
+    deletedAt: user.deletedAt ?? new Date(0),
     isActive: (user as any).isActive ?? true,
     createdBy: (user as any).createdBy ?? "",
     updatedBy: (user as any).updatedBy ?? "",
     firstName: user.firstName,
-    middleName: user.middleName ?? "", // ✅ null → empty string
+    middleName: user.middleName ?? "",
     lastName: user.lastName,
     dob: (user as any).dob ?? null,
     email: user.email,
     homeTown: (user as any).homeTown ?? "",
     currentCity: (user as any).currentCity ?? "",
     gender: (user as any).gender ?? "",
-    role: user.role as unknown as Role,
+    role: user.role as Role,
+
+    // include full objects now
+    studentProfile: user.studentProfile ?? null,
+    teacherProfile: user.teacherProfile ?? null,
   };
 }
