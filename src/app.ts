@@ -4,15 +4,24 @@ import dotenv from "dotenv";
 import { errorHandler } from "./middlewares/errorHandler";
 import { responseHandler } from "./middlewares/responseHandler";
 import mainRouter from "./base/base.router";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
 const app = express();
 
 // 🧩 Core Middlewares
+app.use(helmet())
+app.use(cors())
 app.use(json());
 app.use(cors());
 app.use(urlencoded({ extended: true }));
+const limiter = rateLimit({
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 60000),
+  max: Number(process.env.RATE_LIMIT_MAX || 100)
+});
+app.use(limiter);
 
 // 🧠 API Routes
 app.use("/api", mainRouter);

@@ -1,29 +1,44 @@
 import createHttpError from "http-errors";
 import prisma from "../../config/database";
-import { CreateMindmapDto, UpdateMindmapDto } from "./mindmap.dto";
-import { Prisma } from "@prisma/client";
+import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "./mindmap.dto";
+import { generateMindmap } from "./mindmap.ai.service";
 
 export class MindmapService {
-  async createMindmap(data: CreateMindmapDto) {
-    const { title, description, structure, userId } = data;
+   async createFromText(dto: GenerateMindmapDto) {
+    const user = await prisma.user.findUnique({ where: { id: dto.userId } });
+    if (!user) throw createHttpError(404, "User not found");
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw createHttpError(404, "User not found.");
+    const structure = await generateMindmap(dto.title, dto.sourceText);
 
-    // ✅ Ensure structure is a plain JSON object
-    const safeStructure: Prisma.InputJsonValue =
-      typeof structure === "string"
-        ? JSON.parse(structure)
-        : (structure as unknown as Prisma.InputJsonValue);
-
-    return await prisma.mindmap.create({
+    const saved = await prisma.mindmap.create({
       data: {
-        title,
-        description,
-        structure: safeStructure,
-        userId,
+        title: dto.title,
+        description: typeof dto.description === "string"
+          ? dto.description
+          : (dto.description ? JSON.stringify(dto.description) : ""),
+        structure: structure as any,
+        userId: dto.userId,
       },
     });
+
+    return saved;
+  }
+
+  // ✏️ Create a raw mindmap manually (client provides structure)
+  async createRaw(dto: CreateMindmapDto) {
+    const user = await prisma.user.findUnique({ where: { id: dto.userId } });
+    if (!user) throw createHttpError(404, "User not found");
+
+    const mindmap = await prisma.mindmap.create({
+      data: {
+        title: dto.title,
+        description: dto.description ?? "",
+        structure: dto.structure as any,
+        userId: dto.userId,
+      },
+    });
+
+    return mindmap;
   }
 
   async getMindmapsByUser(userId: string) {

@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { verifyToken } from "../../middlewares/jwtVerifiction";
 import { dtoValidation } from "../../middlewares/dtoValidation";
 import { MindmapController } from "./mindmap.controller";
-import { CreateMindmapDto, UpdateMindmapDto } from "./mindmap.dto";
+import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "./mindmap.dto";
 import createHttpError from "http-errors";
 
 export const mindmapRouter = Router();
@@ -17,6 +17,21 @@ mindmapRouter.post(
       const data = req.body;
       const result = await controller.createMindmap(data);
       res.status(201).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+mindmapRouter.post(
+  "/generate",
+  verifyToken,
+  dtoValidation(GenerateMindmapDto),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = req.body;
+      const result = await controller.createMindmapFromText(data);
+      res.status(201).json({ success: true, data: result });
     } catch (err) {
       next(err);
     }

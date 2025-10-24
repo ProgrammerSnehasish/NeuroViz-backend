@@ -24,6 +24,7 @@ This backend is built with [Node.js](https://nodejs.org/en), [TypeScript](https:
 | Framework | Express.js |
 | ORM | Prisma |
 | Database | PostgreSQL (NeonDB) |
+|NLP| wink-nlp and others(local[python],Open-ai,hugging face)|
 | Environment Management | dotenv |
 | Build Tool | tsc (TypeScript Compiler) |
 | Dev Runner | ts-node-dev |
@@ -85,28 +86,36 @@ NeuroViz-backend/
 │ │ └── database.ts
 │ │
 │ ├── features/
-│ │ └── user/
-│ │ ├── user.controller.ts
-│ │ ├── user.service.ts
-│ │ ├── user.dto.ts
-│ │ ├── user.interface.ts
-│ │ └── user.routes.ts
-│ │
-│ │ └── mindmap/
-│ │ ├── mindmap.controller.ts
-│ │ ├── mindmap.service.ts
-│ │ ├── mindmap.dto.ts
-│ │ ├── mindmap.type.ts
-│ │ └── mindmap.routes.ts
+│ │ ├──  user/
+│ │ │ ├── user.controller.ts
+│ │ │ ├── user.service.ts
+│ │ │ ├── user.dto.ts
+│ │ │ ├── user.interface.ts
+│ │ │ └── user.routes.ts
+│ │ │
+│ │ ├── mindmap/
+│ │ │ ├── mindmap.controller.ts
+│ │ │ ├── mindmap.service.ts
+│ │ │ ├── mindmap.dto.ts
+│ │ │ ├── mindmap.type.ts
+│ │ │ └── mindmap.routes.ts
+│ │ │
+│ │ └──nlp/
+│ │   ├─ nlp.dto.ts
+│ │   ├─ nlp.controller.ts
+│ │   ├─ nlp.router.ts
+│ │   └─ nlp.service.ts
 │ │
 │ ├── middlewares/
 │ │ ├── errorHandler.ts # Global error handling middleware
 │ │ ├── dtoValidation.ts
 │ │ ├── jwtVerification.ts
 │ │ └── responseHandler.ts # Unified response format
-│ │
-│ └── utils/
-│  └── util.ts # Helper utilities (e.g., getUserResponse)
+│ ├─ utils/
+│ │  ├─ env.ts
+│ │  └─ util.ts
+│ └─ types/
+│     └─ express.d.ts
 │
 ├── .env # Environment variables (not committed)
 ├── .gitignore
@@ -168,11 +177,18 @@ yarn dev
 |DELETE|`/api/users/delete/:id`| Delete User by id.|
 |**Mindmap**|
 |POST|`/api/mindmaps/create`| Create Mindmap|
+|POST|`/api/mindmaps/generate`| Generate Mindmap using Ai|
 |GET|`/api/mindmaps/:mindmapId`| Get Mindmap by Mindmap id|
 |GET|`/api/mindmaps/user/:userId`| Get Mindmaps by user id|
 |PUT|`/api/mindmaps/update/:mindmapId`| Update mindmap by mindmap id|
 |DELETE|`/api/mindmaps/delete/:mindmapId`| Delete Mindmap by mindmap id|
-
+|**NLP**|
+|POST|`/api/nlp/summarize`| Summarize Text|
+|POST|`/api/nlp/detect-toxicity`| Detect toxicity|
+|POST|`/api/nlp/sentiment`| Sentiment Analysis|
+|POST|`/api/nlp/keywords`| Extract Keywords|
+|POST|`/api/nlp/classify`| Classify Text|
+|POST|`/api/nlp/entities`| Named Entity Recognition|
 ## 🧹 Graceful Shutdown
 
 On **`Ctrl+C`** or stop signal:

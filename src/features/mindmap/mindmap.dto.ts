@@ -18,6 +18,24 @@ export class CreateMindmapDto {
   userId: string;
 }
 
+export class GenerateMindmapDto {
+  @IsString()
+  @IsNotEmpty()
+  userId!: string;
+
+  @IsString() 
+  @IsNotEmpty() 
+  title!: string;
+  
+  @IsOptional()
+  @IsObject() 
+  description?: Record<string, any>;
+
+  @IsString() 
+  @IsNotEmpty() 
+  sourceText!: string;
+}
+
 export class UpdateMindmapDto {
   @IsString()
   @IsOptional()
