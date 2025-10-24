@@ -1,5 +1,6 @@
-import { IsNotEmpty, MinLength, IsEmail, IsDateString, IsEnum } from "class-validator";
-import { userRole } from "../config/core";
+import { Role } from "@prisma/client";
+import { IsNotEmpty, MinLength, IsEmail, IsEnum } from "class-validator";
+
 
 export class SigninDto {
     @IsNotEmpty()
@@ -11,8 +12,8 @@ export class SigninDto {
     email:string;
 
     @IsNotEmpty()
-    @IsEnum(userRole)
-    userRole: userRole;
+    @IsEnum(Role)
+    role: Role;
 
 }
 export class SignupDto{
@@ -33,8 +34,7 @@ export class SignupDto{
     lastName: string
     
     @IsNotEmpty()
-    @IsEnum(userRole)
-    userRole: userRole;
-  Role: any;
+    @IsEnum(Role)
+    role: Role;
     
 }

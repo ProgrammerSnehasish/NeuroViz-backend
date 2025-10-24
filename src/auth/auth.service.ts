@@ -51,7 +51,7 @@ export class AuthService {
         firstName: data.firstName,
         middleName: data.middleName,
         lastName: data.lastName,
-        role: data.Role,
+        role: data.role,
         password: hashedPassword
       },
     });
