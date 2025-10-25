@@ -86,25 +86,59 @@ NeuroViz-backend/
 │ │ └── database.ts
 │ │
 │ ├── features/
-│ │ ├──  user/
-│ │ │ ├── user.controller.ts
-│ │ │ ├── user.service.ts
-│ │ │ ├── user.dto.ts
-│ │ │ ├── user.interface.ts
-│ │ │ └── user.routes.ts
-│ │ │
-│ │ ├── mindmap/
-│ │ │ ├── mindmap.controller.ts
-│ │ │ ├── mindmap.service.ts
-│ │ │ ├── mindmap.dto.ts
-│ │ │ ├── mindmap.type.ts
-│ │ │ └── mindmap.routes.ts
-│ │ │
-│ │ └──nlp/
-│ │   ├─ nlp.dto.ts
-│ │   ├─ nlp.controller.ts
-│ │   ├─ nlp.router.ts
-│ │   └─ nlp.service.ts
+│ │   ├── user/
+│ │   │   ├── user.controller.ts
+│ │   │   ├── user.service.ts
+│ │   │   ├── user.dto.ts
+│ │   │   ├── user.interface.ts
+│ │   │   └── user.routes.ts
+│ │   │
+│ │   ├── mindmap/
+│ │   │   ├── mindmap.controller.ts
+│ │   │   ├── mindmap.ai.service.ts
+│ │   │   ├── mindmap.service.ts
+│ │   │   ├── mindmap.dto.ts
+│ │   │   ├── mindmap.type.ts
+│ │   │   └── mindmap.routes.ts
+│ │   │
+│ │   ├── nlp/
+│ │   │   ├── nlp.dto.ts
+│ │   │   ├── nlp.controller.ts
+│ │   │   ├── nlp.router.ts
+│ │   │   └── nlp.service.ts
+│ │   │
+│ │   ├── cognitive_profile/
+│ │   │   ├── cognitiveProfile.dto.ts
+│ │   │   ├── cognitiveProfile.controller.ts
+│ │   │   ├── cognitiveProfile.service.ts
+│ │   │   └── cognitiveProfile.routes.ts
+│ │   │
+│ │   ├── emotion/
+│ │   │   ├── emotion.dto.ts
+│ │   │   ├── emotion.controller.ts
+│ │   │   ├── emotion.service.ts
+│ │   │   └── emotion.routes.ts
+│ │   │
+│ │   ├── feedback/
+│ │   │   ├── feedback.dto.ts
+│ │   │   ├── feedback.controller.ts
+│ │   │   ├── feedback.service.ts
+│ │   │   └── feedback.routes.ts
+│ │   │
+│ │   ├── adapt/
+│ │   │   ├── adapt.controller.ts
+│ │   │   ├── adapt.service.ts
+│ │   │   └── adapt.routes.ts
+│ │   │
+│ │   ├── content/
+│ │   │   ├── content.controller.ts
+│ │   │   ├── content.service.ts
+│ │   │   └── content.routes.ts
+│ │   │
+│ │   └── admin/
+│ │       ├── admin.controller.ts
+│ │       ├── admin.service.ts
+│ │       └── admin.routes.ts
 │ │
 │ ├── middlewares/
 │ │ ├── errorHandler.ts # Global error handling middleware
