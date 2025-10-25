@@ -52,8 +52,6 @@ export class UserService {
   if (data.currentCity) updateData.currentCity = data.currentCity;
   if (data.gender) updateData.gender = data.gender;
   if (data.profilePhoto) updateData.profilePhoto = data.profilePhoto;
-  if (data.cursorMovement) updateData.cursorMovement = data.cursorMovement;
-  if (data.eyeTrackingData) updateData.eyeTrackingData = data.eyeTrackingData;
   if (data.password) updateData.password = await hash(data.password, 10);
 
   const updatedUser = await prisma.user.update({

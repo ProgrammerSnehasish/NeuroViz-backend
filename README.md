@@ -230,6 +230,7 @@ Thanks to all the open-source community!
 -Snehasish Das
 Developer • Cyber Security Enthusiast • NeuroViz Project Member
 
+## 💬 Editor
 -Rounak Saha
 Developer • Cyber Security Enthusiast • NeuroViz Project Lead
 

@@ -94,13 +94,16 @@ model User {
   updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?
   profilePhoto     String?   @default("")      // URL or Base64-encoded image
-  cursorMovement   Json?                       // optional JSON data
-  eyeTrackingData  Json?                       // optional JSON data
 
   // Relations
   studentProfile   StudentProfile?
   teacherProfile   TeacherProfile?
-  mindmaps         Mindmap[]
+  preferences   Json?     @default("{}")
+  cognitive     CognitiveProfile?
+  emotionLogs   EmotionLog[]
+  feedbacks     Feedback[]
+  mindmaps      Mindmap[]
+  adaptations  AdaptationLog[]
 }
 
 /* ─────────────────────────────
@@ -146,4 +149,57 @@ model Mindmap {
   user       User     @relation(fields: [userId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+/* ─────────────────────────────
+   Cognitive Profile MODEL
+────────────────────────────── */
+model CognitiveProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  attentionScore Float?
+  focusDuration  Int?
+  interactions   Int?
+  lastUpdated    DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+/* ─────────────────────────────
+   Emotion Log MODEL
+────────────────────────────── */
+model EmotionLog {
+  id        String   @id @default(uuid())
+  userId    String
+  emotion   String
+  intensity Float?
+  meta      Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+/* ─────────────────────────────
+   Feedback MODEL
+────────────────────────────── */
+model Feedback {
+  id        String   @id @default(uuid())
+  userId    String
+  mapId     String?
+  rating    Int?
+  comments  String?
+  timeSpent Int?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+/* ─────────────────────────────
+   Adaptation Log MODEL
+────────────────────────────── */
+model AdaptationLog {
+  id        String   @id @default(uuid())
+  userId    String
+  changes   Json
+  reason    String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }

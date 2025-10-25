@@ -15,6 +15,7 @@ export function getUserResponse(
     firstName: user.firstName,
     middleName: user.middleName ?? "",
     lastName: user.lastName,
+    preferences: (user as any).preferences ?? {},
     dob: (user as any).dob ?? null,
     email: user.email,
     homeTown: (user as any).homeTown ?? "",
@@ -22,8 +23,6 @@ export function getUserResponse(
     gender: (user as any).gender ?? "",
     role: user.role as Role,
     profilePhoto: user.profilePhoto ?? "",
-    cursorMovement: user.cursorMovement ?? {},
-    eyeTrackingData: user.eyeTrackingData ?? {},
 
     // include full objects now
     studentProfile: user.studentProfile ?? null,
