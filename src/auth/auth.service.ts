@@ -5,6 +5,7 @@ import { IUserDetails } from "../features/user/user.interface";
 import { getUserResponse } from "../utils/util";
 import { SigninDto, SignupDto } from "./auth.dto";
 import prisma from "../config/database";
+import { runAdaptationForUser } from "../features/adapt/adapt.service";
 
 export class AuthService {
   public constructor() { }
@@ -27,6 +28,10 @@ export class AuthService {
       { expiresIn: "1h" }
     );
 
+    runAdaptationForUser(foundUser.id)
+    .then((result) => console.log("Adaptation run on login:", result))
+    .catch((err) => console.error("Adaptation failed:", err));
+    
     const userData = getUserResponse(foundUser);
 
     return {
@@ -52,7 +57,8 @@ export class AuthService {
         middleName: data.middleName,
         lastName: data.lastName,
         role: data.role,
-        password: hashedPassword
+        password: hashedPassword,
+        preferences: {}
       },
     });
 

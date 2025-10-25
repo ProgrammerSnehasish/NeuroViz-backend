@@ -189,6 +189,19 @@ yarn dev
 |POST|`/api/nlp/keywords`| Extract Keywords|
 |POST|`/api/nlp/classify`| Classify Text|
 |POST|`/api/nlp/entities`| Named Entity Recognition|
+|**Cognitive Profiling**|
+|POST|`/api/cognitive/update`|Update cognitive profile|
+|GET|`/api/cognitive/user/:userId`|Get Cognitive Profile by user Id|
+|**Emotion Profiling**|
+|POST|`/api/emotion/log`|Log new emotion|
+|GET|`/api/emotion/user/:userId`|Get Emotion Log by user Id|
+|**Feedback**|
+|POST|`/api/feedback/add`|Add new feedback|
+|GET|`/api/feedback/user/:userId`|Get feedback by user Id|
+|**Others**|
+|POST|`/api/adapt/trigger/user/:userid`|Trigger Adaptation Manually(Interface Adaptation)|
+|POST|`/api/content/summarize`|Summarize Content|
+|GET|`/api/admin/overview`|Admin Overview|
 ## 🧹 Graceful Shutdown
 
 On **`Ctrl+C`** or stop signal:

@@ -112,11 +112,18 @@ export class UserService {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw createHttpError(404, "User not found.");
 
-  // Delete dependent profiles first (if any)
-  await prisma.studentProfile.deleteMany({ where: { userId } });
-  await prisma.teacherProfile.deleteMany({ where: { userId } });
+  // Delete dependent (child) entities first
+  await prisma.$transaction([
+    prisma.studentProfile.deleteMany({ where: { userId } }),
+    prisma.teacherProfile.deleteMany({ where: { userId } }),
+    prisma.cognitiveProfile.deleteMany({ where: { userId } }),
+    prisma.emotionLog.deleteMany({ where: { userId } }),
+    prisma.feedback.deleteMany({ where: { userId } }),
+    prisma.mindmap.deleteMany({ where: { userId } }),
+    prisma.adaptationLog.deleteMany({ where: { userId } }),
+  ]);
 
-  // Now safe to delete user
+  // ✅ Finally delete the user
   await prisma.user.delete({ where: { id: userId } });
 }
 }
