@@ -337,4 +337,4 @@ The following flow diagram represents the overall architecture and data flow of 
 
 ## 💡 Inspiration
 
-Inspired by the need for *inclusive educational technologies, NeuroViz bridges the gap between cognitive diversity and modern learning — ensuring that **every mind learns visually, effectively, and confidently*.
+Inspired by the need for *inclusive educational technologies, NeuroViz bridges the gap between cognitive diversity and modern learning — ensuring that ***every mind learns visually, effectively, and confidently****.
