@@ -298,6 +298,14 @@ The system analyzes a student’s behavior, emotional state, and learning prefer
 
 ---
 
+## 🧩 Diagram Reference
+
+The following flow diagram represents the overall architecture and data flow of the NeuroViz system:
+
+> *NeuroViz: Adaptive Visual Learning Companion for Neurodivergent Students*  
+> ![Architecture_&_Dataflow_Diagram](./Image/Architecture_&_Dataflow_Diagram.jpg)
+
+---
 ## 🧠 Core Features
 
 - Adaptive visualization based on learning type.
