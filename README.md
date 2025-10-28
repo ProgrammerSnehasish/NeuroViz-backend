@@ -290,7 +290,7 @@ Developer • Cyber Security Enthusiast • NeuroViz Project Member
 ---
 
 # 🧩 NeuroViz — Empowering neurodivergent learners with intelligent visualization.
-#### Adaptive Visual Learning Companion for Neurodivergent Students
+#### An adaptive and creative mind canvas for Neurodivergent Students
 
 *NeuroViz* is an AI-powered adaptive visual learning system designed to support *neurodivergent learners* (e.g., students with ADHD, Autism, Dyslexia, etc.) by transforming educational content into interactive visual formats — such as *mind maps, infographics, and visual flows* — tailored to individual cognitive and emotional profiles.
 
