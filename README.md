@@ -24,7 +24,7 @@ This backend is built with [Node.js](https://nodejs.org/en), [TypeScript](https:
 | Framework | Express.js |
 | ORM | Prisma |
 | Database | PostgreSQL (NeonDB) |
-|NLP| wink-nlp and others(local[python],Open-ai,hugging face)|
+|NLP| wink-nlp and others(local[python], hugging face)|
 | Environment Management | dotenv |
 | Build Tool | tsc (TypeScript Compiler) |
 | Dev Runner | ts-node-dev |
@@ -60,7 +60,7 @@ npm install -g yarn
 ```
 ---
 
-## 📁 Project Structure
+## 📁 Backend Folder Structure
 ```bash
 NeuroViz-backend/
 ├── prisma/
@@ -274,12 +274,18 @@ Thanks to all the open-source community!
 ---
 
 ## 💬 Author
--Snehasish Das
+- Snehasish Das
 Developer • Cyber Security Enthusiast • NeuroViz Project Member
 
-## 💬 Editor
--Rounak Saha
+## 💬 Collaborators
+- Rounak Saha
 Developer • Cyber Security Enthusiast • NeuroViz Project Lead
+
+- Puskar Sarkar
+Developer • Cyber Security Enthusiast • NeuroViz Project Member
+
+- Sagnika Mitra
+Developer • Cyber Security Enthusiast • NeuroViz Project Member
 
 ---
 
