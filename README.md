@@ -279,13 +279,13 @@ Developer • Cyber Security Enthusiast • NeuroViz Project Member
 
 ## 💬 Collaborators
 - Rounak Saha
-Developer • Cyber Security Enthusiast • NeuroViz Project Lead
+> Developer • Cyber Security Enthusiast • NeuroViz Project Lead
 
 - Puskar Sarkar
-Developer • Cyber Security Enthusiast • NeuroViz Project Member
+> Developer • Cyber Security Enthusiast • NeuroViz Project Member
 
 - Sagnika Mitra
-Developer • Cyber Security Enthusiast • NeuroViz Project Member
+> Developer • Cyber Security Enthusiast • NeuroViz Project Member
 
 ---
 
