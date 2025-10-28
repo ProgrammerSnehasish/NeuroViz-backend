@@ -7,10 +7,10 @@ import { verifyToken } from "../../middlewares/jwtVerifiction";
 const nlpRouter = Router();
 
 nlpRouter.post("/summarize",verifyToken, dtoValidation(TextDto), NLPController.summarize);
-nlpRouter.post("/detect-toxicity", dtoValidation(TextDto), NLPController.detect);
-nlpRouter.post("/sentiment", dtoValidation(TextDto), NLPController.sentiment);
-nlpRouter.post("/keywords", dtoValidation(TextDto), NLPController.keywords);
-nlpRouter.post("/classify", dtoValidation(TextDto), NLPController.classify);
-nlpRouter.post("/entities", dtoValidation(TextDto), NLPController.entities);
+nlpRouter.post("/detect-toxicity",verifyToken, dtoValidation(TextDto), NLPController.detect);
+nlpRouter.post("/sentiment",verifyToken, dtoValidation(TextDto), NLPController.sentiment);
+nlpRouter.post("/keywords",verifyToken, dtoValidation(TextDto), NLPController.keywords);
+nlpRouter.post("/classify",verifyToken, dtoValidation(TextDto), NLPController.classify);
+nlpRouter.post("/entities",verifyToken, dtoValidation(TextDto), NLPController.entities);
 
 export default nlpRouter;

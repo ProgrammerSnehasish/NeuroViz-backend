@@ -55,25 +55,29 @@ export class MindmapService {
     return mindmap;
   }
 
-  async updateMindmap(data: UpdateMindmapDto, mindmapId: string, userId: string) {
-    const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
-    if (!mindmap) throw createHttpError(404, "Mindmap not found.");
-    if (mindmap.userId !== userId) throw createHttpError(403, "Not authorized to update this mindmap.");
+ async updateMindmap(data: UpdateMindmapDto, mindmapId: string, userId?: string) {
+  const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
+  if (!mindmap) throw createHttpError(404, "Mindmap not found.");
 
-    const updateData: Record<string, any> = {};
-
-    if (data.title) updateData["title"] = data.title;
-    if (data.description) updateData["description"] = data.description;
-    if (data.structure) updateData["structure"] = data.structure;
-
-    if (Object.keys(updateData).length === 0)
-      throw createHttpError(400, "Provide some data to update mindmap.");
-
-    return await prisma.mindmap.update({
-      where: { id: mindmapId },
-      data: updateData,
-    });
+  if (userId && mindmap.userId !== userId) {
+    throw createHttpError(403, "You are not authorized to update this mindmap.");
   }
+
+  const updateData: Record<string, any> = {};
+  if (data.title) updateData.title = data.title;
+  if (data.description) updateData.description = data.description;
+  if (data.structure) updateData.structure = data.structure;
+
+  if (Object.keys(updateData).length === 0) {
+    throw createHttpError(400, "Please provide at least one field to update.");
+  }
+
+  return await prisma.mindmap.update({
+    where: { id: mindmapId },
+    data: updateData,
+  });
+}
+
 
   async deleteMindmap(mindmapId: string, userId: string): Promise<void> {
     const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });

@@ -22,5 +22,6 @@ export const upsertCognitiveProfile = async (userId: string, payload: CognitiveP
 };
 
 export const getCognitiveProfile = async (userId: string) => {
+  if (!userId) throw new Error("userId is required");
   return await prisma.cognitiveProfile.findUnique({ where: { userId } });
 };

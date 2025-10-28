@@ -12,9 +12,7 @@ export class UserController {
     //TODO: get user details from user service
     return await this.userService.getUser(email);
   }
-
   public async getUserDetailsById(id: string): Promise<IUserDetails>{
-    //TODO: get user details from user service
     return await this.userService.getUserById(id);
   }
   public async updateUser(data:UpdateUserDto, userId: string):Promise<IUserDetails>{

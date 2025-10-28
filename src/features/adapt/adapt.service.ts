@@ -22,13 +22,12 @@ export const runAdaptationForUser = async (userId: string) => {
   // Emotion-based adaptation logic
   // ───────────────────────────────
   if (emotions.length > 0) {
-    // Properly type the accumulator
+   
     const counts = emotions.reduce((acc: Record<string, number>, e) => {
       acc[e.emotion] = (acc[e.emotion] || 0) + 1;
       return acc;
     }, {});
 
-    // Type entries as [string, number][]
     const entries = Object.entries(counts) as [string, number][];
     const dominant = entries.sort((a, b) => b[1] - a[1])[0][0];
 

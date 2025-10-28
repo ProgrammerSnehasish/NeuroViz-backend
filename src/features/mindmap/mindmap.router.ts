@@ -75,15 +75,22 @@ mindmapRouter.put(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const mindmapId = req.params["mindmapId"];
-      if (!mindmapId) throw createHttpError("Missing path parameter: mindmapId");
-      const userId = req.body.token.userId;
+      if (!mindmapId) throw createHttpError(400, "Missing path parameter: mindmapId");
+
+      const userId =
+        (req as any).user?.userId ||
+        (req as any).user?.id ||
+        (req as any).user?.sub; // support multiple JWT payload formats
+
       const updated = await controller.updateMindmap(req.body, mindmapId, userId);
+
       res.status(200).json(updated);
     } catch (err) {
       next(err);
     }
   }
 );
+
 
 mindmapRouter.delete(
   "/delete/:mindmapId",
@@ -92,11 +99,23 @@ mindmapRouter.delete(
     try {
       const mindmapId = req.params["mindmapId"];
       if (!mindmapId) throw createHttpError("Missing path parameter: mindmapId");
-      const userId = req.body.token.userId;
+
+      const userId =
+        (req.user as any)?.userId ||
+        (req.user as any)?.id ||
+        (req.user as any)?.sub;
+
+      if (!userId) throw createHttpError(401, "Unauthorized");
+
       await controller.deleteMindmap(mindmapId, userId);
-      res.status(200).json({Success:true, message: "Mindmap deleted successfully" });
+
+      res.status(200).json({
+        success: true,
+        message: "Mindmap deleted successfully",
+      });
     } catch (err) {
       next(err);
     }
   }
 );
+

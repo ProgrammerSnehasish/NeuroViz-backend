@@ -11,35 +11,46 @@ export class AuthService {
   public constructor() { }
 
   public async signin(data: SigninDto): Promise<any> {
-    const foundUser = await prisma.user.findUnique({ where: { email: data.email } });
+  const foundUser = await prisma.user.findUnique({
+    where: { email: data.email },
+  });
 
-    if (!foundUser) {
-      throw createHttpError(400, "User with email " + data.email + " does not exist");
-    }
+  if (!foundUser) {
+    throw createHttpError(400, `User with email ${data.email} does not exist`);
+  }
 
-    const passwordMatch = await compare(data.password, foundUser.password);
-    if (!passwordMatch) {
-      throw createHttpError(400, "Invalid password");
-    }
+  const passwordMatch = await compare(data.password, foundUser.password);
+  if (!passwordMatch) {
+    throw createHttpError(400, "Invalid password");
+  }
 
-    const token = sign(
-      { userId: foundUser.id, userEmail: foundUser.email },
-      process.env.JWT_SECRET_KEY as string,
-      { expiresIn: "1h" }
-    );
+  if (data.role && data.role !== foundUser.role) {
+    throw createHttpError(403, `This account is registered as a ${foundUser.role}, not as ${data.role}`);
+  }
 
-    runAdaptationForUser(foundUser.id)
+  const token = sign(
+    {
+      userId: foundUser.id,
+      userEmail: foundUser.email,
+      role: foundUser.role,
+    },
+    process.env.JWT_SECRET_KEY as string,
+    { expiresIn: "1h" }
+  );
+
+  runAdaptationForUser(foundUser.id)
     .then((result) => console.log("Adaptation run on login:", result))
     .catch((err) => console.error("Adaptation failed:", err));
-    
-    const userData = getUserResponse(foundUser);
 
-    return {
-      token: token,
-      expiry: new Date().getTime() + 60 * 60 * 1000,
-      ...userData,
-    };
-  }
+  const userData = getUserResponse(foundUser);
+
+  return {
+    token,
+    expiry: Date.now() + 60 * 60 * 1000,
+    ...userData,
+  };
+}
+
 
   public async signup(data: SignupDto): Promise<IUserDetails> {
     const foundUser = await prisma.user.findUnique({ where: { email: data.email } });

@@ -4,7 +4,9 @@ import * as CognitiveService from "./cognitiveProfile.service";
 
 export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req.user as any)?.id;
+    const userId =
+      (req.user as any)?.userId || (req.user as any)?.id || (req.user as any)?.sub;
+
     if (!userId) throw createHttpError(401, "Unauthorized");
 
     const { attentionScore, focusDuration, interactions } = req.body;
@@ -24,6 +26,7 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
     next(err);
   }
 };
+
 
 export const getProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {

@@ -10,7 +10,7 @@ export class CognitiveProfileDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  focusDuration?: number; // seconds
+  focusDuration?: number; 
 
   @IsOptional()
   @IsNumber()
