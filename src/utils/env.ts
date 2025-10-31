@@ -1,5 +1,5 @@
 export const NLP = {
-  provider: process.env.NLP_PROVIDER ?? "huggingface",
+  provider: process.env.NLP_PROVIDER ?? "python",
   serviceUrl: process.env.NLP_SERVICE_URL ?? "",
   hfKey: process.env.HUGGINGFACE_API_KEY ?? "",
   python: {
