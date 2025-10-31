@@ -215,6 +215,8 @@ yarn dev
 |GET|`/api/mindmaps/:mindmapId`| Get Mindmap by Mindmap id|
 |GET|`/api/mindmaps/user/:userId`| Get Mindmaps by user id|
 |PUT|`/api/mindmaps/update/:mindmapId`| Update mindmap by mindmap id|
+|GET|`/api/mindmaps/:mindmapId/jpeg`|Download Mindmap as JPEG|
+|GET|`/api/mindmaps/:mindmapId/pdf`|Download Mindmap as PDF|
 |DELETE|`/api/mindmaps/delete/:mindmapId`| Delete Mindmap by mindmap id|
 |**NLP**|
 |POST|`/api/nlp/summarize`| Summarize Text|

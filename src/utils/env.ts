@@ -1,6 +1,6 @@
 export const NLP = {
-  provider: process.env.NLP_PROVIDER ?? "python",
-  openaiKey: process.env.OPENAI_API_KEY ?? "",
+  provider: process.env.NLP_PROVIDER ?? "huggingface",
+  serviceUrl: process.env.NLP_SERVICE_URL ?? "",
   hfKey: process.env.HUGGINGFACE_API_KEY ?? "",
   python: {
     summarizer: process.env.PY_SUMMARIZER_URL,

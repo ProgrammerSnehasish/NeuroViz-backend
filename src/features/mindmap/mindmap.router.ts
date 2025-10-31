@@ -4,6 +4,7 @@ import { dtoValidation } from "../../middlewares/dtoValidation";
 import { MindmapController } from "./mindmap.controller";
 import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "./mindmap.dto";
 import createHttpError from "http-errors";
+import { MindmapExportController } from "./export/mindmap.export.controller";
 
 export const mindmapRouter = Router();
 const controller = new MindmapController();
@@ -119,3 +120,5 @@ mindmapRouter.delete(
   }
 );
 
+mindmapRouter.get("/:id/pdf", verifyToken, MindmapExportController.downloadPDF);
+mindmapRouter.get("/:id/jpeg", verifyToken, MindmapExportController.downloadJPEG);
