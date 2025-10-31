@@ -94,6 +94,9 @@ NeuroViz-backend/
 │ │   │   └── user.routes.ts
 │ │   │
 │ │   ├── mindmap/
+│ │   │   ├── export/
+│ │   │   │ ├── mindmap.export.controller.ts
+│ │   │   │ └── mindmap.export.service.ts
 │ │   │   ├── mindmap.controller.ts
 │ │   │   ├── mindmap.ai.service.ts
 │ │   │   ├── mindmap.service.ts
