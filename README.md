@@ -144,6 +144,7 @@ NeuroViz-backend/
 │ │   │   ├── Services/
 │ │   │   │   ├── teacher.assignment.service.ts
 │ │   │   │   ├── teacher.review.service.ts
+│ │   │   │   ├── teacher.mail-log.service.ts
 │ │   │   │   ├── teacher.service.ts
 │ │   │   │   └── teacher.student.service.ts
 │ │   │   │
