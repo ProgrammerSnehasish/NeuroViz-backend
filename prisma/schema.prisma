@@ -76,7 +76,7 @@ enum Qualification {
    USER MODEL
 ────────────────────────────── */
 model User {
-  id               String    @id @default(uuid())
+  id               String    @id @default(uuid())  
   firstName        String
   middleName       String?   @default("")
   lastName         String
@@ -115,14 +115,18 @@ model User {
   teacherFeedbacksReceived TeacherFeedback[]       @relation("TeacherFeedbackStudent")
   teacherNotifications Notification[] @relation("UserTeacherNotifications")
   studentNotifications Notification[] @relation("UserStudentNotifications")
+  sentMails      MailLog[] @relation("UserSentMails")
+  receivedMails  MailLog[] @relation("UserReceivedMails")
+  teacherStudents TeacherStudent[] @relation("TeacherToStudents")
+  studentTeachers TeacherStudent[] @relation("StudentToTeachers")
 }
 
 /* ─────────────────────────────
    STUDENT PROFILE
 ────────────────────────────── */
 model StudentProfile {
-  id               String           @id @default(uuid())
-  userId           String           @unique
+  id               String           @id @default(uuid())  
+  userId           String           @unique  
   user             User             @relation(fields: [userId], references: [id])
   neuroProblemType NeuroProblemType @default(NOT_MENTIONED)
   education        Education        @default(NOT_MENTIONED)
@@ -137,8 +141,8 @@ model StudentProfile {
    TEACHER PROFILE
 ────────────────────────────── */
 model TeacherProfile {
-  id               String         @id @default(uuid())
-  userId           String         @unique
+  id               String         @id @default(uuid())  
+  userId           String         @unique  
   user             User           @relation(fields: [userId], references: [id])
   qualification    Qualification  @default(NOT_MENTIONED)
   experience       Int?
@@ -321,6 +325,7 @@ model Notification {
   id          String   @id @default(uuid())
   title       String
   message     String
+  type        String   @default("Info")
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
 
@@ -343,4 +348,32 @@ model TeacherFeedback {
 
   teacher     User     @relation("TeacherToFeedbacks", fields: [teacherId], references: [id])
   student     User     @relation("TeacherFeedbackStudent", fields: [studentId], references: [id])
+}
+
+model MailLog {
+  id           String   @id @default(uuid())  
+  senderId     String?   
+  recipientId  String?   
+  to           String
+  subject      String
+  body         String?
+  status       String   @default("SENT")
+  error        String?
+  sentAt       DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  sender       User? @relation("UserSentMails", fields: [senderId], references: [id])
+  recipient    User? @relation("UserReceivedMails", fields: [recipientId], references: [id])
+}
+
+model TeacherStudent {
+  id         String   @id @default(uuid())
+  teacherId  String
+  studentId  String
+  createdAt  DateTime @default(now())
+
+  teacher    User     @relation("TeacherToStudents", fields: [teacherId], references: [id])
+  student    User     @relation("StudentToTeachers", fields: [studentId], references: [id])
+
+  @@unique([teacherId, studentId], name: "UniqueTeacherStudent")
 }

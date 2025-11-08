@@ -11,18 +11,22 @@ async function postTo(url?: string, body?: any) {
 /* ------------------ Hugging Face Helper ------------------ */
 async function hfRequest(model: string, input: string, extraParams?: any) {
   if (!NLP.hfKey) throw new Error("Missing Hugging Face API key");
-  const url = `https://api-inference.huggingface.co/models/${model}`;
+  const url = `https://router.huggingface.co/hf-inference/models/${model}`;
+
   const { data } = await axios.post(
     url,
     { inputs: input, parameters: extraParams },
     {
-      headers: { Authorization: `Bearer ${NLP.hfKey}` },
+      headers: {
+        Authorization: `Bearer ${NLP.hfKey}`,
+        "Content-Type": "application/json",
+      },
       timeout: 120000,
     }
   );
+
   return data;
 }
-
 /* ------------------ Utility: Merge Tokens ------------------ */
 function mergeEntities(entities: any[]) {
   const merged: any[] = [];
@@ -61,37 +65,105 @@ function mergeEntities(entities: any[]) {
 export const NLPService = {
   /* ---------- Summarization ---------- */
   summarize: async (text: string) => {
-    if (NLP.provider === "python" && NLP.python.summarizer)
-      return postTo(NLP.python.summarizer, { text });
+  const cleanText = text.replace(/\s+/g, " ").trim();
 
-    if (NLP.provider === "huggingface") {
+  if (!cleanText || cleanText.split(" ").length < 10) {
+    return { summary: cleanText || "No meaningful text to summarize." };
+  }
+
+  if (NLP.provider === "python" && NLP.python.summarizer) {
+    return postTo(NLP.python.summarizer, { text: cleanText });
+  }
+
+  if (NLP.provider === "huggingface") {
+    try {
+      const out = await hfRequest("facebook/bart-large-cnn", cleanText, {
+        max_length: 100,
+        min_length: 25,
+        do_sample: false,
+      })
+
+      let summaryText =
+        out?.[0]?.summary_text ||
+        out?.summary_text ||
+        (Array.isArray(out) && typeof out[0] === "string" ? out[0] : null);
+
+      if (summaryText?.toLowerCase().includes(cleanText.toLowerCase())) {
+        summaryText = summaryText.replace(cleanText, "").trim();
+      }
+
+      return {
+        summary: summaryText || "No summary generated.",
+      };
+    } catch (err: any) {
+      console.warn("⚠️ Summarizer fallback due to error:", err.message);
+      const sentences = cleanText.split(/[.!?]/).filter(Boolean);
+      const fallback = sentences.slice(0, 3).join(". ") + ".";
+      return { summary: fallback };
+    }
+  }
+
+  const sentences = cleanText.split(/[.!?]/).filter(Boolean);
+  return { summary: sentences.slice(0, 3).join(". ") + "." };
+},
+
+
+/* ---------- Toxicity Detection ---------- */
+detectToxicity: async (text: string) => {
+  if (NLP.provider === "python" && NLP.python.toxicity)
+    return postTo(NLP.python.toxicity, { text });
+
+  if (NLP.provider === "huggingface") {
+    const models = [
+      "s-nlp/roberta_toxicity_classifier",
+      "unitary/toxic-bert",
+    ];
+
+    for (const model of models) {
       try {
-        const out = await hfRequest("facebook/bart-large-cnn", text);
-        return { summary: out?.[0]?.summary_text || "No summary generated" };
-      } catch {
-        return { summary: text.split(".").slice(0, 3).join(".") };
+        const out = await hfRequest(model, text);
+
+        // Normalize possible nested outputs
+        let preds: any[] = [];
+        if (Array.isArray(out?.[0])) preds = out[0];
+        else if (Array.isArray(out)) preds = out;
+        else if (out?.labels && out?.scores) {
+          preds = out.labels.map((label: string, i: number) => ({
+            label,
+            score: out.scores[i],
+          }));
+        }
+
+        if (!preds.length) {
+          console.warn(`⚠️ No predictions from ${model}`);
+          continue;
+        }
+
+        // Pick the highest confidence prediction
+        const best = preds.reduce((a, b) => (a.score > b.score ? a : b));
+        const labelText = best?.label?.toLowerCase?.() || "";
+
+        const isToxic =
+          labelText.includes("toxic") ||
+          labelText.includes("insult") ||
+          labelText.includes("offensive") ||
+          best.score > 0.6;
+
+        // ✅ Return clean JSON — no model name
+        return {
+          label: isToxic ? "toxic" : "non-toxic",
+          score: best.score ?? 0,
+        };
+      } catch (err: any) {
+        console.warn(`⚠️ Model ${model} failed:`, err.message);
       }
     }
 
-    return { summary: text.split(".").slice(0, 3).join(".") };
-  },
+    return { label: "non-toxic", score: 0 };
+  }
 
-  /* ---------- Toxicity Detection ---------- */
-  detectToxicity: async (text: string) => {
-    if (NLP.provider === "python" && NLP.python.toxicity)
-      return postTo(NLP.python.toxicity, { text });
-
-    if (NLP.provider === "huggingface") {
-      try {
-        const out = await hfRequest("unitary/toxic-bert", text);
-        return Array.isArray(out) ? out[0] : out;
-      } catch {
-        return { label: "non-toxic", score: 0 };
-      }
-    }
-
-    return { label: "NOT_TOXIC", score: 0.0 };
-  },
+  return { label: "NOT_TOXIC", score: 0.0 };
+},
 
   /* ---------- Sentiment Analysis ---------- */
   sentiment: async (text: string) => {
@@ -143,48 +215,63 @@ export const NLPService = {
   },
 
   /* ---------- Text Classification ---------- */
-  classify: async (text: string) => {
-    if (NLP.provider === "python" && NLP.python.classify)
-      return postTo(NLP.python.classify, { text });
+classify: async (text: string) => {
+  if (NLP.provider === "python" && NLP.python.classify)
+    return postTo(NLP.python.classify, { text });
 
-    if (NLP.provider === "huggingface") {
-      const candidateLabels = [
-        "technology", "science", "education", "sports", "politics",
-        "health", "finance", "entertainment", "environment", "general"
-      ];
+  if (NLP.provider === "huggingface") {
+    const candidateLabels = [
+      "technology", "science", "education", "sports", "politics",
+      "health", "finance", "entertainment", "environment", "general"
+    ];
 
+    const models = [
+      "joeddav/xlm-roberta-large-xnli",
+      "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
+    ];
+
+    for (const model of models) {
       try {
-        const out = await hfRequest(
-          "joeddav/xlm-roberta-large-xnli",
-          text,
-          { candidate_labels: candidateLabels }
-        );
+        const out = await hfRequest(model, text, {
+          candidate_labels: candidateLabels,
+          multi_label: false, // can set true for multiple possible topics
+        });
 
-        return {
-          labels: out?.labels ?? [],
-          scores: out?.scores ?? [],
-        };
-      } catch (err) {
-        console.warn("⚠️ HF classify primary model failed — trying fallback");
-        try {
-          const out = await hfRequest(
-            "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
-            text,
-            { candidate_labels: candidateLabels }
-          );
-          return {
-            labels: out?.labels ?? [],
-            scores: out?.scores ?? [],
-          };
-        } catch {
-          return { labels: ["general"], scores: [1.0] };
+        // ✅ Handle both old and new response formats
+        let labels: string[] = [];
+        let scores: number[] = [];
+
+        if (out?.labels && out?.scores) {
+          labels = out.labels;
+          scores = out.scores;
+        } else if (Array.isArray(out) && out[0]?.labels) {
+          labels = out[0].labels;
+          scores = out[0].scores;
+        } else if (Array.isArray(out) && out[0]?.label) {
+          // In case it's a list of single-label objects
+          labels = out.map((r: any) => r.label);
+          scores = out.map((r: any) => r.score);
         }
+
+        // ✅ Pick top result if available
+        if (labels.length && scores.length) {
+          const bestIndex = scores.indexOf(Math.max(...scores));
+          return {
+            label: labels[bestIndex],
+            score: scores[bestIndex],
+            all: labels.map((l, i) => ({ label: l, score: scores[i] })),
+          };
+        }
+      } catch (err: any) {
+        console.warn(`⚠️ HF classify model ${model} failed:`, err.message);
       }
     }
 
-    return { labels: ["general"], scores: [1.0] };
-  },
+    return { label: "general", score: 1.0, all: [] };
+  }
 
+  return { label: "general", score: 1.0, all: [] };
+},
   /* ---------- Named Entity Recognition ---------- */
   entities: async (text: string) => {
   if (NLP.provider === "python" && NLP.python.ner)

@@ -290,6 +290,9 @@ yarn dev
 |POST|	`/api/teacher/students/register`|	Register a new student under the teacher|
 |POST|	`/api/teacher/students/invite`|	Invite a student by email|
 |POST|	`/api/teacher/students/invite/group`|	Invite a student by email to join a group|
+|*Mail*|
+|GET|`/api/teacher/mail/logs`|Get Recent Mail log for teacher |
+|GET|`/api/teacher/mail/log/:id`|Get specific Mail log by log id|
 |**Teacher Dashboard Routes**|
 |*Overview & Heatmap*|		
 |GET|	`/api/teacherDashboard/overview`|	Get complete teacher dashboard overview|

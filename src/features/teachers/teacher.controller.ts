@@ -5,6 +5,7 @@ import { TeacherService } from "./Services/teacher.service";
 import { TeacherReviewService } from "./Services/teacher.review.service";
 import { TeacherStudentService } from "./Services/teacher.student.service";
 import prisma from "../../config/database";
+import { MailLogService } from "./Services/teacher.mail-log.service";
 
 export const TeacherController = {
   // ------------------------------
@@ -443,4 +444,34 @@ export const TeacherController = {
     next(err);
   }
 },
+
+async getTeacherMailLogs(req: Request, res: Response, next: NextFunction) {
+    try {
+      const teacherId = (req.user as any)?.id ||
+        (req.user as any)?.userId ||
+        (req.user as any)?._id; // ensure req.user is set by auth middleware
+      const limit = Number(req.query.limit) || 50;
+
+      const logs = await MailLogService.getTeacherMailLogs(teacherId, limit);
+      res.status(200).json({ count: logs.length, logs });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getMailLogById(req: Request, res: Response, next: NextFunction) {
+  try {
+    const teacherId =
+      (req.user as any)?.id ||
+      (req.user as any)?.userId ||
+      (req.user as any)?._id;
+
+    const mailId = req.params.id;
+    const mail = await MailLogService.getMailLogById(teacherId, mailId);
+
+    res.status(200).json({ success: true, data: mail });
+  } catch (err) {
+    next(err);
+  }
+  }
 };

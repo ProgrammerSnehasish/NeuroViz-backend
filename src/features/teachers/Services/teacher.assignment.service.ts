@@ -106,36 +106,48 @@ export const TeacherAssignmentService = {
    * ✅ Evaluate student submission using AI or manual
    */
   async evaluateAssignment(studentText: string, mode: "AUTO" | "MANUAL" = "AUTO") {
-    if (mode === "MANUAL") {
-      return {
-        score: null,
-        sentiment: null,
-        toxicity: null,
-        summary: null,
-        feedback: "Awaiting manual evaluation.",
-      };
-    }
+  if (mode === "MANUAL") {
+    return {
+      score: null,
+      sentiment: null,
+      toxicity: null,
+      summary: null,
+      feedback: "Awaiting manual evaluation.",
+    };
+  }
 
-    const [sentiment, toxicity, summary] = await Promise.all([
-      NLPService.sentiment(studentText),
-      NLPService.detectToxicity(studentText),
-      NLPService.summarize(studentText),
-    ]);
+  const [sentiment, toxicity, summary] = await Promise.all([
+    NLPService.sentiment(studentText),
+    NLPService.detectToxicity(studentText),
+    NLPService.summarize(studentText),
+  ]);
 
-    let score = 70;
-    if (sentiment?.label?.includes("POSITIVE")) score += 10;
-    if (sentiment?.label?.includes("NEGATIVE")) score -= 10;
-    if ((toxicity?.score ?? 0) > 0.5) score -= 20;
+  // 🧩 Sanity correction for toxicity misfires
+  let toxicityScore = toxicity?.score ?? 0;
+  if (studentText.length < 10) toxicityScore = 0; // too short to judge
+  if (!/[a-zA-Z]/.test(studentText)) toxicityScore = 0; // not natural text
+  if (toxicityScore > 0.95 && !/\s/.test(studentText)) toxicityScore = 0; // single-word false positive
 
-    const feedback = `
+  let score = 70;
+  if (sentiment?.label?.includes("POSITIVE")) score += 10;
+  if (sentiment?.label?.includes("NEGATIVE")) score -= 10;
+  if (toxicityScore > 0.5) score -= 20;
+
+  const feedback = `
 ${summary?.summary ?? "No summary available."}
 Tone: ${sentiment?.label ?? "N/A"} (${((sentiment?.score ?? 0) * 100).toFixed(1)}%)
-Toxicity: ${((toxicity?.score ?? 0) * 100).toFixed(2)}%
+Toxicity: ${(toxicityScore * 100).toFixed(2)}%
 Final AI Grade: ${score}/100.
 `;
 
-    return { score, sentiment, toxicity, summary, feedback };
-  },
+  return {
+    score,
+    sentiment,
+    toxicity: { ...toxicity, score: toxicityScore }, // ✅ return the corrected score
+    summary,
+    feedback,
+  };
+},
 
   /**
    * ✅ Evaluate and store submission result

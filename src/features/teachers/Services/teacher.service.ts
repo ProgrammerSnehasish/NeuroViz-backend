@@ -52,19 +52,30 @@ export const TeacherService = {
   },
 
   async summarizeStudentPerformance(teacherId: string, studentId: string) {
-    await this.validateTeacher(teacherId);
-    const analytics = await this.getStudentAnalytics(teacherId, studentId);
+  await this.validateTeacher(teacherId);
+  const analytics = await this.getStudentAnalytics(teacherId, studentId);
 
-    const summaryText = `
-      The student's attention score is ${analytics.profile?.attentionScore ?? "N/A"}.
-      Their average feedback rating is ${analytics.avgFeedback.toFixed(2)}.
-      Recent emotional state indicates ${analytics.emotions[0]?.emotion ?? "neutral"}.
-      Engagement duration averages ${analytics.profile?.focusDuration ?? "N/A"} seconds.
-    `;
+  const summaryText = `
+    Student Performance Overview:
+    - Attention Score: ${analytics.profile?.attentionScore ?? "N/A"}
+    - Average Feedback Rating: ${analytics.avgFeedback.toFixed(2)}
+    - Recent Emotion: ${analytics.emotions[0]?.emotion ?? "neutral"}
+    - Average Focus Duration: ${analytics.profile?.focusDuration ?? "N/A"} seconds
+    - Engagement Interactions: ${analytics.profile?.interactions ?? 0}
+  `;
 
-    const summary = await NLPService.summarize(summaryText);
-    return { summary, data: analytics };
-  },
+  const summary = await NLPService.summarize(summaryText);
+
+  if (
+    !summary.summary ||
+    summary.summary === "No summary generated." ||
+    summary.summary.trim().length < 10
+  ) {
+    summary.summary = `The student shows an average attention score of ${analytics.profile?.attentionScore ?? "N/A"} and a feedback rating of ${analytics.avgFeedback.toFixed(2)}. Their emotional state appears ${analytics.emotions[0]?.emotion ?? "neutral"}, with an average focus duration of ${analytics.profile?.focusDuration ?? "N/A"} seconds.`;
+  }
+
+  return { summary, data: analytics };
+},
 
   async reviewMindmap(teacherId: string, mindmapId: string, approval: boolean, comment?: string) {
     await this.validateTeacher(teacherId);

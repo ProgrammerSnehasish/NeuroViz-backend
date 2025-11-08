@@ -69,4 +69,8 @@ teacherRouter.post("/students/invite",verifyToken,dtoValidation(InviteStudentDto
 // 📩 Invite student to add a specific group by email
 teacherRouter.post("/students/invite/group",verifyToken,dtoValidation(InviteStudentToGroupDto),TeacherController.inviteStudentToGroup);
 
+//Mail Logs
+teacherRouter.get("/mail/logs", verifyToken, TeacherController.getTeacherMailLogs);
+teacherRouter.get("/mail/log/:id", verifyToken, TeacherController.getMailLogById);
+
 export default teacherRouter;
