@@ -121,6 +121,24 @@ export class UserService {
     prisma.feedback.deleteMany({ where: { userId } }),
     prisma.mindmap.deleteMany({ where: { userId } }),
     prisma.adaptationLog.deleteMany({ where: { userId } }),
+    prisma.notification.deleteMany({
+      where: { OR: [{ teacherId: userId }, { studentId: userId }] },
+    }),
+    prisma.mailLog.deleteMany({
+      where: { OR: [{ senderId: userId }, { recipientId: userId }] },
+    }),
+    prisma.teacherFeedback.deleteMany({
+      where: { OR: [{ teacherId: userId }, { studentId: userId }] },
+    }),
+    prisma.assignmentStudent.deleteMany({ where: { studentId: userId } }),
+    prisma.assignmentSubmission.deleteMany({ where: { studentId: userId } }),
+    prisma.assignment.deleteMany({ where: { teacherId: userId } }),
+    prisma.groupMember.deleteMany({ where: { userId } }),
+    prisma.group.deleteMany({ where: { teacherId: userId } }),
+    prisma.studentInvite.deleteMany({ where: { teacherId: userId } }),
+    prisma.teacherStudent.deleteMany({
+      where: { OR: [{ teacherId: userId }, { studentId: userId }] },
+    }),
   ]);
 
   // ✅ Finally delete the user
