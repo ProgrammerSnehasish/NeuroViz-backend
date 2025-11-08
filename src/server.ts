@@ -1,20 +1,32 @@
+// src/server.ts
 import dotenv from "dotenv";
-import { PrismaClient } from "@prisma/client";
 import app from "./app";
+import prisma from "./config/database";
 
 dotenv.config();
 
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
+
+async function connectWithRetry(delay = 5000) {
+  while (true) {
+    try {
+      await prisma.$connect();
+      console.log("✅ Connected to NeonDB successfully!");
+      return; // exit loop when successful
+    } catch (error: any) {
+      console.error(`❌ Database connection failed: ${error.message}`);
+      console.log(`🔁 Retrying in ${delay / 1000}s...`);
+      await new Promise((res) => setTimeout(res, delay));
+    }
+  }
+}
 
 async function startServer() {
   try {
-    await prisma.$connect();
-    console.log("✅ Connected to NeonDB successfully!");
-
-    const server = app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-    });
+    await connectWithRetry();
+    const server = app.listen(PORT, () =>
+      console.log(`🚀 Server running on http://localhost:${PORT}`)
+    );
 
     // Graceful shutdown
     process.on("SIGINT", async () => {
@@ -26,7 +38,7 @@ async function startServer() {
       });
     });
   } catch (error) {
-    console.error("❌ Database connection failed:", error);
+    console.error("❌ Database connection failed after multiple retries:", error);
     process.exit(1);
   }
 }

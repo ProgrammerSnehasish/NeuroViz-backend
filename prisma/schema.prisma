@@ -8,7 +8,7 @@ datasource db {
 }
 
 /* ─────────────────────────────
-   ENUMS (core types)
+   ENUMS
 ────────────────────────────── */
 enum Role {
   STUDENT
@@ -73,7 +73,7 @@ enum Qualification {
 }
 
 /* ─────────────────────────────
-   BASE USER MODEL
+   USER MODEL
 ────────────────────────────── */
 model User {
   id               String    @id @default(uuid())
@@ -93,21 +93,32 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?
-  profilePhoto     String?   @default("")      // URL or Base64-encoded image
+  profilePhoto     String?   @default("")
 
   // Relations
   studentProfile   StudentProfile?
   teacherProfile   TeacherProfile?
-  preferences   Json?     @default("{}")
-  cognitive     CognitiveProfile?
-  emotionLogs   EmotionLog[]
-  feedbacks     Feedback[]
-  mindmaps      Mindmap[]
-  adaptations  AdaptationLog[]
+  preferences      Json?     @default("{}")
+  cognitive        CognitiveProfile?
+  emotionLogs      EmotionLog[]
+  feedbacks        Feedback[]
+  mindmaps         Mindmap[]
+  adaptations      AdaptationLog[]
+  groups Group[] @relation("TeacherGroups")
+  groupMemberships GroupMember[] @relation("UserGroupMemberships")
+  assignmentsGiven Assignment[]           @relation("TeacherAssignments")
+  assignmentsReceived AssignmentStudent[] @relation("StudentAssignments")
+  assignmentSubmissions AssignmentSubmission[] @relation("StudentSubmissions")
+  reviewedMindmaps Mindmap[] @relation("ReviewedMindmaps")
+  studentInvites StudentInvite[] @relation("TeacherInvites")
+  teacherFeedbacksGiven   TeacherFeedback[]        @relation("TeacherToFeedbacks")
+  teacherFeedbacksReceived TeacherFeedback[]       @relation("TeacherFeedbackStudent")
+  teacherNotifications Notification[] @relation("UserTeacherNotifications")
+  studentNotifications Notification[] @relation("UserStudentNotifications")
 }
 
 /* ─────────────────────────────
-   STUDENT PROFILE MODEL
+   STUDENT PROFILE
 ────────────────────────────── */
 model StudentProfile {
   id               String           @id @default(uuid())
@@ -123,7 +134,7 @@ model StudentProfile {
 }
 
 /* ─────────────────────────────
-   TEACHER PROFILE MODEL
+   TEACHER PROFILE
 ────────────────────────────── */
 model TeacherProfile {
   id               String         @id @default(uuid())
@@ -141,18 +152,22 @@ model TeacherProfile {
    MINDMAP MODEL
 ────────────────────────────── */
 model Mindmap {
-  id         String   @id @default(uuid())
-  title      String
-  description String? @default("No description provided.")
-  structure  Json
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default(uuid())
+  title        String
+  description  String?  @default("No description provided.")
+  structure    Json
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  reviewedById String?
+  reviewedBy   User?    @relation("ReviewedMindmaps", fields: [reviewedById], references: [id])
+  approval     Boolean  @default(false)
+  comments     String?  @default("No comments added.")
 }
 
 /* ─────────────────────────────
-   Cognitive Profile MODEL
+   Cognitive Profile
 ────────────────────────────── */
 model CognitiveProfile {
   id             String   @id @default(uuid())
@@ -166,7 +181,7 @@ model CognitiveProfile {
 }
 
 /* ─────────────────────────────
-   Emotion Log MODEL
+   Emotion Log
 ────────────────────────────── */
 model EmotionLog {
   id        String   @id @default(uuid())
@@ -179,7 +194,7 @@ model EmotionLog {
 }
 
 /* ─────────────────────────────
-   Feedback MODEL
+   Feedback
 ────────────────────────────── */
 model Feedback {
   id        String   @id @default(uuid())
@@ -193,7 +208,7 @@ model Feedback {
 }
 
 /* ─────────────────────────────
-   Adaptation Log MODEL
+   Adaptation Log
 ────────────────────────────── */
 model AdaptationLog {
   id        String   @id @default(uuid())
@@ -202,4 +217,130 @@ model AdaptationLog {
   reason    String?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+}
+
+/* ─────────────────────────────
+   ASSIGNMENT MODELS
+────────────────────────────── */
+model Assignment {
+  id            String              @id @default(uuid())
+  title         String
+  description   String?
+  teacherId     String
+  createdAt     DateTime            @default(now())
+  assignedTo    AssignmentStudent[]
+  submissions   AssignmentSubmission[] @relation("AssignmentToSubmissions")
+  teacher       User                @relation("TeacherAssignments", fields: [teacherId], references: [id])
+  assignmentGroups AssignmentGroup[]  @relation("AssignmentGroupRelation")
+  evaluationMode  String?                @default("MANUAL") // or "AUTO"
+  metadata        Json?                  @default("{}")
+}
+
+model AssignmentStudent {
+  id           String   @id @default(uuid())
+  assignmentId String
+  studentId    String
+  status       String   @default("PENDING")
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  student      User       @relation("StudentAssignments", fields: [studentId], references: [id])
+}
+
+model AssignmentSubmission {
+  id             String   @id @default(uuid())
+  assignmentId   String
+  studentId      String
+  content        String
+  status         String   @default("SUBMITTED")
+  grade          Float?
+  feedback       String?
+  sentiment      String?
+  sentimentScore Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  assignment     Assignment @relation("AssignmentToSubmissions", fields: [assignmentId], references: [id])
+  student        User       @relation("StudentSubmissions", fields: [studentId], references: [id])
+}
+
+/* ─────────────────────────────
+  GROUP MODELS
+────────────────────────────── */
+model Group {
+  id          String        @id @default(uuid())
+  name        String
+  description String?       @default("")
+  teacherId   String
+  teacher     User          @relation("TeacherGroups", fields: [teacherId], references: [id])
+  members     GroupMember[] @relation("GroupMembersRelation")
+  assignments AssignmentGroup[]
+  invites     StudentInvite[] @relation("GroupInvites")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model GroupMember {
+  id        String   @id @default(uuid())
+  groupId   String
+  userId    String
+  group     Group    @relation("GroupMembersRelation", fields: [groupId], references: [id])
+  user      User     @relation("UserGroupMemberships", fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([groupId, userId], name: "compositeId")
+}
+
+model AssignmentGroup {
+  id           String      @id @default(uuid())
+  assignmentId String
+  groupId      String
+  assignment   Assignment  @relation("AssignmentGroupRelation", fields: [assignmentId], references: [id])
+  group        Group       @relation(fields: [groupId], references: [id])
+}
+
+/* ─────────────────────────────
+  STUDENT INVITE MODELS
+────────────────────────────── */
+model StudentInvite {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  token      String
+  teacherId  String
+  groupId    String?
+  used       Boolean  @default(false)
+  expiresAt  DateTime
+
+  teacher    User     @relation("TeacherInvites", fields: [teacherId], references: [id])
+  group      Group?   @relation("GroupInvites", fields: [groupId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+}
+
+/* ─────────────────────────────
+  Notification System
+────────────────────────────── */
+model Notification {
+  id          String   @id @default(uuid())
+  title       String
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  teacherId   String?
+  studentId   String?
+  teacher     User?    @relation("UserTeacherNotifications", fields: [teacherId], references: [id])
+  student     User?    @relation("UserStudentNotifications", fields: [studentId], references: [id])
+}
+
+/* ─────────────────────────────
+| Teacher Feedback (manual)
+────────────────────────────── */
+model TeacherFeedback {
+  id          String   @id @default(uuid())
+  teacherId   String
+  studentId   String
+  feedback    String
+  createdAt   DateTime @default(now())
+
+  teacher     User     @relation("TeacherToFeedbacks", fields: [teacherId], references: [id])
+  student     User     @relation("TeacherFeedbackStudent", fields: [studentId], references: [id])
 }

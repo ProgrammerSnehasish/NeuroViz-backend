@@ -133,6 +133,24 @@ NeuroViz-backend/
 │ │   │   ├── adapt.service.ts
 │ │   │   └── adapt.routes.ts
 │ │   │
+│ │   │
+│ │   ├── teachers/
+│ │   │   ├── Dashboard/
+│ │   │   │   ├── teacher.dashboard.controller.ts
+│ │   │   │   ├── teacher.dashboard.dto.ts
+│ │   │   │   ├── teacher.dashboard.router.ts
+│ │   │   │   └── teacher.dashboard.service.ts
+│ │   │   │
+│ │   │   ├── Services/
+│ │   │   │   ├── teacher.assignment.service.ts
+│ │   │   │   ├── teacher.review.service.ts
+│ │   │   │   ├── teacher.service.ts
+│ │   │   │   └── teacher.student.service.ts
+│ │   │   │
+│ │   │   ├── teacher.controller.ts
+│ │   │   ├── teacher.dto.ts
+│ │   │   └── teacher.router.ts
+│ │   │
 │ │   ├── content/
 │ │   │   ├── content.controller.ts
 │ │   │   ├── content.service.ts
@@ -156,6 +174,9 @@ NeuroViz-backend/
 │
 ├── .env # Environment variables (not committed)
 ├── .gitignore
+├── .yarnrc.yml
+├── LICENSE # MIT License
+├── package-lock.json
 ├── package.json
 ├── tsconfig.json
 ├── yarn.lock
@@ -241,6 +262,56 @@ yarn dev
 |POST|`/api/adapt/trigger/user/:userid`|Trigger Adaptation Manually(Interface Adaptation)|
 |POST|`/api/content/summarize`|Summarize Content|
 |GET|`/api/admin/overview`|Admin Overview|
+|**Teacher Routes**|
+|*Analytics & Performance*|		
+|GET|	`/api/teacher/student/:userId/analytics`|	Get analytics for a specific student|
+|GET|	`/api/teacher/student/:userId/summarize`|	Summarize student performance|
+|POST|	`/api/teacher/mindmap/:mindmapId/review`|	Review or approve a mindmap|
+|GET|	`/api/teacher/class/overview`|	Get teacher’s overall class overview|
+|*Assignments*|		
+|POST|	`/api/teacher/assignment/create`|	Create a new assignment|
+|GET|	`/api/teacher/get/assignments`|	Get all assignments created by teacher|
+|GET|	`/api/teacher/assignment/:assignmentId`|	Get specific assignment details|
+|PUT|	`/api/teacher/assignment/update/:assignmentId`|	Update an existing assignment|
+|DELETE|	`/api/teacher/assignment/:assignmentId`|	Delete an assignment|
+|POST|	`/api/teacher/assignment/evaluate`|	Evaluate an assignment (manual/auto)|
+|POST|	`/api/teacher/assignment/submission/evaluate`|	Evaluate a specific student submission|
+|*Review + Feedback*|		
+|POST|	`/api/teacher/review`|	Review and grade a submission|
+|GET|	`/api/teacher/submissions/teacher`|	Get all submissions for teacher|
+|GET|	`/api/teacher/submission/:submissionId/regenerate-summary`|	Regenerate AI summary for submission|
+|*Student Management*|		
+|POST|	`/api/teacher/group/create`|	Create a new student group|
+|PUT|	`/api/teacher/groups/:groupId`|	Update group details|
+|DELETE|	`/api/teacher/groups/:groupId`|	Delete a group|
+|POST|	`/api/teacher/group/members/add`|	Add multiple students to a group|
+|POST|	`/api/teacher/group/student/add`|	Add a single student to a group|		
+|GET|	`/api/teacher/students/search`|	Search students by name or email|
+|POST|	`/api/teacher/students/register`|	Register a new student under the teacher|
+|POST|	`/api/teacher/students/invite`|	Invite a student by email|
+|POST|	`/api/teacher/students/invite/group`|	Invite a student by email to join a group|
+|**Teacher Dashboard Routes**|
+|*Overview & Heatmap*|		
+|GET|	`/api/teacherDashboard/overview`|	Get complete teacher dashboard overview|
+|GET|	`/api/teacherDashboard/heatmap`|	Get class heatmap for engagement|
+|*Student Progress*|		
+|GET|	`/api/teacherDashboard/student/:studentId/progress`|	Get progress data for a student|
+|GET|	`/api/teacherDashboard/student/:studentId/report`|	Get detailed performance report|
+|GET|	`/api/teacherDashboard/student/:studentId/strategy`|	Get adaptive strategy for student|
+|*Class Insights*|		
+|GET|	`/api/teacherDashboard/class/strategy`|	Get adaptive class strategy|
+|GET|	`/api/teacherDashboard/compare`|	Compare progress between students|
+|GET|	`/api/teacherDashboard/insights/teaching`|	Get adaptive teaching insights|
+|GET|	`/api/teacherDashboard/insights/assignments`|	Get assignment insights|
+|*Feedback & Notifications*|		
+|POST|	`/api/teacherDashboard/feedback`|	Submit feedback for student/class|
+|GET|	`/api/teacherDashboard/feedback/overview`|	Get feedback overview|
+|GET|	`/api/teacherDashboard/notifications`|	Get all notifications for teacher|
+|POST|	`/api/teacherDashboard/notifications/create`|	Post a new notification to students|
+|PATCH|	`/api/teacherDashboard/notifications/:id/read`|	Mark notification as read|
+
+---
+
 ## 🧹 Graceful Shutdown
 
 On **`Ctrl+C`** or stop signal:

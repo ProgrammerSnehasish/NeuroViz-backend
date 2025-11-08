@@ -229,4 +229,56 @@ export const NLPService = {
 
   return { entities: [] };
 },
+
+/* ---------- Generation ---------- */
+   async generate(prompt: string) {
+    const models = [
+      "meta-llama/Meta-Llama-3-8B-Instruct",
+      "tiiuae/falcon-7b-instruct",
+      "gpt2",
+    ];
+
+    for (const model of models) {
+      try {
+        console.log(`🔍 Trying model: ${model}`);
+
+        const response = await axios.post(
+          "https://router.huggingface.co/v1/chat/completions",
+          {
+            model: model,
+            messages: [
+              { role: "user", content: prompt }
+            ],
+            max_tokens: 300,
+            temperature: 0.7,
+            top_p: 0.9,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            proxy: false,
+            timeout: 20000,
+          }
+        );
+
+        const output = response.data?.choices?.[0]?.message?.content;
+        if (output) {
+          console.log(`✅ Success with model: ${model}`);
+          return output.trim();
+        }
+      } catch (error: any) {
+        console.warn(
+          `⚠️ Error with model ${model}:`,
+          error.response?.status,
+          error.response?.data || error.message
+        );
+
+        if (model === models[models.length - 1]) {
+          throw new Error("All Hugging Face text generation models failed.");
+        }
+      }
+    }
+  },
 };

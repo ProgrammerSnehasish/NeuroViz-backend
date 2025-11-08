@@ -9,6 +9,8 @@ import feedBackRouter from "../features/feedback/feedback.router";
 import adaptRouter from "../features/adapt/adapt.router";
 import contentRouter from "../features/content/content.router";
 import adminRouter from "../features/admin/admin.router";
+import teacherRouter from "../features/teachers/teacher.router";
+import teacherDashboardRouter from "../features/teachers/Dashboard/teacher.dashboard.router";
 
 const mainRouter = Router()
 
@@ -23,5 +25,7 @@ mainRouter.use("/feedback", feedBackRouter);
 mainRouter.use("/adapt", adaptRouter);
 mainRouter.use("/content", contentRouter);
 mainRouter.use("/admin", adminRouter);
+mainRouter.use("/teacher",teacherRouter);
+mainRouter.use("/teacherDashboard", teacherDashboardRouter);
 
 export default mainRouter
