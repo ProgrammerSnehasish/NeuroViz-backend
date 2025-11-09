@@ -355,7 +355,7 @@ Thanks to all the open-source community!
 
 ## 💬 Author
 - Snehasish Das
-Developer • Cyber Security Enthusiast • NeuroViz Project Member
+> Developer • Cyber Security Enthusiast • NeuroViz Project Member
 
 ## 💬 Collaborators
 - Rounak Saha
