@@ -241,8 +241,8 @@ yarn dev
 |GET|`/api/mindmaps/user/:userId`| Get Mindmaps by user id|
 |PUT|`/api/mindmaps/update/:mindmapId`| Update mindmap by mindmap id|
 |GET|`/api/mindmaps/:mindmapId/jpeg`|Download Mindmap as JPEG|
-|GET|`/api/mindmaps/:mindmapId/pdf`|Download Mindmap as PDF(Although it is recomended to fetch from from end, for visualization download, not a part of backend.)|
-|DELETE|`/api/mindmaps/delete/:mindmapId`| Delete Mindmap by mindmap id(Although it is recomended to fetch from from end, for visualization download, not a part of backend.)|
+|GET|`/api/mindmaps/:mindmapId/pdf`|Download Mindmap as PDF(Although it is recomended to fetch from frontend, for visualization download, not a part of backend.)|
+|DELETE|`/api/mindmaps/delete/:mindmapId`| Delete Mindmap by mindmap id(Although it is recomended to fetch from frontend, for visualization download, not a part of backend.)|
 |**NLP**|
 |POST|`/api/nlp/summarize`| Summarize Text|
 |POST|`/api/nlp/detect-toxicity`| Detect toxicity|
