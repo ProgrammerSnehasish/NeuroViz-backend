@@ -63,6 +63,9 @@ npm install -g yarn
 ## 📁 Backend Folder Structure
 ```bash
 NeuroViz-backend/
+├── .yarn/
+│ └── install-state.gz
+│
 ├── prisma/
 │ ├── schema.prisma # Prisma schema for DB models
 │ └── migrations/ # Prisma migration history
@@ -165,11 +168,15 @@ NeuroViz-backend/
 │ │   │
 │ │   └── admin/
 │ │       ├── admin.controller.ts
+│ │       ├── admin.dto.ts
 │ │       ├── admin.service.ts
 │ │       └── admin.routes.ts
 │ │
 │ ├── middlewares/
 │ │ ├── errorHandler.ts # Global error handling middleware
+│ │ ├── enforceAdmin.ts
+│ │ ├── enforceTeacher.ts
+│ │ ├── enforceTeacherStudentRelation.ts
 │ │ ├── dtoValidation.ts
 │ │ ├── jwtVerification.ts
 │ │ └── responseHandler.ts # Unified response format
@@ -182,8 +189,10 @@ NeuroViz-backend/
 ├── .env # Environment variables (not committed)
 ├── .gitignore
 ├── .yarnrc.yml
+├── LICENSE
 ├── LICENSE # MIT License
 ├── package-lock.json
+├── prisma.config.js
 ├── package.json
 ├── tsconfig.json
 ├── yarn.lock
