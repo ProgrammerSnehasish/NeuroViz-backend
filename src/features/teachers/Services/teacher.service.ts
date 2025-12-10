@@ -2,6 +2,26 @@ import createHttpError from "http-errors";
 import prisma from "../../../config/database";
 import { NLPService } from "../../nlp/nlp.service";
 
+async function logActivity(
+  userId: string | null | undefined,
+  action: string,
+  details?: string
+) {
+  if (!userId) return; // do not log if no userId
+
+  try {
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        action,
+        details,
+      },
+    });
+  } catch (err) {
+    console.error("⚠️ Failed to write activity log:", err);
+  }
+}
+
 export const TeacherService = {
   async validateTeacher(userId: string) {
     const user = await prisma.user.findUnique({
@@ -47,7 +67,7 @@ export const TeacherService = {
       feedbacks.length > 0
         ? feedbacks.reduce((acc, f) => acc + (f.rating || 0), 0) / feedbacks.length
         : 0;
-
+    await logActivity(teacherId, "VIEW_STUDENT_ANALYTICS", `studentId=${studentId}`);
     return { profile, avgEmotion, avgFeedback, emotions, feedbacks };
   },
 
@@ -73,7 +93,7 @@ export const TeacherService = {
   ) {
     summary.summary = `The student shows an average attention score of ${analytics.profile?.attentionScore ?? "N/A"} and a feedback rating of ${analytics.avgFeedback.toFixed(2)}. Their emotional state appears ${analytics.emotions[0]?.emotion ?? "neutral"}, with an average focus duration of ${analytics.profile?.focusDuration ?? "N/A"} seconds.`;
   }
-
+  await logActivity(teacherId, "SUMMARIZE_STUDENT_PERFORMANCE", `studentId=${studentId}`);
   return { summary, data: analytics };
 },
 
@@ -81,7 +101,7 @@ export const TeacherService = {
     await this.validateTeacher(teacherId);
     const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
     if (!mindmap) throw createHttpError(404, "Mindmap not found");
-
+    await logActivity(teacherId, "REVIEW_MINDMAP", `mindmapId=${mindmapId}, approval=${approval}`);
     return await prisma.mindmap.update({
       where: { id: mindmapId },
       data: {
@@ -114,7 +134,7 @@ export const TeacherService = {
       acc[e.emotion] = (acc[e.emotion] || 0) + 1;
       return acc;
     }, {});
-
+    await logActivity(teacherId, "VIEW_CLASS_OVERVIEW", `studentCount=${students.length}`);
     return { classSize: students.length, avgFeedback, emotionStats };
   },
 };

@@ -23,6 +23,26 @@ async function summarizeText(text: string): Promise<string> {
   }
 }
 
+async function logActivity(
+  userId: string | null | undefined,
+  action: string,
+  details?: string
+) {
+  if (!userId) return; // do not log if no userId
+
+  try {
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        action,
+        details,
+      },
+    });
+  } catch (err) {
+    console.error("⚠️ Failed to write activity log:", err);
+  }
+}
+
 export const TeacherReviewService = {
   /**
    * ✅ Validate if the user is a TEACHER
@@ -64,7 +84,7 @@ export const TeacherReviewService = {
       where: { id: submissionId },
       data: {
         grade,
-        feedback: feedback || `AI Feedback: ${aiSummary}`,
+        feedback: feedback ?? `AI Feedback: ${aiSummary}`,
         status: "REVIEWED",
       },
       include: {
@@ -72,7 +92,11 @@ export const TeacherReviewService = {
         assignment: { select: { title: true } },
       },
     });
-
+    await logActivity(
+      userId,
+      "REVIEW_SUBMISSION",
+      `submissionId=${submissionId}, grade=${grade}`
+    );
     return {
       message: "Submission reviewed successfully.",
       data: updated,
@@ -84,7 +108,7 @@ export const TeacherReviewService = {
    */
   async getSubmissionsForTeacher(userId: string) {
     await this.validateTeacher(userId);
-
+    await logActivity(userId, "VIEW_SUBMISSIONS", `teacherId=${userId}`);
     return prisma.assignmentSubmission.findMany({
       where: { assignment: { teacherId: userId } },
       include: {
@@ -112,7 +136,11 @@ export const TeacherReviewService = {
       throw createHttpError(403, "Unauthorized access.");
 
     const summary = await summarizeText(submission.content);
-
+    await logActivity(
+      userId,
+      "REGENERATE_SUBMISSION_SUMMARY",
+      `submissionId=${submissionId}`
+    );
     return prisma.assignmentSubmission.update({
       where: { id: submissionId },
       data: { feedback: `AI Summary: ${summary}` },

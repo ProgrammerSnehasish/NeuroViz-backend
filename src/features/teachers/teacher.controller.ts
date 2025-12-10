@@ -4,7 +4,6 @@ import { TeacherAssignmentService } from "./Services/teacher.assignment.service"
 import { TeacherService } from "./Services/teacher.service";
 import { TeacherReviewService } from "./Services/teacher.review.service";
 import { TeacherStudentService } from "./Services/teacher.student.service";
-import prisma from "../../config/database";
 import { MailLogService } from "./Services/teacher.mail-log.service";
 
 export const TeacherController = {
@@ -162,6 +161,7 @@ export const TeacherController = {
         text,
         mode || "AUTO"
       );
+
       res.json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -174,7 +174,8 @@ export const TeacherController = {
         (req.user as any)?.id ||
         (req.user as any)?.userId ||
         (req.user as any)?._id;
-      const { submissionId, mode } = req.body;
+
+      const { submissionId, mode, grade, feedback } = req.body;
 
       if (!submissionId)
         throw createHttpError(400, "Submission ID is required.");
@@ -182,8 +183,10 @@ export const TeacherController = {
       const data = await TeacherAssignmentService.evaluateSubmission(
         teacherId,
         submissionId,
-        mode || "AUTO"
+        mode || "AUTO",
+        { grade, feedback } // pass manual inputs
       );
+
       res.json({ success: true, data });
     } catch (err) {
       next(err);
@@ -413,6 +416,30 @@ export const TeacherController = {
 
       const data = await TeacherStudentService.addStudentToGroup(teacherId, groupId, studentId);
       res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  removeStudentFromGroup: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const teacherId =
+        (req.user as any)?.id ||
+        (req.user as any)?.userId ||
+        (req.user as any)?._id;
+
+      const { groupId, studentId } = req.params;
+
+      if (!groupId || !studentId)
+        throw createHttpError(400, "Group ID and Student ID are required.");
+
+      const result = await TeacherStudentService.removeStudentFromGroup(
+        teacherId,
+        groupId,
+        studentId
+      );
+
+      res.json({ success: true, ...result });
     } catch (err) {
       next(err);
     }

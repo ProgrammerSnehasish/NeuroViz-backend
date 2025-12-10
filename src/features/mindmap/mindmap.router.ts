@@ -9,6 +9,11 @@ import { MindmapExportController } from "./export/mindmap.export.controller";
 export const mindmapRouter = Router();
 const controller = new MindmapController();
 
+const getTokenUserId = (req: any) => 
+    req.user?.userId ||
+    req.user?.id ||
+    req.user?.sub; // support multiple JWT payload formats
+
 mindmapRouter.post(
   "/create",
   verifyToken,
@@ -16,7 +21,8 @@ mindmapRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = req.body;
-      const result = await controller.createMindmap(data);
+      const tokenUserId = getTokenUserId(req);
+      const result = await controller.createMindmap(data, tokenUserId);
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -31,7 +37,8 @@ mindmapRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = req.body;
-      const result = await controller.createMindmapFromText(data);
+      const tokenUserId = getTokenUserId(req);
+      const result = await controller.createMindmapFromText(data, tokenUserId);
       res.status(201).json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -45,8 +52,11 @@ mindmapRouter.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.params["userId"];
+      const tokenUserId = getTokenUserId(req);
+
       if (!userId) throw createHttpError("Missing path parameter: userId");
-      const mindmaps = await controller.getMindmapsByUser(userId);
+
+      const mindmaps = await controller.getMindmapsByUser(userId, tokenUserId);
       res.status(200).json(mindmaps);
     } catch (err) {
       next(err);
@@ -60,8 +70,9 @@ mindmapRouter.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const mindmapId = req.params["mindmapId"];
+      const tokenUserId = getTokenUserId(req);
       if (!mindmapId) throw createHttpError("Missing path parameter: mindmapId");
-      const mindmap = await controller.getMindmapById(mindmapId);
+      const mindmap = await controller.getMindmapById(mindmapId, tokenUserId);
       res.status(200).json(mindmap);
     } catch (err) {
       next(err);
@@ -83,7 +94,11 @@ mindmapRouter.put(
         (req as any).user?.id ||
         (req as any).user?.sub; // support multiple JWT payload formats
 
-      const updated = await controller.updateMindmap(req.body, mindmapId, userId);
+      if (!userId) throw createHttpError(401, "Unauthorized");
+
+      const tokenUserId = getTokenUserId(req);
+
+      const updated = await controller.updateMindmap(req.body, mindmapId, userId, tokenUserId);
 
       res.status(200).json(updated);
     } catch (err) {
@@ -108,7 +123,9 @@ mindmapRouter.delete(
 
       if (!userId) throw createHttpError(401, "Unauthorized");
 
-      await controller.deleteMindmap(mindmapId, userId);
+      const tokenUserId = getTokenUserId(req);
+
+      await controller.deleteMindmap(mindmapId, userId, tokenUserId);
 
       res.status(200).json({
         success: true,

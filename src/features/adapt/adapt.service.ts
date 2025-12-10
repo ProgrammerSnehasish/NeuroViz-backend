@@ -1,6 +1,14 @@
 import prisma from "../../config/database";
 
 export const runAdaptationForUser = async (userId: string) => {
+  await prisma.activityLog.create({
+    data: {
+      userId,
+      action: "ADAPTATION_RUN_STARTED",
+      details: `System started adaptation analysis for user ${userId}`,
+    },
+  });
+
   const [profile, emotions, feedbacks] = await Promise.all([
     prisma.cognitiveProfile.findUnique({ where: { userId } }),
     prisma.emotionLog.findMany({
@@ -61,7 +69,7 @@ export const runAdaptationForUser = async (userId: string) => {
   // ───────────────────────────────
   // Save user preference changes
   // ───────────────────────────────
-  if (Object.keys(changes).length > 0) {
+   if (Object.keys(changes).length > 0) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const prefs = { ...(user?.preferences as any), ...changes };
 
@@ -70,10 +78,48 @@ export const runAdaptationForUser = async (userId: string) => {
       data: { preferences: prefs },
     });
 
+    // Log: preferences updated
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        action: "USER_PREFERENCES_UPDATED",
+        details: `Updated preferences with: ${JSON.stringify(changes)}`,
+      },
+    });
+
     await prisma.adaptationLog.create({
       data: { userId, changes, reason },
     });
+
+    // Log: adaptation entry added
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        action: "ADAPTATION_LOGGED",
+        details: `Adaptation log created. Reason: ${reason}`,
+      },
+    });
+
+    // Adaptation applied
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        action: "ADAPTATION_APPLIED",
+        details: `Adaptation applied with changes ${JSON.stringify(changes)}`,
+      },
+    });
+
+    return { applied: true, changes, reason };
   }
 
-  return { applied: Object.keys(changes).length > 0, changes, reason };
+  // No adaptation needed
+  await prisma.activityLog.create({
+    data: {
+      userId,
+      action: "ADAPTATION_SKIPPED",
+      details: `No changes applied for user ${userId} (no adaptation needed)`,
+    },
+  });
+
+  return { applied: false, changes: {}, reason: "" };
 };

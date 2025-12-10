@@ -160,6 +160,19 @@ export class AddStudentToGroupDto {
 }
 
 /**
+ * remove single student to a group
+ */
+export class RemoveStudentFromGroupDto {
+  @IsNotEmpty()
+  @IsString()
+  groupId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  studentId!: string;
+}
+
+/**
  * 🔍 Search DTO (for admin or teacher filtering)
  */
 export class SearchQueryDto {

@@ -79,6 +79,7 @@ NeuroViz-backend/
 │ │
 │ ├── base/
 │ │ ├── base.router.ts # Central router entry point
+│ │ ├── ActivityLogService.ts
 │ │ └── interface.ts
 │ │
 │ ├── config/
@@ -91,7 +92,7 @@ NeuroViz-backend/
 │ │   │   ├── user.service.ts
 │ │   │   ├── user.dto.ts
 │ │   │   ├── user.interface.ts
-│ │   │   └── user.routes.ts
+│ │   │   └── user.router.ts
 │ │   │
 │ │   ├── mindmap/
 │ │   │   ├── export/
@@ -102,7 +103,7 @@ NeuroViz-backend/
 │ │   │   ├── mindmap.service.ts
 │ │   │   ├── mindmap.dto.ts
 │ │   │   ├── mindmap.type.ts
-│ │   │   └── mindmap.routes.ts
+│ │   │   └── mindmap.router.ts
 │ │   │
 │ │   ├── nlp/
 │ │   │   ├── nlp.dto.ts
@@ -114,25 +115,30 @@ NeuroViz-backend/
 │ │   │   ├── cognitiveProfile.dto.ts
 │ │   │   ├── cognitiveProfile.controller.ts
 │ │   │   ├── cognitiveProfile.service.ts
-│ │   │   └── cognitiveProfile.routes.ts
+│ │   │   └── cognitiveProfile.router.ts
 │ │   │
 │ │   ├── emotion/
 │ │   │   ├── emotion.dto.ts
 │ │   │   ├── emotion.controller.ts
 │ │   │   ├── emotion.service.ts
-│ │   │   └── emotion.routes.ts
+│ │   │   └── emotion.router.ts
 │ │   │
 │ │   ├── feedback/
 │ │   │   ├── feedback.dto.ts
 │ │   │   ├── feedback.controller.ts
 │ │   │   ├── feedback.service.ts
-│ │   │   └── feedback.routes.ts
+│ │   │   └── feedback.router.ts
 │ │   │
 │ │   ├── adapt/
 │ │   │   ├── adapt.controller.ts
 │ │   │   ├── adapt.service.ts
-│ │   │   └── adapt.routes.ts
+│ │   │   └── adapt.router.ts
 │ │   │
+│ │   ├── admin/
+│ │   │   ├── admin.controller.ts
+│ │   │   ├── admin.dto.ts
+│ │   │   ├── admin.service.ts
+│ │   │   └── admin.router.ts
 │ │   │
 │ │   ├── teachers/
 │ │   │   ├── Dashboard/
@@ -286,7 +292,8 @@ yarn dev
 |PUT|	`/api/teacher/groups/:groupId`|	Update group details|
 |DELETE|	`/api/teacher/groups/:groupId`|	Delete a group|
 |POST|	`/api/teacher/group/members/add`|	Add multiple students to a group|
-|POST|	`/api/teacher/group/student/add`|	Add a single student to a group|		
+|POST|	`/api/teacher/group/student/add`|	Add a single student to a group|
+|DELETE|`/api/teacher/group/:groupId/student/:studentId/remove`|Remove a student from a group|		
 |GET|	`/api/teacher/students/search`|	Search students by name or email|
 |POST|	`/api/teacher/students/register`|	Register a new student under the teacher|
 |POST|	`/api/teacher/students/invite`|	Invite a student by email|
@@ -313,6 +320,14 @@ yarn dev
 |GET|	`/api/teacherDashboard/notifications`|	Get all notifications for teacher|
 |POST|	`/api/teacherDashboard/notifications/create`|	Post a new notification to students|
 |PATCH|	`/api/teacherDashboard/notifications/:id/read`|	Mark notification as read|
+|**Admin Routes**|
+|GET|`/api/admin/overview`| An Brief overview of System Usage.|
+|GET|`/api/admin/health`|An Brief overview of System health.|
+|GET|`/api/admin/activity/logs`|Fetch details of recent activity log.|
+|GET|`/api/admin/users`|Fetch Brief Details of each Users(incl. Admin).|
+|POST|`/api/admin/user/status`|Change User's status to Activate/Deactivate.|
+|DELETE|`/api/admin/user/:userId`|Delete a User from application database.|
+|DELETE|`/api/admin/user/:userId/reset`|Reset a User's details.|
 
 ---
 

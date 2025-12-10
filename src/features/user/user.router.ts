@@ -7,6 +7,12 @@ import { UpdateUserDto } from "./user.dto";
 
 export const userRouter = Router();
 const userController = new UserController()
+
+const getTokenUserId = (req: Request) =>
+    (req as any).user?.userId ||
+    (req as any).user?.id ||
+    (req as any).user?.sub;
+
 userRouter.get(
   "/email/:email",
   verifyToken,
@@ -16,7 +22,8 @@ userRouter.get(
       if (!emailParam) {
         throw createHttpError(400, "Missing path parameter: email");
       }
-      const user = await userController.getUserDetails(emailParam);
+      const tokenUserId = getTokenUserId(req);
+      const user = await userController.getUserDetails(emailParam, tokenUserId);
       if (!user) {
         throw createHttpError(404, "User not found");
       }
@@ -38,7 +45,8 @@ userRouter.get(
         if (!req.params["id"]) {
           throw createHttpError("Missing path paramter: id")
         }
-        const user = await userController.getUserDetailsById(req.params["id"])
+        const tokenUserId = getTokenUserId(req);
+        const user = await userController.getUserDetailsById(req.params["id"], tokenUserId);
         req.body = user;
         next()
       } catch (error) {
@@ -62,7 +70,9 @@ userRouter.put(
         throw createHttpError(401, "Unauthorized - Missing user ID in token");
       }
 
-      const result = await userController.updateUser(req.body, userId);
+      const tokenUserId = getTokenUserId(req);
+
+      const result = await userController.updateUser(req.body, userId, tokenUserId);
 
       res.status(200).json({
         success: true,
@@ -84,7 +94,8 @@ userRouter.delete(
       if(!req.params["userId"]){
         throw createHttpError("Missing path paramter: userId")
       }
-      await userController.deleteUser(req.params["userId"])
+      const tokenUserId = getTokenUserId(req);
+      await userController.deleteUser(req.params["userId"], tokenUserId);
       res.status(200).send({success: true, message: "User deleted successfully"})
     }catch(err){
       next(err)

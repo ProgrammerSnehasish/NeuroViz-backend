@@ -9,32 +9,32 @@ export class MindmapController {
   }
 
   // 🧠 Create a mindmap directly from provided JSON structure
-  public async createMindmap(data: CreateMindmapDto) {
-    return await this.mindmapService.createRaw(data);
+  public async createMindmap(data: CreateMindmapDto, tokenUserId: string) {
+    return await this.mindmapService.createRaw(data, tokenUserId);
   }
 
   // 🤖 Create a mindmap from plain text (AI-generated structure)
-  public async createMindmapFromText(data: GenerateMindmapDto) {
-    return await this.mindmapService.createFromText(data);
+  public async createMindmapFromText(data: GenerateMindmapDto, tokenUserId: string) {
+    return await this.mindmapService.createFromText(data, tokenUserId);
   }
 
   // 📋 Get all mindmaps for a given user
-  public async getMindmapsByUser(userId: string) {
-    return await this.mindmapService.getMindmapsByUser(userId);
+  public async getMindmapsByUser(userId: string, tokenUserId: string) {
+    return await this.mindmapService.getMindmapsByUser(userId, tokenUserId);
   }
 
   // 🔍 Get a single mindmap by its ID
-  public async getMindmapById(mindmapId: string) {
-    return await this.mindmapService.getMindmapById(mindmapId);
+  public async getMindmapById(mindmapId: string, tokenUserId: string) {
+    return await this.mindmapService.getMindmapById(mindmapId, tokenUserId);
   }
 
   // 🛠 Update a mindmap
-  public async updateMindmap(data: UpdateMindmapDto, mindmapId: string, userId: string) {
-    return await this.mindmapService.updateMindmap(data, mindmapId, userId);
+  public async updateMindmap(data: UpdateMindmapDto, mindmapId: string, userId: string, tokenUserId: string) {
+    return await this.mindmapService.updateMindmap(data, mindmapId, userId, tokenUserId);
   }
 
   // 🗑 Delete a mindmap
-  public async deleteMindmap(mindmapId: string, userId: string) {
-    return await this.mindmapService.deleteMindmap(mindmapId, userId);
+  public async deleteMindmap(mindmapId: string, userId: string, tokenUserId: string) {
+    return await this.mindmapService.deleteMindmap(mindmapId, userId, tokenUserId);
   }
 }

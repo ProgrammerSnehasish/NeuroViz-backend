@@ -1,16 +1,16 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 /* ─────────────────────────────
    ENUMS
 ────────────────────────────── */
 enum Role {
+  ADMIN
   STUDENT
   TEACHER
 }
@@ -72,6 +72,10 @@ enum Qualification {
   NOT_MENTIONED
 }
 
+enum EvaluationMode {
+  MANUAL
+  AUTO
+}
 /* ─────────────────────────────
    USER MODEL
 ────────────────────────────── */
@@ -119,6 +123,7 @@ model User {
   receivedMails  MailLog[] @relation("UserReceivedMails")
   teacherStudents TeacherStudent[] @relation("TeacherToStudents")
   studentTeachers TeacherStudent[] @relation("StudentToTeachers")
+  activityLogs ActivityLog[]
 }
 
 /* ─────────────────────────────
@@ -236,7 +241,7 @@ model Assignment {
   submissions   AssignmentSubmission[] @relation("AssignmentToSubmissions")
   teacher       User                @relation("TeacherAssignments", fields: [teacherId], references: [id])
   assignmentGroups AssignmentGroup[]  @relation("AssignmentGroupRelation")
-  evaluationMode  String?                @default("MANUAL") // or "AUTO"
+  evaluationMode  EvaluationMode         @default(AUTO) // or "MANUAL"
   metadata        Json?                  @default("{}")
 }
 
@@ -275,7 +280,7 @@ model Group {
   teacherId   String
   teacher     User          @relation("TeacherGroups", fields: [teacherId], references: [id])
   members     GroupMember[] @relation("GroupMembersRelation")
-  assignments AssignmentGroup[]
+  assignments AssignmentGroup[] 
   invites     StudentInvite[] @relation("GroupInvites")
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -297,7 +302,7 @@ model AssignmentGroup {
   assignmentId String
   groupId      String
   assignment   Assignment  @relation("AssignmentGroupRelation", fields: [assignmentId], references: [id])
-  group        Group       @relation(fields: [groupId], references: [id])
+  group        Group       @relation( fields: [groupId], references: [id])
 }
 
 /* ─────────────────────────────
@@ -376,4 +381,17 @@ model TeacherStudent {
   student    User     @relation("StudentToTeachers", fields: [studentId], references: [id])
 
   @@unique([teacherId, studentId], name: "UniqueTeacherStudent")
+}
+
+/*─────────────────────────────
+ ADMIN ACTIVITY LOG
+──────────────────────────────*/
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String?  @default("System")
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  user      User?     @relation(fields: [userId], references: [id])
 }

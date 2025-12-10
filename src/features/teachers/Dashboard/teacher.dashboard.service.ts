@@ -2,6 +2,22 @@ import createHttpError from "http-errors";
 import prisma from "../../../config/database";
 import { NLPService } from "../../nlp/nlp.service";
 
+async function logActivity(
+  userId: string | null | undefined,
+  action: string,
+  details?: string
+) {
+  if (!userId) return;
+
+  try {
+    await prisma.activityLog.create({
+      data: { userId, action, details },
+    });
+  } catch (err) {
+    console.error("⚠️ Failed to write activity log:", err);
+  }
+}
+
 export const TeacherDashboardService = {
   // Validate teacher role
   async validateTeacher(userId: string) {
@@ -62,6 +78,11 @@ export const TeacherDashboardService = {
       cognitiveProfiles.reduce((a, p) => a + (p.focusDuration ?? 0), 0) /
       (cognitiveProfiles.length || 1);
 
+    await logActivity(
+      teacherId,
+      "VIEW_DASHBOARD_OVERVIEW",
+      `students=${students.length}`
+    );
     return {
       classSize: students.length,
       avgFeedback: Number(avgFeedback.toFixed(2)),
@@ -80,7 +101,11 @@ export const TeacherDashboardService = {
       prisma.cognitiveProfile.findMany({ where: { userId: studentId }, orderBy: { createdAt: "asc" } }),
       prisma.teacherFeedback.findMany({ where: { studentId }, orderBy: { createdAt: "asc" } }),
     ]);
-
+    await logActivity(
+      teacherId,
+      "VIEW_STUDENT_PROGRESS",
+      `studentId=${studentId}`
+    );
     return { emotions, cognition, feedbacks };
   },
 
@@ -119,6 +144,12 @@ export const TeacherDashboardService = {
     cognition.reduce((a, c) => a + (c.attentionScore ?? 0), 0) /
     (cognition.length || 1);
 
+  await logActivity(
+    teacherId,
+    "VIEW_CLASS_HEATMAP",
+    `students=${studentIds.length}`
+  );
+
   return {
     heatmap: Object.entries(emotionCounts).map(([emotion, count]) => ({
       emotion,
@@ -136,6 +167,11 @@ export const TeacherDashboardService = {
     ].join("\n");
 
     const summary = await NLPService.summarize(`Summarize student progress:\n${combinedText}`);
+    await logActivity(
+      teacherId,
+      "GET_STUDENT_REPORT",
+      `studentId=${studentId}`
+    );
     return { summary, emotions, cognition };
   },
 
@@ -156,6 +192,11 @@ export const TeacherDashboardService = {
     `;
 
     const strategies = await NLPService.generate(prompt);
+    await logActivity(
+      teacherId,
+      "GET_STUDENT_STRATEGY",
+      `studentId=${studentId}`
+    );
     return { strategies };
   },
 
@@ -172,6 +213,11 @@ export const TeacherDashboardService = {
       Suggest adaptive pacing or grouping strategies.
     `;
     const strategies = await NLPService.generate(prompt);
+    await logActivity(
+      teacherId,
+      "GET_CLASS_STRATEGY",
+      `students=${studentIds.length}`
+    );
     return { strategies };
   },
   // Student Comparison
@@ -221,7 +267,11 @@ export const TeacherDashboardService = {
   `;
 
   const aiSummary = await NLPService.summarize(prompt);
-
+  await logActivity(
+    teacherId,
+    "COMPARE_STUDENTS",
+    `students=${students.length}`
+  );
   return { students: studentComparisons, aiSummary };
 },
   // AI-Based Adaptive Insights for Teaching
@@ -238,7 +288,11 @@ export const TeacherDashboardService = {
     `;
 
     const insights = await NLPService.summarize(input);
-
+    await logActivity(
+      teacherId,
+      "GET_ADAPTIVE_TEACHING_INSIGHTS",
+      `classSize=${overview.classSize}`
+    );
     return { insights, metrics: overview };
   },
 
@@ -253,19 +307,34 @@ export const TeacherDashboardService = {
     const allText = allSubmissions.map(s => s.feedback ?? "").join("\n");
     const sentiment = await NLPService.sentiment(allText);
     const keywords = await NLPService.keywords(allText);
-
+    await logActivity(
+      teacherId,
+      "GET_ASSIGNMENT_INSIGHTS",
+      `assignments=${assignments.length}, submissions=${allSubmissions.length}`
+    );
     return { avgGrade, submissionRate, avgSentiment: sentiment.label, commonKeywords: keywords };
   },
 
   // Feedback Services
   async giveFeedback(teacherId: string, studentId: string, feedback: string) {
-    return prisma.teacherFeedback.create({ data: { teacherId, studentId, feedback } });
+    const feed = await prisma.teacherFeedback.create({ data: { teacherId, studentId, feedback } });
+    await logActivity(
+      teacherId,
+      "GIVE_FEEDBACK",
+      `studentId=${studentId}, feedbackId=${feed.id}`
+    );
+    return feed;
   },
 
   async getFeedbackOverview(teacherId: string) {
     const feedbacks = await prisma.teacherFeedback.findMany({ where: { teacherId } });
     const combined = feedbacks.map(f => f.feedback).join("\n");
     const summary = await NLPService.summarize(`Summarize my feedback reflections:\n${combined}`);
+    await logActivity(
+      teacherId,
+      "VIEW_FEEDBACK_OVERVIEW",
+      `feedbackCount=${feedbacks.length}`
+    );
     return { summary, count: feedbacks.length };
   },
 
@@ -275,6 +344,12 @@ export const TeacherDashboardService = {
       where: { teacherId },
       orderBy: { createdAt: "desc" },
     });
+
+    await logActivity(
+      teacherId,
+      "VIEW_NOTIFICATIONS",
+      `notificationCount=${notifications.length}`
+    );
 
     if (!notifications || notifications.length === 0) {
       throw createHttpError(404, "No notifications found for this teacher.");
@@ -307,7 +382,7 @@ export const TeacherDashboardService = {
       throw createHttpError(400, "Notification title and message are required.");
     }
 
-    return prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         teacherId,
         title,
@@ -315,5 +390,12 @@ export const TeacherDashboardService = {
         isRead: false,
       },
     });
+
+    await logActivity(
+      teacherId,
+      "POST_NOTIFICATION",
+      `notificationId=${notification.id}`
+    );
+    return notification;
   },
 };

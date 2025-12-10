@@ -4,14 +4,38 @@ import crypto, { randomBytes } from "crypto";
 import bcrypt from "bcrypt";
 import { sendMail } from "../../../utils/mailer";
 
+async function logActivity(
+  userId: string | null | undefined,
+  action: string,
+  details?: string
+) {
+  if (!userId) return; // do not log if no userId
+
+  try {
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        action,
+        details,
+      },
+    });
+  } catch (err) {
+    console.error("⚠️ Failed to write activity log:", err);
+  }
+}
+
+
 export const TeacherStudentService = {
   /**
    * 🔒 Validate if the user is a teacher
    */
   async validateTeacher(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.role !== "TEACHER")
+    if (!user || user.role !== "TEACHER") {
+      await logActivity(userId, "unauthorized_access_attempt", "Non-teacher tried to access teacher service");
       throw createHttpError(403, "Only teachers can manage assignments.");
+    }
+    await logActivity(userId, "teacher_validated", "Teacher access validated");
     return user;
   },
 
@@ -20,6 +44,7 @@ export const TeacherStudentService = {
    */
   async createGroup(teacherId: string, name: string, description?: string) {
     await this.validateTeacher(teacherId);
+    await logActivity(teacherId, "GROUP_CREATE", `name=${name}`);
     return prisma.group.create({ data: { name, description, teacherId } });
   },
 
@@ -41,7 +66,7 @@ export const TeacherStudentService = {
         description: updateData.description ?? group.description,
       },
     });
-
+    await logActivity(teacherId, "GROUP_UPDATE", `groupId=${groupId}`);
     return updatedGroup;
   },
 
@@ -59,7 +84,7 @@ export const TeacherStudentService = {
     await prisma.groupMember.deleteMany({ where: { groupId } });
 
     await prisma.group.delete({ where: { id: groupId } });
-
+    await logActivity(teacherId, "GROUP_DELETE", `groupId=${groupId}`);
     return { message: "Group deleted successfully." };
   },
   
@@ -116,6 +141,7 @@ export const TeacherStudentService = {
       });
 
       if (alreadyLinked) {
+        await logActivity(teacherId, "STUDENT_REGISTER_ATTEMPT", `Student ${existingStudent.id} already linked`);
         return {
           message: "Student already registered under this teacher.",
           linked: false,
@@ -156,7 +182,7 @@ export const TeacherStudentService = {
         teacherId,
         studentId: existingStudent.id,
       });
-
+      await logActivity(teacherId, "STUDENT_REGISTERED", `Student ${existingStudent.id} linked`);
       return {
         message: "Existing student linked and notified successfully.",
         linked: true,
@@ -211,7 +237,7 @@ export const TeacherStudentService = {
         type: "WELCOME",
       },
     });
-
+    await logActivity(teacherId, "STUDENT_REGISTERED", `New student ${newStudent.id} created and linked`);
     return {
       message: "New student registered and notified successfully.",
       linked: true,
@@ -233,7 +259,7 @@ export const TeacherStudentService = {
       where: { id: { in: studentIds }, role: "STUDENT" },
     });
     if (!students.length) throw createHttpError(400, "No valid students provided.");
-
+    await logActivity(teacherId, "GROUP_ADD_MEMBERS", `groupId=${groupId}, count=${students.length}`);
     return prisma.$transaction(
       students.map((s) =>
         prisma.groupMember.upsert({
@@ -259,7 +285,7 @@ export const TeacherStudentService = {
       where: { id: studentId, role: "STUDENT" },
     });
     if (!student) throw createHttpError(404, "Student not found.");
-
+    await logActivity(teacherId, "GROUP_ADD_STUDENT", `groupId=${groupId}, studentId=${studentId}`);
     return prisma.groupMember.upsert({
       where: { compositeId: { groupId, userId: studentId } },
       create: { groupId, userId: studentId },
@@ -310,8 +336,41 @@ export const TeacherStudentService = {
     teacherId,
     studentId: null, // no student account yet
   });
-
+  await logActivity(teacherId, "STUDENT_INVITED", `email=${email}`);
   return { email, inviteLink, expiresAt };
+},
+
+//Remove student from group 
+
+async removeStudentFromGroup(teacherId: string, groupId: string, studentId: string) {
+  await this.validateTeacher(teacherId);
+
+  // Check if group exists and owned by teacher
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  if (!group || group.teacherId !== teacherId)
+    throw createHttpError(403, "Group not found or unauthorized.");
+
+  // Check if student exists
+  const student = await prisma.user.findUnique({
+    where: { id: studentId },
+  });
+  if (!student || student.role !== "STUDENT")
+    throw createHttpError(404, "Student not found.");
+
+  // Check membership
+  const membership = await prisma.groupMember.findUnique({
+    where: { compositeId: { groupId, userId: studentId } },
+  });
+
+  if (!membership)
+    throw createHttpError(400, "Student is not a member of this group.");
+
+  // Remove
+  await prisma.groupMember.delete({
+    where: { compositeId: { groupId, userId: studentId } },
+  });
+  await logActivity(teacherId, "GROUP_REMOVE_STUDENT", `groupId=${groupId}, studentId=${studentId}`);
+  return { message: "Student removed from group successfully." };
 },
 
   /**
@@ -375,7 +434,7 @@ export const TeacherStudentService = {
       teacherId,                     // sender (teacher)
       studentId: existingUser.id,    // recipient (student)
     });
-
+    await logActivity(teacherId, "GROUP_ADD_EXISTING_STUDENT", `groupId=${groupId}, studentId=${existingUser.id}`);
     return {
       message: "Existing student added to group and notified.",
       added: true,
@@ -410,7 +469,7 @@ export const TeacherStudentService = {
     teacherId,
     studentId: null,
   });
-
+  await logActivity(teacherId, "STUDENT_INVITED_TO_GROUP", `email=${email}, groupId=${groupId}`);
   return { email, inviteLink, group: group.name, expiresAt, invited: true };
 }
 };

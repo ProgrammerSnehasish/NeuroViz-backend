@@ -1,5 +1,25 @@
 import axios from "axios";
 import { NLP } from "../../utils/env";
+import prisma from "../../config/database";
+
+async function logNLPActivity(
+  action: string,
+  details?: string,
+  userId: string = "System"   // fallback for NLP
+) {
+  try {
+    await prisma.activityLog.create({
+      data: {
+        userId,       // always valid because "System" user must exist
+        action,
+        details,
+      },
+    });
+  } catch (err) {
+    console.error("⚠ NLP ActivityLog failed:", err);
+  }
+}
+
 
 /* ------------------ Base HTTP Helper ------------------ */
 async function postTo(url?: string, body?: any) {
@@ -67,6 +87,8 @@ export const NLPService = {
   summarize: async (text: string) => {
   const cleanText = text.replace(/\s+/g, " ").trim();
 
+  await logNLPActivity("NLP_summarize", `Text length: ${cleanText.length}`);
+
   if (!cleanText || cleanText.split(" ").length < 10) {
     return { summary: cleanText || "No meaningful text to summarize." };
   }
@@ -110,6 +132,8 @@ export const NLPService = {
 
 /* ---------- Toxicity Detection ---------- */
 detectToxicity: async (text: string) => {
+  await logNLPActivity("NLP_toxicity_check", `Text length: ${text.length}`);
+
   if (NLP.provider === "python" && NLP.python.toxicity)
     return postTo(NLP.python.toxicity, { text });
 
@@ -167,6 +191,7 @@ detectToxicity: async (text: string) => {
 
   /* ---------- Sentiment Analysis ---------- */
   sentiment: async (text: string) => {
+  await logNLPActivity("NLP_sentiment_analysis", `Text length: ${text.length}`);
   if (NLP.provider === "python" && NLP.python.sentiment)
     return postTo(NLP.python.sentiment, { text });
 
@@ -196,6 +221,7 @@ detectToxicity: async (text: string) => {
 
   /* ---------- Keyword Extraction ---------- */
   keywords: async (text: string) => {
+    await logNLPActivity("NLP_keyword_extraction", `Text length: ${text.length}`);
     if (NLP.provider === "python" && NLP.python.keywords)
       return postTo(NLP.python.keywords, { text });
 
@@ -216,6 +242,8 @@ detectToxicity: async (text: string) => {
 
   /* ---------- Text Classification ---------- */
 classify: async (text: string) => {
+  await logNLPActivity("NLP_text_classification", `Text length: ${text.length}`);
+
   if (NLP.provider === "python" && NLP.python.classify)
     return postTo(NLP.python.classify, { text });
 
@@ -274,6 +302,7 @@ classify: async (text: string) => {
 },
   /* ---------- Named Entity Recognition ---------- */
   entities: async (text: string) => {
+  await logNLPActivity("NLP_named_entity_recognition", `Text length: ${text.length}`);
   if (NLP.provider === "python" && NLP.python.ner)
     return postTo(NLP.python.ner, { text });
 
@@ -319,6 +348,7 @@ classify: async (text: string) => {
 
 /* ---------- Generation ---------- */
    async generate(prompt: string) {
+    await logNLPActivity("NLP_text_generation", `Prompt length: ${prompt.length}`);
     const models = [
       "meta-llama/Meta-Llama-3-8B-Instruct",
       "tiiuae/falcon-7b-instruct",
