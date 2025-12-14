@@ -57,7 +57,7 @@ The backend supports AI-driven mind map generation, NLP processing, cognitive an
 | Framework | Express.js |
 | ORM | Prisma |
 | Database | PostgreSQL (NeonDB) |
-|NLP| wink-nlp and others(local[python], hugging face)|
+|NLP| wink-nlp and others(local[python], huggingface models)|
 | Environment Management | dotenv |
 | Build Tool | tsc (TypeScript Compiler) |
 | Dev Runner | ts-node-dev |
