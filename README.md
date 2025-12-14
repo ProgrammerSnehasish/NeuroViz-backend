@@ -214,9 +214,9 @@ yarn install
 ```
 **to initialize Prisma**
 ```bash
-yarn prisma:migrate
+yarn prisma migrate
 #and
-yarn prisma:generate
+yarn prisma generate
 ```
 **to compile the project, use**
 ```bash
@@ -233,9 +233,9 @@ yarn dev
 |`yarn dev`|	Start dev server using ts-node-dev|
 |`yarn build`|	Compile TypeScript to JavaScript (dist/)|
 |`yarn start`|	Run compiled server from `dist/`|
-|`yarn prisma:migrate`|	Run database migrations|
-|`yarn prisma:generate`|	Generate Prisma client|
-|`yarn prisma:studio`|	Launch Prisma Studio (DB GUI)|
+|`yarn prisma migrate`|	Run database migrations|
+|`yarn prisma generate`|	Generate Prisma client|
+|`yarn prisma studio`|	Launch Prisma Studio (DB GUI)|
 |`yarn lint`|	Check TypeScript errors|
 ---
 ## 🌐 API Endpoints
