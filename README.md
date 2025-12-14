@@ -21,31 +21,31 @@ The backend supports AI-driven mind map generation, NLP processing, cognitive an
 
 ### 🔑 Core Capabilities
 
-- Secure Authentication & RBAC – JWT-based login with role enforcement for Student, Teacher, and Admin via middleware.
+- ***Secure Authentication & RBAC*** – JWT-based login with role enforcement for Student, Teacher, and Admin via middleware.
 
-- User & Profile Management – Centralized user APIs with independent cognitive and emotional profiling for long-term personalization.
+- ***User & Profile Management*** – Centralized user APIs with independent cognitive and emotional profiling for long-term personalization.
 
-- AI-Powered Mind Map Engine – Manual and AI-generated mind maps with storage, export (JPEG/PDF), and teacher review workflows.
+- ***AI-Powered Mind Map Engine*** – Manual and AI-generated mind maps with storage, export (JPEG/PDF), and teacher review workflows.
 
-- NLP & AI Processing – Text summarization, keyword extraction, sentiment analysis, NER, classification, and toxicity detection.
+- ***NLP & AI Processing*** – Text summarization, keyword extraction, sentiment analysis, NER, classification, and toxicity detection.
 
-- Cognitive Profiling System – Dynamic tracking of attention, engagement, and learning preferences to adapt content delivery.
+- ***Cognitive Profiling System*** – Dynamic tracking of attention, engagement, and learning preferences to adapt content delivery.
 
-- Emotion & Focus Tracking – Emotion logging with trend analysis (stress, fatigue, motivation) for adaptive learning triggers.
+- ***Emotion & Focus Tracking*** – Emotion logging with trend analysis (stress, fatigue, motivation) for adaptive learning triggers.
 
-- Adaptive Learning Engine – Automatically adjusts visualization complexity, UI, and content strategy using cognitive–emotional signals.
+- ***Adaptive Learning Engine*** – Automatically adjusts visualization complexity, UI, and content strategy using cognitive–emotional signals.
 
-- Teacher Intelligence Layer – Analytics-driven tools for assignments, grading, mind map review, student groups, and AI insights.
+- ***Teacher Intelligence Layer*** – Analytics-driven tools for assignments, grading, mind map review, student groups, and AI insights.
 
-- Teacher Dashboard & Insights – Class heatmaps, progress tracking, student comparison, feedback, and notification systems.
+- ***Teacher Dashboard & Insights*** – Class heatmaps, progress tracking, student comparison, feedback, and notification systems.
 
-- Admin Control & Observability – System health monitoring, user management, activity logs, and usage analytics.
+- ***Admin Control & Observability*** – System health monitoring, user management, activity logs, and usage analytics.
 
-- Robust Architecture – Modular, feature-based design with Prisma ORM, clean separation of concerns, and scalable structure.
+- ***Robust Architecture*** – Modular, feature-based design with Prisma ORM, clean separation of concerns, and scalable structure.
 
-- Security & Reliability – Middleware authorization, DTO validation, activity auditing, and graceful shutdown handling.
+- ***Security & Reliability*** – Middleware authorization, DTO validation, activity auditing, and graceful shutdown handling.
 
-- Target Users – Built for neurodivergent students, insight-driven educators, inclusive institutions, and learning researchers.
+- ***Target Users*** – Built for neurodivergent students, insight-driven educators, inclusive institutions, and learning researchers.
 
 ---
 
