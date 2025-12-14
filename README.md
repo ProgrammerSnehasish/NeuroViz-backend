@@ -350,7 +350,7 @@ Server closes connections gracefully.
 
 Logs:
 
-🛑 Shutting down gracefully...
+🛑 Shutting down gracefully...  
 🧹 Prisma disconnected and server closed.
 
 ---
