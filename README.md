@@ -8,11 +8,44 @@ This backend is built with [Node.js](https://nodejs.org/en), [TypeScript](https:
 
 ## 🚀 Project Overview
 
+**NeuroViz Backend** is a scalable, AI-powered server-side system that drives the core intelligence of the NeuroViz platform. It provides secure and efficient REST APIs for managing users, generating adaptive visual learning content, and enabling role-based workflows for Students, Teachers, and Admins.
+
+The backend supports AI-driven mind map generation, NLP processing, cognitive and emotion profiling, and adaptive learning triggers, ensuring personalized learning experiences for neurodivergent students. Built with a modular architecture, it ensures clean error handling, strong security, and reliable database operations using **Prisma ORM and PostgreSQL**.
+
 **NeuroViz Backend** provides secure and efficient REST APIs for:
 - User authentication and profile management
 - Mind map creation, retrieval, and updates
 - Database operations via Prisma ORM
 - Clean error handling and modular architecture
+- Clean Admin, Teacher and Student Route handling
+
+### 🔑 Core Capabilities
+
+- Secure Authentication & RBAC – JWT-based login with role enforcement for Student, Teacher, and Admin via middleware.
+
+- User & Profile Management – Centralized user APIs with independent cognitive and emotional profiling for long-term personalization.
+
+- AI-Powered Mind Map Engine – Manual and AI-generated mind maps with storage, export (JPEG/PDF), and teacher review workflows.
+
+- NLP & AI Processing – Text summarization, keyword extraction, sentiment analysis, NER, classification, and toxicity detection.
+
+- Cognitive Profiling System – Dynamic tracking of attention, engagement, and learning preferences to adapt content delivery.
+
+- Emotion & Focus Tracking – Emotion logging with trend analysis (stress, fatigue, motivation) for adaptive learning triggers.
+
+- Adaptive Learning Engine – Automatically adjusts visualization complexity, UI, and content strategy using cognitive–emotional signals.
+
+- Teacher Intelligence Layer – Analytics-driven tools for assignments, grading, mind map review, student groups, and AI insights.
+
+- Teacher Dashboard & Insights – Class heatmaps, progress tracking, student comparison, feedback, and notification systems.
+
+- Admin Control & Observability – System health monitoring, user management, activity logs, and usage analytics.
+
+- Robust Architecture – Modular, feature-based design with Prisma ORM, clean separation of concerns, and scalable structure.
+
+- Security & Reliability – Middleware authorization, DTO validation, activity auditing, and graceful shutdown handling.
+
+- Target Users – Built for neurodivergent students, insight-driven educators, inclusive institutions, and learning researchers.
 
 ---
 
