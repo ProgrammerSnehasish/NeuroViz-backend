@@ -353,9 +353,11 @@ Logs:
 🛑 Shutting down gracefully...
 🧹 Prisma disconnected and server closed.
 
+---
+
 ## 🧭 Future Enhancements
 
-- JWT-based authentication
+- Attribute Based Access Control (For Admin Login)
 
 - Role-based access control (RBAC)
 
@@ -365,6 +367,12 @@ Logs:
 
 - GraphQL API support
 
+- Real time video lecture room.
+
+- Calender Sync
+
+- Voice Assistant Support
+
 ---
 
 ## 📜 License
@@ -373,7 +381,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 ## 🙌 Acknowledgements
-Thanks to all the open-source community!
+Thanks to all the open-source community! and all the contributors in this repo.
 
 ---
 
@@ -383,13 +391,13 @@ Thanks to all the open-source community!
 
 ## 💬 Collaborators
 - Rounak Saha
-> Developer • Cyber Security Enthusiast • NeuroViz Project Lead
+> Backend Developer • Cyber Security Enthusiast • NeuroViz Project Lead
 
 - Puskar Sarkar
-> Developer • Cyber Security Enthusiast • NeuroViz Project Member
+> App Developer and Tester • Cyber Security Enthusiast • NeuroViz Project Member
 
 - Sagnika Mitra
-> Developer • Cyber Security Enthusiast • NeuroViz Project Member
+> Frontend Web-Developer • Cyber Security Enthusiast • NeuroViz Project Member
 
 ---
 
