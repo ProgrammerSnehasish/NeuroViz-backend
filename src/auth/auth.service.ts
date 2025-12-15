@@ -77,12 +77,6 @@ export class AuthService {
     const fullUserDetails = await prisma.user.findUnique({
       where: { id: foundUser.id },
       include: getUserIncludeByRole(foundUser.role),
-      // {
-      //   studentProfile: true,
-      //   teacherProfile: true,
-      //   cognitive: true,
-      //   mindmaps: true,
-      // },
     });
 
     if (!fullUserDetails) {
