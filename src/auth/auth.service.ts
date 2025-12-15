@@ -6,6 +6,8 @@ import { getUserResponse } from "../utils/util";
 import { SigninDto, SignupDto } from "./auth.dto";
 import prisma from "../config/database";
 import { runAdaptationForUser } from "../features/adapt/adapt.service";
+import { get } from "http";
+import getUserIncludeByRole from "../utils/getUserDetailsbyRole";
 
 export class AuthService {
   public constructor() { }
@@ -74,12 +76,13 @@ export class AuthService {
 
     const fullUserDetails = await prisma.user.findUnique({
       where: { id: foundUser.id },
-      include: {
-        studentProfile: true,
-        teacherProfile: true,
-        cognitive: true,
-        mindmaps: true,
-      },
+      include: getUserIncludeByRole(foundUser.role),
+      // {
+      //   studentProfile: true,
+      //   teacherProfile: true,
+      //   cognitive: true,
+      //   mindmaps: true,
+      // },
     });
 
     if (!fullUserDetails) {
