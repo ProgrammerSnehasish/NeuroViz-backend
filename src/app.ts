@@ -23,6 +23,11 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// app.use((req, res, next) => {
+//   console.log("REQ ARRIVED:", req.method, req.path, req.body);
+//   next();
+// }); // We can uncomment this for debugging purposes, for Router level logging use middleware in the router files
+
 // 🧠 API Routes
 app.use("/api", mainRouter);
 
