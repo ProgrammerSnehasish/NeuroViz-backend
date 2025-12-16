@@ -1,6 +1,10 @@
 import prisma from "../../config/database";
 
 export const runAdaptationForUser = async (userId: string) => {
+  if (process.env.ENABLE_ADAPTATION !== "true") {
+    return { applied: false, changes: {}, reason: "Adaptation disabled" };
+  }
+
   await prisma.activityLog.create({
     data: {
       userId,
@@ -8,6 +12,22 @@ export const runAdaptationForUser = async (userId: string) => {
       details: `System started adaptation analysis for user ${userId}`,
     },
   });
+
+  const last = await prisma.adaptationLog.findFirst({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (last && Date.now() - last.createdAt.getTime() <  10 * 60 * 1000) {
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        action: "ADAPTATION_SKIPPED",
+        details: `No adaptation run for user ${userId} (last run too recent), skipped due to cooldown`,
+      },
+    });
+    return { applied: false, changes: {}, reason: "Last adaptation too recent, Cooldown active" };
+  }
 
   const [profile, emotions, feedbacks] = await Promise.all([
     prisma.cognitiveProfile.findUnique({ where: { userId } }),
@@ -53,6 +73,10 @@ export const runAdaptationForUser = async (userId: string) => {
     reason += "Low attention detected. ";
   }
 
+  if (profile?.attentionScore !== undefined && profile?.attentionScore !== null && profile.attentionScore > 0.6) {
+    delete changes.complexity;
+  }
+
   // ───────────────────────────────
   // Feedback-based adaptation logic
   // ───────────────────────────────
@@ -72,6 +96,12 @@ export const runAdaptationForUser = async (userId: string) => {
    if (Object.keys(changes).length > 0) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const prefs = { ...(user?.preferences as any), ...changes };
+
+    if(
+      JSON.stringify(user?.preferences) === JSON.stringify(prefs)
+    ) {
+      return { applied: false, changes: {}, reason: "No effective changes in preferences" };
+    }
 
     await prisma.user.update({
       where: { id: userId },

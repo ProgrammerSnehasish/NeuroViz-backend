@@ -147,7 +147,13 @@ NeuroViz-backend/
 │ │   │   ├── nlp.router.ts
 │ │   │   └── nlp.service.ts
 │ │   │
+│ │   ├── behavior/
+│ │   │   ├── behavior.controller.ts
+│ │   │   ├── behavior.service.ts
+│ │   │   └── behavior.router.ts
+│ │   │
 │ │   ├── cognitive_profile/
+│ │   │   ├── cognitive.engine.ts
 │ │   │   ├── cognitiveProfile.dto.ts
 │ │   │   ├── cognitiveProfile.controller.ts
 │ │   │   ├── cognitiveProfile.service.ts
@@ -298,8 +304,9 @@ yarn dev
 |POST|`/api/nlp/keywords`| Extract Keywords|
 |POST|`/api/nlp/classify`| Classify Text|
 |POST|`/api/nlp/entities`| Named Entity Recognition|
+|**Behavior Tracking**|
+|POST|`/api/behavior/track`|Track User Behaviour for cognitive profiling.|
 |**Cognitive Profiling**|
-|POST|`/api/cognitive/update`|Update cognitive profile|
 |GET|`/api/cognitive/user/:userId`|Get Cognitive Profile by user Id|
 |**Emotion Profiling**|
 |POST|`/api/emotion/log`|Log new emotion|

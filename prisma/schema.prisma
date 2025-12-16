@@ -76,6 +76,13 @@ enum EvaluationMode {
   MANUAL
   AUTO
 }
+
+enum BehaviorType {
+  PAGE_FOCUS
+  CLICK
+  IDLE
+}
+
 /* ─────────────────────────────
    USER MODEL
 ────────────────────────────── */
@@ -124,6 +131,7 @@ model User {
   teacherStudents TeacherStudent[] @relation("TeacherToStudents")
   studentTeachers TeacherStudent[] @relation("StudentToTeachers")
   activityLogs ActivityLog[]
+  behaviorEvents BehaviorEvent[]
 }
 
 /* ─────────────────────────────
@@ -187,6 +195,23 @@ model CognitiveProfile {
   lastUpdated    DateTime @updatedAt
   createdAt      DateTime @default(now())
   user           User     @relation(fields: [userId], references: [id])
+}
+
+/*─────────────────────────────
+ Behavior Event LOG
+──────────────────────────────*/
+model BehaviorEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  type      BehaviorType
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
 }
 
 /* ─────────────────────────────

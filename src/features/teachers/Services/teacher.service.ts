@@ -45,7 +45,11 @@ export const TeacherService = {
     return user;
   },
 
-  async getStudentAnalytics(teacherId: string, studentId: string) {
+  async getStudentAnalytics(
+    teacherId: string,
+    studentId: string,
+    log: boolean = true
+  ) {
     await this.validateTeacher(teacherId);
     await this.validateStudent(studentId);
 
@@ -56,46 +60,109 @@ export const TeacherService = {
         orderBy: { createdAt: "desc" },
         take: 30,
       }),
-      prisma.feedback.findMany({ where: { userId: studentId } }),
+      prisma.feedback.findMany({ where: { userId: studentId }, take: 100 }),
     ]);
 
-    const avgEmotion =
-      emotions.length > 0
-        ? emotions.reduce((acc, e) => acc + (e.intensity || 0), 0) / emotions.length
+    // clamp between -1 and 1
+    const clamp = (val: number, min: number, max: number) =>
+      Math.min(max, Math.max(min, val));
+
+    /* ───────────── Emotion (recency-weighted) ───────────── */
+    const weightSum = emotions.reduce((acc, _, i) => acc + 1 / (i + 1), 0);
+    const weightedEmotion =
+      emotions.length > 0 && weightSum > 0
+        ? emotions.reduce(
+            (acc, e, i) => acc + (e.intensity ?? 0) * (1 / (i + 1)),
+            0
+          ) / weightSum
         : 0;
+
+    /* ───────────── Feedback Average ───────────── */
     const avgFeedback =
       feedbacks.length > 0
-        ? feedbacks.reduce((acc, f) => acc + (f.rating || 0), 0) / feedbacks.length
+        ? feedbacks.reduce((acc, f) => acc + (f.rating ?? 0), 0) /
+          feedbacks.length
         : 0;
-    await logActivity(teacherId, "VIEW_STUDENT_ANALYTICS", `studentId=${studentId}`);
-    return { profile, avgEmotion, avgFeedback, emotions, feedbacks };
+
+    /* ───────────── Cognitive Normalization ───────────── */
+    const normalizedProfile = profile
+      ? {
+          ...profile,
+          avgFocusPerInteraction:
+            profile.interactions && profile.interactions > 0
+              ? Math.round((profile.focusDuration ?? 0) / profile.interactions)
+              : 0,
+        }
+      : null;
+
+    if (log) {
+      await logActivity(
+        teacherId,
+        "VIEW_STUDENT_ANALYTICS",
+        `studentId=${studentId}`
+      );
+    }
+
+    return {
+      profile: normalizedProfile,
+      avgEmotion: clamp(weightedEmotion, -1, 1),
+      avgFeedback,
+      emotions,
+      feedbacks,
+    };
   },
 
-  async summarizeStudentPerformance(teacherId: string, studentId: string) {
-  await this.validateTeacher(teacherId);
-  const analytics = await this.getStudentAnalytics(teacherId, studentId);
+  async summarizeStudentPerformance(
+  teacherId: string,
+  studentId: string
+  ) {
+    await this.validateTeacher(teacherId);
 
-  const summaryText = `
-    Student Performance Overview:
-    - Attention Score: ${analytics.profile?.attentionScore ?? "N/A"}
-    - Average Feedback Rating: ${analytics.avgFeedback.toFixed(2)}
-    - Recent Emotion: ${analytics.emotions[0]?.emotion ?? "neutral"}
-    - Average Focus Duration: ${analytics.profile?.focusDuration ?? "N/A"} seconds
-    - Engagement Interactions: ${analytics.profile?.interactions ?? 0}
+    // 🔁 reuse analytics without re-logging
+    const analytics = await this.getStudentAnalytics(
+      teacherId,
+      studentId,
+      false
+    );
+
+    const summaryText = `
+  Student Performance Overview:
+  - Attention Score: ${analytics.profile?.attentionScore ?? "N/A"}
+  - Average Feedback Rating: ${analytics.avgFeedback.toFixed(2)}
+  - Emotional Trend Score: ${analytics.avgEmotion.toFixed(2)}
+  - Avg Focus per Interaction: ${
+      analytics.profile?.avgFocusPerInteraction ?? "N/A"
+    } seconds
+  - Engagement Interactions: ${analytics.profile?.interactions ?? 0}
   `;
 
-  const summary = await NLPService.summarize(summaryText);
+  const safeSummaryText =
+  summaryText.length > 2000
+    ? summaryText.slice(0, 2000)
+    : summaryText;
 
-  if (
-    !summary.summary ||
-    summary.summary === "No summary generated." ||
-    summary.summary.trim().length < 10
-  ) {
-    summary.summary = `The student shows an average attention score of ${analytics.profile?.attentionScore ?? "N/A"} and a feedback rating of ${analytics.avgFeedback.toFixed(2)}. Their emotional state appears ${analytics.emotions[0]?.emotion ?? "neutral"}, with an average focus duration of ${analytics.profile?.focusDuration ?? "N/A"} seconds.`;
-  }
-  await logActivity(teacherId, "SUMMARIZE_STUDENT_PERFORMANCE", `studentId=${studentId}`);
-  return { summary, data: analytics };
-},
+  const summary = await NLPService.summarize(safeSummaryText);
+
+    if (
+      !summary.summary ||
+      summary.summary === "No summary generated." ||
+      summary.summary.trim().length < 10
+    ) {
+      summary.summary = `The student demonstrates an attention score of ${
+        analytics.profile?.attentionScore ?? "N/A"
+      }, with an average feedback rating of ${analytics.avgFeedback.toFixed(
+        2
+      )}. Their emotional trend appears stable, and they engage meaningfully with the content.`;
+    }
+
+    await logActivity(
+      teacherId,
+      "SUMMARIZE_STUDENT_PERFORMANCE",
+      `studentId=${studentId}`
+    );
+
+    return { summary, data: analytics };
+  },
 
   async reviewMindmap(teacherId: string, mindmapId: string, approval: boolean, comment?: string) {
     await this.validateTeacher(teacherId);
