@@ -21,7 +21,6 @@ export default function getUserIncludeByRole(role: Role) {
     case "TEACHER":
       return {
         teacherProfile: true,
-        cognitive: true,
         mindmaps: true,
 
         groups: true,
