@@ -5,6 +5,7 @@ import { MindmapController } from "./mindmap.controller";
 import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "./mindmap.dto";
 import createHttpError from "http-errors";
 import { MindmapExportController } from "./export/mindmap.export.controller";
+import { enforceTeacherOrStudent } from "../../middlewares/enforceTeacherorStudent";
 
 export const mindmapRouter = Router();
 const controller = new MindmapController();
@@ -14,9 +15,10 @@ const getTokenUserId = (req: any) =>
     req.user?.id ||
     req.user?.sub; // support multiple JWT payload formats
 
+mindmapRouter.use(verifyToken, enforceTeacherOrStudent)
+
 mindmapRouter.post(
   "/create",
-  verifyToken,
   dtoValidation(CreateMindmapDto),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -32,7 +34,6 @@ mindmapRouter.post(
 
 mindmapRouter.post(
   "/generate",
-  verifyToken,
   dtoValidation(GenerateMindmapDto),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -48,7 +49,6 @@ mindmapRouter.post(
 
 mindmapRouter.get(
   "/user/:userId",
-  verifyToken,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.params["userId"];
@@ -66,7 +66,6 @@ mindmapRouter.get(
 
 mindmapRouter.get(
   "/:mindmapId",
-  verifyToken,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const mindmapId = req.params["mindmapId"];
@@ -82,7 +81,6 @@ mindmapRouter.get(
 
 mindmapRouter.put(
   "/update/:mindmapId",
-  verifyToken,
   dtoValidation(UpdateMindmapDto),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -110,7 +108,6 @@ mindmapRouter.put(
 
 mindmapRouter.delete(
   "/delete/:mindmapId",
-  verifyToken,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const mindmapId = req.params["mindmapId"];
@@ -137,5 +134,5 @@ mindmapRouter.delete(
   }
 );
 
-mindmapRouter.get("/:id/pdf", verifyToken, MindmapExportController.downloadPDF);
-mindmapRouter.get("/:id/jpeg", verifyToken, MindmapExportController.downloadJPEG);
+mindmapRouter.get("/:id/pdf", MindmapExportController.downloadPDF);
+mindmapRouter.get("/:id/jpeg", MindmapExportController.downloadJPEG);
