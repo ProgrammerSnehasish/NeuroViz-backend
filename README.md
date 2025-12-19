@@ -240,7 +240,7 @@ NeuroViz-backend/
 ---
 ## Backend Dataflow Diagram (Till now)
   
-> ![NeuroViz_backend_flowchart](./Image/Neuroviz%20Backend%20Flow%20Diagram.png)
+> ![NeuroViz_backend_flowchart](./Image/Neuroviz%20Backend%20Flow%20Diagram.jpg)
 ---
 
 ## 🚀 Project Setup
