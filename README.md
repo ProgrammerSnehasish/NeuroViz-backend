@@ -321,7 +321,6 @@ yarn dev
 |**Others**|
 |POST|`/api/adapt/trigger/user/:userid`|Trigger Adaptation Manually(Interface Adaptation)|
 |POST|`/api/content/summarize`|Summarize Content|
-|GET|`/api/admin/overview`|Admin Overview|
 |**Teacher Routes**|
 |*Analytics & Performance*|		
 |GET|	`/api/teacher/student/:userId/analytics`|	Get analytics for a specific student|
