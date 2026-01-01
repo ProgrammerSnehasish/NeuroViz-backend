@@ -1,6 +1,7 @@
 import createHttpError from "http-errors";
 import prisma from "../../../config/database";
 import { NLPService } from "../../nlp/nlp.service";
+import { userRole } from "../../../config/core";
 
 async function logActivity(
   userId: string | null | undefined,
@@ -29,8 +30,8 @@ export const TeacherService = {
       include: { teacherProfile: true },
     });
     if (!user) throw createHttpError(404, "User not found");
-    if (user.role !== "TEACHER")
-      throw createHttpError(403, "Access denied. Only teachers are allowed.");
+    if (user.role !== userRole.Teacher)
+    throw createHttpError(403, "Access denied. Only teachers are allowed.");
     return user;
   },
 
@@ -40,7 +41,7 @@ export const TeacherService = {
       include: { studentProfile: true },
     });
     if (!user) throw createHttpError(404, "Student not found");
-    if (user.role !== "STUDENT")
+    if (user.role !== userRole.Student)
       throw createHttpError(403, "Target user is not a student");
     return user;
   },
@@ -72,27 +73,27 @@ export const TeacherService = {
     const weightedEmotion =
       emotions.length > 0 && weightSum > 0
         ? emotions.reduce(
-            (acc, e, i) => acc + (e.intensity ?? 0) * (1 / (i + 1)),
-            0
-          ) / weightSum
+          (acc, e, i) => acc + (e.intensity ?? 0) * (1 / (i + 1)),
+          0
+        ) / weightSum
         : 0;
 
     /* ───────────── Feedback Average ───────────── */
     const avgFeedback =
       feedbacks.length > 0
         ? feedbacks.reduce((acc, f) => acc + (f.rating ?? 0), 0) /
-          feedbacks.length
+        feedbacks.length
         : 0;
 
     /* ───────────── Cognitive Normalization ───────────── */
     const normalizedProfile = profile
       ? {
-          ...profile,
-          avgFocusPerInteraction:
-            profile.interactions && profile.interactions > 0
-              ? Math.round((profile.focusDuration ?? 0) / profile.interactions)
-              : 0,
-        }
+        ...profile,
+        avgFocusPerInteraction:
+          profile.interactions && profile.interactions > 0
+            ? Math.round((profile.focusDuration ?? 0) / profile.interactions)
+            : 0,
+      }
       : null;
 
     if (log) {
@@ -113,8 +114,8 @@ export const TeacherService = {
   },
 
   async summarizeStudentPerformance(
-  teacherId: string,
-  studentId: string
+    teacherId: string,
+    studentId: string
   ) {
     await this.validateTeacher(teacherId);
 
@@ -130,29 +131,27 @@ export const TeacherService = {
   - Attention Score: ${analytics.profile?.attentionScore ?? "N/A"}
   - Average Feedback Rating: ${analytics.avgFeedback.toFixed(2)}
   - Emotional Trend Score: ${analytics.avgEmotion.toFixed(2)}
-  - Avg Focus per Interaction: ${
-      analytics.profile?.avgFocusPerInteraction ?? "N/A"
-    } seconds
+  - Avg Focus per Interaction: ${analytics.profile?.avgFocusPerInteraction ?? "N/A"
+      } seconds
   - Engagement Interactions: ${analytics.profile?.interactions ?? 0}
   `;
 
-  const safeSummaryText =
-  summaryText.length > 2000
-    ? summaryText.slice(0, 2000)
-    : summaryText;
+    const safeSummaryText =
+      summaryText.length > 2000
+        ? summaryText.slice(0, 2000)
+        : summaryText;
 
-  const summary = await NLPService.summarize(safeSummaryText);
+    const summary = await NLPService.summarize(safeSummaryText);
 
     if (
       !summary.summary ||
       summary.summary === "No summary generated." ||
       summary.summary.trim().length < 10
     ) {
-      summary.summary = `The student demonstrates an attention score of ${
-        analytics.profile?.attentionScore ?? "N/A"
-      }, with an average feedback rating of ${analytics.avgFeedback.toFixed(
-        2
-      )}. Their emotional trend appears stable, and they engage meaningfully with the content.`;
+      summary.summary = `The student demonstrates an attention score of ${analytics.profile?.attentionScore ?? "N/A"
+        }, with an average feedback rating of ${analytics.avgFeedback.toFixed(
+          2
+        )}. Their emotional trend appears stable, and they engage meaningfully with the content.`;
     }
 
     await logActivity(
@@ -183,7 +182,7 @@ export const TeacherService = {
     await this.validateTeacher(teacherId);
 
     const students = await prisma.user.findMany({
-      where: { createdBy: teacherId, role: "STUDENT" },
+      where: { createdBy: teacherId, role: userRole.Student },
     });
 
     if (!students.length)

@@ -6,8 +6,8 @@ import { getUserResponse } from "../utils/util";
 import { SigninDto, SignupDto } from "./auth.dto";
 import prisma from "../config/database";
 import { runAdaptationForUser } from "../features/adapt/adapt.service";
-import { get } from "http";
 import getUserIncludeByRole from "../utils/getUserDetailsbyRole";
+import { userRole } from "../config/core";
 
 export class AuthService {
   public constructor() { }
@@ -85,13 +85,13 @@ export class AuthService {
 
     const { password, ...sanitizedUser } = fullUserDetails as any;
 
-    if (sanitizedUser.role === "TEACHER") {
+    if (sanitizedUser.role === userRole.Teacher) {
       delete sanitizedUser.studentProfile;
     } else {
       delete sanitizedUser.teacherProfile;
     }
 
-    // 🟢 Log successful login
+    // Log successful login
     await prisma.activityLog.create({
       data: {
         userId: foundUser.id,

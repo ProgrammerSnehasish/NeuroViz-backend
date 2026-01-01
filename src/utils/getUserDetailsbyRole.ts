@@ -1,9 +1,10 @@
 import { Role } from "@prisma/client";
 import { group } from "console";
+import { userRole } from "../config/core";
 
 export default function getUserIncludeByRole(role: Role) {
   switch (role) {
-    case "STUDENT":
+    case userRole.Student:
       return {
         studentProfile: true,
         cognitive: true,
@@ -18,7 +19,7 @@ export default function getUserIncludeByRole(role: Role) {
         studentNotifications: true,
       };
 
-    case "TEACHER":
+    case userRole.Teacher:
       return {
         teacherProfile: true,
         mindmaps: true,
@@ -33,7 +34,7 @@ export default function getUserIncludeByRole(role: Role) {
         teacherNotifications: true,
       };
 
-    case "ADMIN":
+    case userRole.Admin:
       return {
         activityLogs: true,
         receivedMails: true,

@@ -1,3 +1,4 @@
+import { userRole } from "../../config/core";
 import prisma from "../../config/database";
 import createHttpError from "http-errors";
 
@@ -6,7 +7,7 @@ export const AdminService = {
   // Verify admin
   async validateAdmin(userId: string) {
     const admin = await prisma.user.findUnique({ where: { id: userId } });
-    if (!admin || admin.role !== "ADMIN")
+    if (!admin || admin.role !== userRole.Admin)
       throw createHttpError(403, "Access denied. Admin only.");
     await prisma.activityLog.create({
       data: {

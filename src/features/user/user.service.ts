@@ -5,6 +5,7 @@ import { UpdateUserDto } from "./user.dto";
 import { IUserDetails } from "./user.interface";
 import prisma from "../../config/database";
 import { hash } from "bcrypt";
+import { userRole } from "../../config/core";
 
 export class UserService {
   static async createUser(data: SignupDto): Promise<string> {
@@ -56,49 +57,49 @@ export class UserService {
   }
 
   async updateUser(data: UpdateUserDto, userId: string, tokenUserId: string): Promise<IUserDetails> {
-  await this.validateUserAccess(userId, tokenUserId);
+    await this.validateUserAccess(userId, tokenUserId);
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw createHttpError(404, "User does not exist");
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw createHttpError(404, "User does not exist");
 
-  // update basic user fields
-  const updateData: Record<string, any> = { updatedBy: userId };
-  if (data.firstName) updateData.firstName = data.firstName;
-  if (data.middleName !== undefined) updateData.middleName = data.middleName;
-  if (data.lastName) updateData.lastName = data.lastName;
-  if (data.dob !== undefined) updateData.dob = data.dob;
-  if (data.email) updateData.email = data.email;
-  if (data.homeTown) updateData.homeTown = data.homeTown;
-  if (data.currentCity) updateData.currentCity = data.currentCity;
-  if (data.gender) updateData.gender = data.gender;
-  if (data.profilePhoto) updateData.profilePhoto = data.profilePhoto;
-  if (data.password) updateData.password = await hash(data.password, 10);
+    // update basic user fields
+    const updateData: Record<string, any> = { updatedBy: userId };
+    if (data.firstName) updateData.firstName = data.firstName;
+    if (data.middleName !== undefined) updateData.middleName = data.middleName;
+    if (data.lastName) updateData.lastName = data.lastName;
+    if (data.dob !== undefined) updateData.dob = data.dob;
+    if (data.email) updateData.email = data.email;
+    if (data.homeTown) updateData.homeTown = data.homeTown;
+    if (data.currentCity) updateData.currentCity = data.currentCity;
+    if (data.gender) updateData.gender = data.gender;
+    if (data.profilePhoto) updateData.profilePhoto = data.profilePhoto;
+    if (data.password) updateData.password = await hash(data.password, 10);
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: updateData,
-  });
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
 
-  // now update linked profile based on role
-  if (updatedUser.role === "STUDENT") {
-    const studentProfileData: Record<string, any> = {};
+    // now update linked profile based on role
+    if (updatedUser.role === userRole.Student) {
+      const studentProfileData: Record<string, any> = {};
 
-    if ((data as any).education) studentProfileData.education = (data as any).education;
-    if ((data as any).affiliation) studentProfileData.affiliation = (data as any).affiliation;
-    if ((data as any).instituteName) studentProfileData.instituteName = (data as any).instituteName;
-    if ((data as any).guardianName) studentProfileData.guardianName = (data as any).guardianName; // ✅ fixed spelling
-    if ((data as any).neuroProblemType) studentProfileData.neuroProblemType = (data as any).neuroProblemType;
+      if ((data as any).education) studentProfileData.education = (data as any).education;
+      if ((data as any).affiliation) studentProfileData.affiliation = (data as any).affiliation;
+      if ((data as any).instituteName) studentProfileData.instituteName = (data as any).instituteName;
+      if ((data as any).guardianName) studentProfileData.guardianName = (data as any).guardianName; // ✅ fixed spelling
+      if ((data as any).neuroProblemType) studentProfileData.neuroProblemType = (data as any).neuroProblemType;
 
-    if (Object.keys(studentProfileData).length > 0) {
-      await prisma.studentProfile.upsert({
-        where: { userId },
-        update: studentProfileData,
-        create: { userId, ...studentProfileData },
-      });
+      if (Object.keys(studentProfileData).length > 0) {
+        await prisma.studentProfile.upsert({
+          where: { userId },
+          update: studentProfileData,
+          create: { userId, ...studentProfileData },
+        });
+      }
     }
-  }
 
-  if (updatedUser.role === "TEACHER") {
+    if (updatedUser.role === userRole.Teacher) {
     const teacherProfileData: Record<string, any> = {};
 
     if ((data as any).qualification) teacherProfileData.qualification = (data as any).qualification;
@@ -128,11 +129,11 @@ export class UserService {
 }
 
 
-  async deleteUser(userId: string, tokenUserId: string): Promise<void> {
+  async deleteUser(userId: string, tokenUserId: string): Promise < void> {
   await this.validateUserAccess(userId, tokenUserId);
-  
+
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw createHttpError(404, "User not found.");
+  if(!user) throw createHttpError(404, "User not found.");
 
   // Delete dependent (child) entities first
   await prisma.$transaction([

@@ -2,6 +2,7 @@ import prisma from "../../../config/database";
 import createHttpError from "http-errors";
 import axios from "axios";
 import { NLP } from "../../../utils/env";
+import { userRole } from "../../../config/core";
 
 /**
  * 🧠 Summarize text using Hugging Face API (facebook/bart-large-cnn)
@@ -49,11 +50,11 @@ export const TeacherReviewService = {
    */
   async validateTeacher(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.role !== "TEACHER") {
-      throw createHttpError(403, "Only teachers can review assignments.");
-    }
+    if (!user || user.role !== userRole.Teacher) {
+    throw createHttpError(403, "Only teachers can review assignments.");
+  }
     return user;
-  },
+},
 
   /**
    * 🧾 Review a student submission (manual or AI-assisted)
@@ -103,47 +104,47 @@ export const TeacherReviewService = {
     };
   },
 
-  /**
-   * 🧮 Get all submissions under a teacher’s assignments
-   */
-  async getSubmissionsForTeacher(userId: string) {
-    await this.validateTeacher(userId);
-    await logActivity(userId, "VIEW_SUBMISSIONS", `teacherId=${userId}`);
-    return prisma.assignmentSubmission.findMany({
-      where: { assignment: { teacherId: userId } },
-      include: {
-        student: { select: { id: true, firstName: true, lastName: true } },
-        assignment: { select: { id: true, title: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  },
+    /**
+     * 🧮 Get all submissions under a teacher’s assignments
+     */
+    async getSubmissionsForTeacher(userId: string) {
+  await this.validateTeacher(userId);
+  await logActivity(userId, "VIEW_SUBMISSIONS", `teacherId=${userId}`);
+  return prisma.assignmentSubmission.findMany({
+    where: { assignment: { teacherId: userId } },
+    include: {
+      student: { select: { id: true, firstName: true, lastName: true } },
+      assignment: { select: { id: true, title: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+},
 
   /**
    * 🧩 (Optional) Re-summarize an existing submission feedback
    * Useful if you want to trigger re-analysis later
    */
   async regenerateSummary(userId: string, submissionId: string) {
-    await this.validateTeacher(userId);
+  await this.validateTeacher(userId);
 
-    const submission = await prisma.assignmentSubmission.findUnique({
-      where: { id: submissionId },
-      include: { assignment: true },
-    });
+  const submission = await prisma.assignmentSubmission.findUnique({
+    where: { id: submissionId },
+    include: { assignment: true },
+  });
 
-    if (!submission) throw createHttpError(404, "Submission not found.");
-    if (submission.assignment.teacherId !== userId)
-      throw createHttpError(403, "Unauthorized access.");
+  if (!submission) throw createHttpError(404, "Submission not found.");
+  if (submission.assignment.teacherId !== userId)
+    throw createHttpError(403, "Unauthorized access.");
 
-    const summary = await summarizeText(submission.content);
-    await logActivity(
-      userId,
-      "REGENERATE_SUBMISSION_SUMMARY",
-      `submissionId=${submissionId}`
-    );
-    return prisma.assignmentSubmission.update({
-      where: { id: submissionId },
-      data: { feedback: `AI Summary: ${summary}` },
-    });
-  },
+  const summary = await summarizeText(submission.content);
+  await logActivity(
+    userId,
+    "REGENERATE_SUBMISSION_SUMMARY",
+    `submissionId=${submissionId}`
+  );
+  return prisma.assignmentSubmission.update({
+    where: { id: submissionId },
+    data: { feedback: `AI Summary: ${summary}` },
+  });
+},
 };

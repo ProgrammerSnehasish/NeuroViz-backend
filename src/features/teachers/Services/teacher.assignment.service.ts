@@ -1,6 +1,7 @@
 import createHttpError from "http-errors";
 import prisma from "../../../config/database";
 import { NLPService } from "../../nlp/nlp.service";
+import { userRole } from "../../../config/core";
 
 async function logActivity(
   userId: string | null | undefined,
@@ -25,11 +26,11 @@ async function logActivity(
 export const TeacherAssignmentService = {
   async validateTeacher(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.role !== "TEACHER")
-      throw createHttpError(403, "Only teachers can manage assignments.");
+    if (!user || user.role !== userRole.Teacher)
+    throw createHttpError(403, "Only teachers can manage assignments.");
     return user;
   },
-  
+
   async createAssignment(
     teacherId: string,
     title: string,
@@ -38,7 +39,7 @@ export const TeacherAssignmentService = {
   ) {
     await this.validateTeacher(teacherId);
     if ((!options?.studentIds || options.studentIds.length === 0) &&
-        (!options?.groupIds || options.groupIds.length === 0)) {
+      (!options?.groupIds || options.groupIds.length === 0)) {
       throw createHttpError(400, "You must assign to at least one student or group.");
     }
     const assignment = await prisma.assignment.create({
@@ -137,114 +138,114 @@ export const TeacherAssignmentService = {
    * ✅ Evaluate student submission using AI or manual
    */
   async evaluateAssignment(
-  studentText: string,
-  mode: "AUTO" | "MANUAL" = "AUTO"
-) {
-  if (mode === "MANUAL") {
-    return {
-      score: null,
-      sentiment: null,
-      toxicity: null,
-      summary: null,
-      feedback: "Awaiting manual evaluation.",
-    };
-  }
+    studentText: string,
+    mode: "AUTO" | "MANUAL" = "AUTO"
+  ) {
+    if (mode === "MANUAL") {
+      return {
+        score: null,
+        sentiment: null,
+        toxicity: null,
+        summary: null,
+        feedback: "Awaiting manual evaluation.",
+      };
+    }
 
-  const [sentiment, toxicity, summary] = await Promise.all([
-    NLPService.sentiment(studentText),
-    NLPService.detectToxicity(studentText),
-    NLPService.summarize(studentText),
-  ]);
+    const [sentiment, toxicity, summary] = await Promise.all([
+      NLPService.sentiment(studentText),
+      NLPService.detectToxicity(studentText),
+      NLPService.summarize(studentText),
+    ]);
 
-  // Fix toxicity false positives
-  let toxicityScore = toxicity?.score ?? 0;
-  if (studentText.length < 10) toxicityScore = 0;
-  if (!/[a-zA-Z]/.test(studentText)) toxicityScore = 0;
-  if (toxicityScore > 0.95 && !/\s/.test(studentText)) toxicityScore = 0;
+    // Fix toxicity false positives
+    let toxicityScore = toxicity?.score ?? 0;
+    if (studentText.length < 10) toxicityScore = 0;
+    if (!/[a-zA-Z]/.test(studentText)) toxicityScore = 0;
+    if (toxicityScore > 0.95 && !/\s/.test(studentText)) toxicityScore = 0;
 
-  let score = 70;
-  if (sentiment?.label?.includes("POSITIVE")) score += 10;
-  if (sentiment?.label?.includes("NEGATIVE")) score -= 10;
-  if (toxicityScore > 0.5) score -= 20;
+    let score = 70;
+    if (sentiment?.label?.includes("POSITIVE")) score += 10;
+    if (sentiment?.label?.includes("NEGATIVE")) score -= 10;
+    if (toxicityScore > 0.5) score -= 20;
 
-  const feedback = `
+    const feedback = `
 ${summary?.summary ?? "No summary available."}
 Tone: ${sentiment?.label}
 Toxicity: ${(toxicityScore * 100).toFixed(2)}%
 Final AI Grade: ${score}/100.
 `;
 
-  await logActivity(
-    null,
-    "EVALUATE_ASSIGNMENT_AUTO",
-    `score=${score}, sentiment=${sentiment?.label}, toxicity=${toxicityScore.toFixed(2)}`
-  );
+    await logActivity(
+      null,
+      "EVALUATE_ASSIGNMENT_AUTO",
+      `score=${score}, sentiment=${sentiment?.label}, toxicity=${toxicityScore.toFixed(2)}`
+    );
 
-  return {
-    score,
-    sentiment,
-    toxicity: { ...toxicity, score: toxicityScore },
-    summary,
-    feedback,
-  };
-},
+    return {
+      score,
+      sentiment,
+      toxicity: { ...toxicity, score: toxicityScore },
+      summary,
+      feedback,
+    };
+  },
 
   /**
    * ✅ Evaluate and store submission result
    */
-async evaluateSubmission(
-  teacherId: string,
-  submissionId: string,
-  mode: "AUTO" | "MANUAL" = "AUTO",
-  manual: { grade?: number; feedback?: string } = {}
-) {
-  await this.validateTeacher(teacherId);
+  async evaluateSubmission(
+    teacherId: string,
+    submissionId: string,
+    mode: "AUTO" | "MANUAL" = "AUTO",
+    manual: { grade?: number; feedback?: string } = {}
+  ) {
+    await this.validateTeacher(teacherId);
 
-  const submission = await prisma.assignmentSubmission.findUnique({
-    where: { id: submissionId },
-    include: { assignment: true },
-  });
+    const submission = await prisma.assignmentSubmission.findUnique({
+      where: { id: submissionId },
+      include: { assignment: true },
+    });
 
-  if (!submission || submission.assignment.teacherId !== teacherId)
-    throw createHttpError(403, "Unauthorized to evaluate this submission.");
+    if (!submission || submission.assignment.teacherId !== teacherId)
+      throw createHttpError(403, "Unauthorized to evaluate this submission.");
 
-  let result;
+    let result;
 
-  // MANUAL MODE
-  if (mode === "MANUAL") {
-    if (manual.grade === undefined || !manual.feedback)
-      throw createHttpError(400, "Manual evaluation requires grade and feedback.");
+    // MANUAL MODE
+    if (mode === "MANUAL") {
+      if (manual.grade === undefined || !manual.feedback)
+        throw createHttpError(400, "Manual evaluation requires grade and feedback.");
 
-    result = {
-      score: manual.grade,
-      sentiment: null,
-      toxicity: null,
-      summary: null,
-      feedback: manual.feedback,
-    };
-  } else {
-    // AUTO MODE
-    result = await this.evaluateAssignment(submission.content, "AUTO");
-  }
+      result = {
+        score: manual.grade,
+        sentiment: null,
+        toxicity: null,
+        summary: null,
+        feedback: manual.feedback,
+      };
+    } else {
+      // AUTO MODE
+      result = await this.evaluateAssignment(submission.content, "AUTO");
+    }
 
-  await prisma.assignmentSubmission.update({
-    where: { id: submissionId },
-    data: {
-      grade: result.score ?? undefined,
-      feedback: result.feedback,
-      sentiment: result.sentiment?.label ?? undefined,
-      sentimentScore: result.sentiment?.score ?? undefined,
-    },
-  });
+    await prisma.assignmentSubmission.update({
+      where: { id: submissionId },
+      data: {
+        grade: result.score ?? undefined,
+        feedback: result.feedback,
+        sentiment: result.sentiment?.label ?? undefined,
+        sentimentScore: result.sentiment?.score ?? undefined,
+      },
+    });
 
-  await logActivity(
-    teacherId,
-    "EVALUATE_SUBMISSION",
-    `submissionId=${submissionId}, mode=${mode}, score=${result.score}`
-  );
+    await logActivity(
+      teacherId,
+      "EVALUATE_SUBMISSION",
+      `submissionId=${submissionId}, mode=${mode}, score=${result.score}`
+    );
 
-  return { message: "Evaluation completed.", result };
-},
+    return { message: "Evaluation completed.", result };
+  },
 
   /**
    * ✅ Get submissions for a student (under this teacher)
@@ -253,7 +254,7 @@ async evaluateSubmission(
     await this.validateTeacher(teacherId);
 
     const student = await prisma.user.findFirst({
-      where: { id: studentId, createdBy: teacherId, role: "STUDENT" },
+      where: { id: studentId, createdBy: teacherId, role: userRole.Student },
     });
     if (!student) throw createHttpError(403, "Student not found under your class.");
     await logActivity(
@@ -300,9 +301,9 @@ async evaluateSubmission(
     };
   },
 
-    /**
-   * ✅ Update an assignment (title, description, student/group assignment, etc.)
-   */
+  /**
+ * ✅ Update an assignment (title, description, student/group assignment, etc.)
+ */
   async updateAssignment(
     teacherId: string,
     assignmentId: string,

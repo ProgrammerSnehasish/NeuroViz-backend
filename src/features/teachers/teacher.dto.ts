@@ -8,6 +8,7 @@ import {
   Min,
   Max,
 } from "class-validator";
+import { userRole } from "../../config/core";
 
 /**
  * 🎓 Assignment creation DTO
@@ -182,7 +183,7 @@ export class SearchQueryDto {
 
   @IsOptional()
   @IsString()
-  role?: "TEACHER" | "STUDENT";
+  role?: userRole.Teacher | userRole.Student;
 
   @IsOptional()
   @IsNumber()

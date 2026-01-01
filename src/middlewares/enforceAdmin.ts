@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { userRole } from "../config/core";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -11,11 +12,11 @@ interface AuthenticatedRequest extends Request {
 export function enforceAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     if (!req.user) {
-      return res.status(401).json({success:false, message: "User not authenticated" });
+      return res.status(401).json({ success: false, message: "User not authenticated" });
     }
 
-    if (req.user.role !== "ADMIN") {
-      return res.status(403).json({success: false, message: "Admins only" });
+    if (req.user.role !== userRole.Admin) {
+      return res.status(403).json({ success: false, message: "Admins only" });
     }
 
     // User is authenticated and is an admin

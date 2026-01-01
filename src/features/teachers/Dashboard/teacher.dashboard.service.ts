@@ -1,6 +1,7 @@
 import createHttpError from "http-errors";
 import prisma from "../../../config/database";
 import { NLPService } from "../../nlp/nlp.service";
+import { userRole } from "../../../config/core";
 
 async function logActivity(
   userId: string | null | undefined,
@@ -27,8 +28,8 @@ export const TeacherDashboardService = {
     });
 
     if (!user) throw createHttpError(404, "User not found");
-    if (user.role !== "TEACHER" && !user.teacherProfile)
-      throw createHttpError(403, "Access denied: not a teacher.");
+    if (user.role !== userRole.Teacher && !user.teacherProfile)
+    throw createHttpError(403, "Access denied: not a teacher.");
 
     return user;
   },
@@ -39,16 +40,16 @@ export const TeacherDashboardService = {
 
     // Find all students created/linked by this teacher
     const students = await prisma.user.findMany({
-  where: {
-    role: "STUDENT",
-    OR: [
-      { createdBy: teacherId },
-      { createdBy: null },
-      { createdBy: "" }, // for students with empty string createdBy
-    ],
-  },
-  select: { id: true, firstName: true, lastName: true },
-});
+      where: {
+        role: userRole.Student,
+        OR: [
+          { createdBy: teacherId },
+          { createdBy: null },
+          { createdBy: "" }, // for students with empty string createdBy
+        ],
+      },
+      select: { id: true, firstName: true, lastName: true },
+    });
 
 
     if (!students.length)
@@ -93,7 +94,7 @@ export const TeacherDashboardService = {
   },
 
   //Analytics Services
-   async getStudentProgress(teacherId: string, studentId: string) {
+  async getStudentProgress(teacherId: string, studentId: string) {
     await this.validateTeacher(teacherId);
 
     const [emotions, cognition, feedbacks] = await Promise.all([
@@ -110,54 +111,54 @@ export const TeacherDashboardService = {
   },
 
   async getClassHeatmap(teacherId: string) {
-  await this.validateTeacher(teacherId);
+    await this.validateTeacher(teacherId);
 
-  const students = await prisma.user.findMany({
-    where: {
-      role: "STUDENT",
-      OR: [
-        { createdBy: teacherId },
-        { createdBy: null },
-        { createdBy: "" },
-        { studentTeachers: { some: { teacherId } } }, // ✅ include linked students too
-      ],
-    },
-    select: { id: true },
-  });
+    const students = await prisma.user.findMany({
+      where: {
+        role: userRole.Student,
+        OR: [
+          { createdBy: teacherId },
+          { createdBy: null },
+          { createdBy: "" },
+          { studentTeachers: { some: { teacherId } } }, // ✅ include linked students too
+        ],
+      },
+      select: { id: true },
+    });
 
-  const studentIds = students.map((s) => s.id);
+    const studentIds = students.map((s) => s.id);
 
-  if (!studentIds.length)
-    return { heatmap: [], avgCognitiveEngagement: 0 };
+    if (!studentIds.length)
+      return { heatmap: [], avgCognitiveEngagement: 0 };
 
-  const [emotions, cognition] = await Promise.all([
-    prisma.emotionLog.findMany({ where: { userId: { in: studentIds } } }),
-    prisma.cognitiveProfile.findMany({ where: { userId: { in: studentIds } } }),
-  ]);
+    const [emotions, cognition] = await Promise.all([
+      prisma.emotionLog.findMany({ where: { userId: { in: studentIds } } }),
+      prisma.cognitiveProfile.findMany({ where: { userId: { in: studentIds } } }),
+    ]);
 
-  const emotionCounts = emotions.reduce((acc: Record<string, number>, e) => {
-    acc[e.emotion] = (acc[e.emotion] || 0) + 1;
-    return acc;
-  }, {});
+    const emotionCounts = emotions.reduce((acc: Record<string, number>, e) => {
+      acc[e.emotion] = (acc[e.emotion] || 0) + 1;
+      return acc;
+    }, {});
 
-  const avgCognitiveEngagement =
-    cognition.reduce((a, c) => a + (c.attentionScore ?? 0), 0) /
-    (cognition.length || 1);
+    const avgCognitiveEngagement =
+      cognition.reduce((a, c) => a + (c.attentionScore ?? 0), 0) /
+      (cognition.length || 1);
 
-  await logActivity(
-    teacherId,
-    "VIEW_CLASS_HEATMAP",
-    `students=${studentIds.length}`
-  );
+    await logActivity(
+      teacherId,
+      "VIEW_CLASS_HEATMAP",
+      `students=${studentIds.length}`
+    );
 
-  return {
-    heatmap: Object.entries(emotionCounts).map(([emotion, count]) => ({
-      emotion,
-      count,
-    })),
-    avgCognitiveEngagement: Number(avgCognitiveEngagement.toFixed(2)),
-  };
-},
+    return {
+      heatmap: Object.entries(emotionCounts).map(([emotion, count]) => ({
+        emotion,
+        count,
+      })),
+      avgCognitiveEngagement: Number(avgCognitiveEngagement.toFixed(2)),
+    };
+  },
   async getStudentReport(teacherId: string, studentId: string) {
     const { emotions, cognition, feedbacks } = await this.getStudentProgress(teacherId, studentId);
 
@@ -203,7 +204,7 @@ export const TeacherDashboardService = {
   async getClassStrategy(teacherId: string) {
     await this.validateTeacher(teacherId);
 
-    const students = await prisma.user.findMany({ where: { createdBy: teacherId, role: "STUDENT" }, select: { id: true } });
+    const students = await prisma.user.findMany({ where: { createdBy: teacherId, role: userRole.Student }, select: { id: true } });
     const studentIds = students.map(s => s.id);
     const cognition = await prisma.cognitiveProfile.findMany({ where: { userId: { in: studentIds } } });
 
@@ -222,58 +223,58 @@ export const TeacherDashboardService = {
   },
   // Student Comparison
   async compareStudents(teacherId: string) {
-  await this.validateTeacher(teacherId);
+    await this.validateTeacher(teacherId);
 
-  // Fetch students linked to this teacher, including linked students
-  const students = await prisma.user.findMany({
-    where: {
-      role: "STUDENT",
-      OR: [
-        { createdBy: teacherId },
-        { createdBy: null },
-        { createdBy: "" },
-        { studentTeachers: { some: { teacherId } } },
-      ],
-    },
-    include: {
-      cognitive: true,
-      feedbacks: true,
-    },
-  });
+    // Fetch students linked to this teacher, including linked students
+    const students = await prisma.user.findMany({
+      where: {
+        role: userRole.Student,
+        OR: [
+          { createdBy: teacherId },
+          { createdBy: null },
+          { createdBy: "" },
+          { studentTeachers: { some: { teacherId } } },
+        ],
+      },
+      include: {
+        cognitive: true,
+        feedbacks: true,
+      },
+    });
 
-  if (!students.length) {
-    throw createHttpError(404, "No students found under this teacher.");
-  }
+    if (!students.length) {
+      throw createHttpError(404, "No students found under this teacher.");
+    }
 
-  const studentComparisons = students.map((student) => {
-    const avgRating =
-      student.feedbacks.reduce((a, f) => a + (f.rating ?? 0), 0) /
-      (student.feedbacks.length || 1);
+    const studentComparisons = students.map((student) => {
+      const avgRating =
+        student.feedbacks.reduce((a, f) => a + (f.rating ?? 0), 0) /
+        (student.feedbacks.length || 1);
 
-    return {
-      id: student.id,
-      name: `${student.firstName} ${student.lastName}`,
-      attention: student.cognitive?.attentionScore ?? null,
-      focusDuration: student.cognitive?.focusDuration ?? null,
-      avgFeedback: Number(avgRating.toFixed(2)),
-    };
-  });
+      return {
+        id: student.id,
+        name: `${student.firstName} ${student.lastName}`,
+        attention: student.cognitive?.attentionScore ?? null,
+        focusDuration: student.cognitive?.focusDuration ?? null,
+        avgFeedback: Number(avgRating.toFixed(2)),
+      };
+    });
 
-  const prompt = `
+    const prompt = `
     Compare and summarize these students' performance based on attention,
     focus duration, and feedback averages:
     ${JSON.stringify(studentComparisons, null, 2)}.
     Highlight top performers, improvement areas, and any overall class trends.
   `;
 
-  const aiSummary = await NLPService.summarize(prompt);
-  await logActivity(
-    teacherId,
-    "COMPARE_STUDENTS",
-    `students=${students.length}`
-  );
-  return { students: studentComparisons, aiSummary };
-},
+    const aiSummary = await NLPService.summarize(prompt);
+    await logActivity(
+      teacherId,
+      "COMPARE_STUDENTS",
+      `students=${students.length}`
+    );
+    return { students: studentComparisons, aiSummary };
+  },
   // AI-Based Adaptive Insights for Teaching
   async getAdaptiveTeachingInsights(teacherId: string) {
     const overview = await this.getDashboardOverview(teacherId);

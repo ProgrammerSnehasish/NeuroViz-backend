@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import createHttpError from "http-errors";
 import prisma from "../config/database";
+import { userRole } from "../config/core";
 
 export const enforceTeacher = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -19,15 +20,15 @@ export const enforceTeacher = async (req: Request, res: Response, next: NextFunc
       throw createHttpError(401, "Invalid token user");
     }
 
-    if (found.role !== "TEACHER") {
-      throw createHttpError(403, "Teacher access only.");
-    }
+    if (found.role !== userRole.Teacher) {
+    throw createHttpError(403, "Teacher access only.");
+  }
 
     req.body.teacherId = found.id;
-    req.params.teacherId = found.id;
+  req.params.teacherId = found.id;
 
-    next();
-  } catch (err) {
-    next(err);
-  }
+  next();
+} catch (err) {
+  next(err);
+}
 };

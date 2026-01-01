@@ -3,6 +3,7 @@ import prisma from "../../../config/database";
 import crypto, { randomBytes } from "crypto";
 import bcrypt from "bcrypt";
 import { sendMail } from "../../../utils/mailer";
+import { userRole } from "../../../config/core";
 
 async function logActivity(
   userId: string | null | undefined,
@@ -31,13 +32,13 @@ export const TeacherStudentService = {
    */
   async validateTeacher(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.role !== "TEACHER") {
-      await logActivity(userId, "unauthorized_access_attempt", "Non-teacher tried to access teacher service");
-      throw createHttpError(403, "Only teachers can manage assignments.");
-    }
+    if (!user || user.role !== userRole.Teacher) {
+    await logActivity(userId, "unauthorized_access_attempt", "Non-teacher tried to access teacher service");
+    throw createHttpError(403, "Only teachers can manage assignments.");
+  }
     await logActivity(userId, "teacher_validated", "Teacher access validated");
     return user;
-  },
+},
 
   /**
    * 🧩 Create a new group under a teacher
@@ -48,130 +49,130 @@ export const TeacherStudentService = {
     return prisma.group.create({ data: { name, description, teacherId } });
   },
 
-  async updateGroup(
-    teacherId: string,
-    groupId: string,
-    updateData: { name?: string; description?: string }
-  ) {
-    await this.validateTeacher(teacherId);
+    async updateGroup(
+      teacherId: string,
+      groupId: string,
+      updateData: { name?: string; description?: string }
+    ) {
+  await this.validateTeacher(teacherId);
 
-    const group = await prisma.group.findUnique({ where: { id: groupId } });
-    if (!group || group.teacherId !== teacherId)
-      throw createHttpError(404, "Group not found or unauthorized.");
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  if (!group || group.teacherId !== teacherId)
+    throw createHttpError(404, "Group not found or unauthorized.");
 
-    const updatedGroup = await prisma.group.update({
-      where: { id: groupId },
-      data: {
-        name: updateData.name ?? group.name,
-        description: updateData.description ?? group.description,
-      },
-    });
-    await logActivity(teacherId, "GROUP_UPDATE", `groupId=${groupId}`);
-    return updatedGroup;
-  },
+  const updatedGroup = await prisma.group.update({
+    where: { id: groupId },
+    data: {
+      name: updateData.name ?? group.name,
+      description: updateData.description ?? group.description,
+    },
+  });
+  await logActivity(teacherId, "GROUP_UPDATE", `groupId=${groupId}`);
+  return updatedGroup;
+},
 
   /**
    * 🗑️ Delete a group (and optionally its members)
    */
   async deleteGroup(teacherId: string, groupId: string) {
-    await this.validateTeacher(teacherId);
+  await this.validateTeacher(teacherId);
 
-    const group = await prisma.group.findUnique({ where: { id: groupId } });
-    if (!group || group.teacherId !== teacherId)
-      throw createHttpError(404, "Group not found or unauthorized.");
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  if (!group || group.teacherId !== teacherId)
+    throw createHttpError(404, "Group not found or unauthorized.");
 
-    // Delete related group members first (optional, depending on schema)
-    await prisma.groupMember.deleteMany({ where: { groupId } });
+  // Delete related group members first (optional, depending on schema)
+  await prisma.groupMember.deleteMany({ where: { groupId } });
 
-    await prisma.group.delete({ where: { id: groupId } });
-    await logActivity(teacherId, "GROUP_DELETE", `groupId=${groupId}`);
-    return { message: "Group deleted successfully." };
-  },
-  
+  await prisma.group.delete({ where: { id: groupId } });
+  await logActivity(teacherId, "GROUP_DELETE", `groupId=${groupId}`);
+  return { message: "Group deleted successfully." };
+},
+
   /**
    * 🔍 Search for students (by name or email)
    */
   async searchStudents(teacherId: string, query: string) {
-    await this.validateTeacher(teacherId);
+  await this.validateTeacher(teacherId);
 
-    return prisma.user.findMany({
-      where: {
-        role: "STUDENT",
-        OR: [
-          { firstName: { contains: query, mode: "insensitive" } },
-          { lastName: { contains: query, mode: "insensitive" } },
-          { email: { contains: query, mode: "insensitive" } },
-        ],
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        createdBy: true,
-      },
-      take: 20,
-    });
-  },
+  return prisma.user.findMany({
+    where: {
+      role: userRole.Student,
+      OR: [
+        { firstName: { contains: query, mode: "insensitive" } },
+        { lastName: { contains: query, mode: "insensitive" } },
+        { email: { contains: query, mode: "insensitive" } },
+      ],
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      createdBy: true,
+    },
+    take: 20,
+  });
+},
 
   /**
    * 🧾 Register a new student under the teacher
    * Generates a temporary random password (hashed)
    */
   async registerStudent(
-    teacherId: string,
-    studentData: { firstName: string; lastName: string; email: string }
-  ) {
-    await this.validateTeacher(teacherId);
+  teacherId: string,
+  studentData: { firstName: string; lastName: string; email: string }
+) {
+  await this.validateTeacher(teacherId);
 
-    // ✅ Check if the student already exists
-    const existingStudent = await prisma.user.findUnique({
-      where: { email: studentData.email },
+  // ✅ Check if the student already exists
+  const existingStudent = await prisma.user.findUnique({
+    where: { email: studentData.email },
+  });
+
+  // --- Case 1: Existing Student ---
+  if (existingStudent) {
+    if (existingStudent.role !== userRole.Student) {
+      throw createHttpError(400, "This email belongs to a non-student user.");
+    }
+
+    // Check if already linked with this teacher
+    const alreadyLinked = await prisma.teacherStudent.findFirst({
+      where: { teacherId, studentId: existingStudent.id },
     });
 
-    // --- Case 1: Existing Student ---
-    if (existingStudent) {
-      if (existingStudent.role !== "STUDENT") {
-        throw createHttpError(400, "This email belongs to a non-student user.");
-      }
+    if (alreadyLinked) {
+      await logActivity(teacherId, "STUDENT_REGISTER_ATTEMPT", `Student ${existingStudent.id} already linked`);
+      return {
+        message: "Student already registered under this teacher.",
+        linked: false,
+        student: existingStudent,
+      };
+    }
 
-      // Check if already linked with this teacher
-      const alreadyLinked = await prisma.teacherStudent.findFirst({
-        where: { teacherId, studentId: existingStudent.id },
-      });
+    // ✅ Link student to teacher
+    await prisma.teacherStudent.create({
+      data: {
+        teacherId,
+        studentId: existingStudent.id,
+      },
+    });
 
-      if (alreadyLinked) {
-        await logActivity(teacherId, "STUDENT_REGISTER_ATTEMPT", `Student ${existingStudent.id} already linked`);
-        return {
-          message: "Student already registered under this teacher.",
-          linked: false,
-          student: existingStudent,
-        };
-      }
+    // ✅ Create notification for student
+    await prisma.notification.create({
+      data: {
+        studentId: existingStudent.id,
+        title: "New Teacher Connection",
+        message: `You have been added under teacher ${teacherId}.`,
+        type: "INFO",
+      },
+    });
 
-      // ✅ Link student to teacher
-      await prisma.teacherStudent.create({
-        data: {
-          teacherId,
-          studentId: existingStudent.id,
-        },
-      });
-
-      // ✅ Create notification for student
-      await prisma.notification.create({
-        data: {
-          studentId: existingStudent.id,
-          title: "New Teacher Connection",
-          message: `You have been added under teacher ${teacherId}.`,
-          type: "INFO",
-        },
-      });
-
-      // ✅ Send notification email (optional)
-      await sendMail({
-        to: existingStudent.email,
-        subject: "You’ve been added under a new teacher",
-        html: `
+    // ✅ Send notification email (optional)
+    await sendMail({
+      to: existingStudent.email,
+      subject: "You’ve been added under a new teacher",
+      html: `
           <h2>Hi ${existingStudent.firstName},</h2>
           <p>Your teacher has added you to their class on <strong>NeuroViz</strong>.</p>
           <p>You can now access your assignments and resources from your dashboard.</p>
@@ -179,43 +180,43 @@ export const TeacherStudentService = {
 
           <p><i>If you are not the intended recipient of this email, please ignore this message. We sincerely apologize for the error.</i></p>
         `,
-        teacherId,
-        studentId: existingStudent.id,
-      });
-      await logActivity(teacherId, "STUDENT_REGISTERED", `Student ${existingStudent.id} linked`);
-      return {
-        message: "Existing student linked and notified successfully.",
-        linked: true,
-        student: existingStudent,
-      };
-    }
-
-    // --- Case 2: New Student (create + email temporary password) ---
-    const tempPassword = randomBytes(8).toString("hex");
-    const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-    const newStudent = await prisma.user.create({
-      data: {
-        ...studentData,
-        role: "STUDENT",
-        createdBy: teacherId,
-        password: hashedPassword,
-      },
+      teacherId,
+      studentId: existingStudent.id,
     });
+    await logActivity(teacherId, "STUDENT_REGISTERED", `Student ${existingStudent.id} linked`);
+    return {
+      message: "Existing student linked and notified successfully.",
+      linked: true,
+      student: existingStudent,
+    };
+  }
 
-    // ✅ Link to teacher
-    await prisma.teacherStudent.create({
-      data: {
-        teacherId,
-        studentId: newStudent.id,
-      },
-    });
+  // --- Case 2: New Student (create + email temporary password) ---
+  const tempPassword = randomBytes(8).toString("hex");
+  const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
-    // ✅ Send welcome mail
-    await sendMail({
-      to: newStudent.email,
-      subject: "Welcome to NeuroViz!",
-      html: `
+  const newStudent = await prisma.user.create({
+    data: {
+      ...studentData,
+      role: userRole.Student,
+      createdBy: teacherId,
+      password: hashedPassword,
+    },
+  });
+
+  // ✅ Link to teacher
+  await prisma.teacherStudent.create({
+    data: {
+      teacherId,
+      studentId: newStudent.id,
+    },
+  });
+
+  // ✅ Send welcome mail
+  await sendMail({
+    to: newStudent.email,
+    subject: "Welcome to NeuroViz!",
+    html: `
         <h2>Welcome, ${newStudent.firstName}!</h2>
         <p>Your teacher added you to NeuroViz.</p>
         <p>You can log in using this temporary password:</p>
@@ -224,74 +225,74 @@ export const TeacherStudentService = {
 
         <p><i>If you are not the intended recipient of this email, please ignore this message. We sincerely apologize for the error.</i></p>
       `,
-      teacherId,
-      studentId: newStudent.id,
-    });
+    teacherId,
+    studentId: newStudent.id,
+  });
 
-    // ✅ Create notification for new student
-    await prisma.notification.create({
-      data: {
-        studentId: newStudent.id,
-        title: "Welcome to NeuroViz!",
-        message: "Your teacher has registered you on NeuroViz. Check your email for login details.",
-        type: "WELCOME",
-      },
-    });
-    await logActivity(teacherId, "STUDENT_REGISTERED", `New student ${newStudent.id} created and linked`);
-    return {
-      message: "New student registered and notified successfully.",
-      linked: true,
-      student: newStudent,
-    };
-  },
+  // ✅ Create notification for new student
+  await prisma.notification.create({
+    data: {
+      studentId: newStudent.id,
+      title: "Welcome to NeuroViz!",
+      message: "Your teacher has registered you on NeuroViz. Check your email for login details.",
+      type: "WELCOME",
+    },
+  });
+  await logActivity(teacherId, "STUDENT_REGISTERED", `New student ${newStudent.id} created and linked`);
+  return {
+    message: "New student registered and notified successfully.",
+    linked: true,
+    student: newStudent,
+  };
+},
 
   /**
    * 👥 Add multiple students to an existing group
    */
   async addMembersToGroup(teacherId: string, groupId: string, studentIds: string[]) {
-    await this.validateTeacher(teacherId);
+  await this.validateTeacher(teacherId);
 
-    const group = await prisma.group.findUnique({ where: { id: groupId } });
-    if (!group || group.teacherId !== teacherId)
-      throw createHttpError(404, "Group not found or unauthorized.");
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  if (!group || group.teacherId !== teacherId)
+    throw createHttpError(404, "Group not found or unauthorized.");
 
-    const students = await prisma.user.findMany({
-      where: { id: { in: studentIds }, role: "STUDENT" },
-    });
-    if (!students.length) throw createHttpError(400, "No valid students provided.");
-    await logActivity(teacherId, "GROUP_ADD_MEMBERS", `groupId=${groupId}, count=${students.length}`);
-    return prisma.$transaction(
-      students.map((s) =>
-        prisma.groupMember.upsert({
-          where: { compositeId: { groupId, userId: s.id } }, // Assuming composite unique
-          create: { groupId, userId: s.id },
-          update: {},
-        })
-      )
-    );
-  },
+  const students = await prisma.user.findMany({
+    where: { id: { in: studentIds }, role: userRole.Student },
+  });
+  if (!students.length) throw createHttpError(400, "No valid students provided.");
+  await logActivity(teacherId, "GROUP_ADD_MEMBERS", `groupId=${groupId}, count=${students.length}`);
+  return prisma.$transaction(
+    students.map((s) =>
+      prisma.groupMember.upsert({
+        where: { compositeId: { groupId, userId: s.id } }, // Assuming composite unique
+        create: { groupId, userId: s.id },
+        update: {},
+      })
+    )
+  );
+},
 
   /**
    * 👤 Add a single student to an existing group
    */
   async addStudentToGroup(teacherId: string, groupId: string, studentId: string) {
-    await this.validateTeacher(teacherId);
+  await this.validateTeacher(teacherId);
 
-    const group = await prisma.group.findUnique({ where: { id: groupId } });
-    if (!group || group.teacherId !== teacherId)
-      throw createHttpError(403, "Group not found or unauthorized.");
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  if (!group || group.teacherId !== teacherId)
+    throw createHttpError(403, "Group not found or unauthorized.");
 
-    const student = await prisma.user.findFirst({
-      where: { id: studentId, role: "STUDENT" },
-    });
-    if (!student) throw createHttpError(404, "Student not found.");
-    await logActivity(teacherId, "GROUP_ADD_STUDENT", `groupId=${groupId}, studentId=${studentId}`);
-    return prisma.groupMember.upsert({
-      where: { compositeId: { groupId, userId: studentId } },
-      create: { groupId, userId: studentId },
-      update: {},
-    });
-  },
+  const student = await prisma.user.findFirst({
+    where: { id: studentId, role: userRole.Student },
+  });
+  if (!student) throw createHttpError(404, "Student not found.");
+  await logActivity(teacherId, "GROUP_ADD_STUDENT", `groupId=${groupId}, studentId=${studentId}`);
+  return prisma.groupMember.upsert({
+    where: { compositeId: { groupId, userId: studentId } },
+    create: { groupId, userId: studentId },
+    update: {},
+  });
+},
 
   /**
    * 📩 Invite a student via email (invite link)
@@ -354,7 +355,7 @@ async removeStudentFromGroup(teacherId: string, groupId: string, studentId: stri
   const student = await prisma.user.findUnique({
     where: { id: studentId },
   });
-  if (!student || student.role !== "STUDENT")
+  if (!student || student.role !== userRole.Student)
     throw createHttpError(404, "Student not found.");
 
   // Check membership
@@ -394,7 +395,7 @@ async removeStudentFromGroup(teacherId: string, groupId: string, studentId: stri
 
   // If user exists and is a STUDENT -> add to group (if not already)
   if (existingUser) {
-    if (existingUser.role !== "STUDENT") {
+    if (existingUser.role !== userRole.Student) {
       throw createHttpError(400, "This email belongs to a non-student user.");
     }
 

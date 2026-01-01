@@ -19,8 +19,9 @@ export enum NeuroProblemType {
 }
 
 export enum userRole {
-    Student = "Student",
-    Teacher = "Teacher"
+    Student = "STUDENT",
+    Teacher = "TEACHER",
+    Admin = "ADMIN"
 }
 
 export enum Education {
@@ -47,7 +48,7 @@ export enum Affiliation {
 }
 
 export enum Qualification {
-    default ="Not mentioned yet",
+    default = "Not mentioned yet",
     B_Tech = "B.tech",
     B_A = "B.A",
     B_Sc = "B.Sc",
