@@ -60,3 +60,20 @@ export enum Qualification {
     M_Phil = "M_Phil",
     PhD = "PhD"
 }
+
+export enum EvaluationMode {
+  Manual = "MANUAL",
+  Auto = "AUTO"
+}
+
+export enum BehaviorType {
+  Page_Focus = "PAGE_FOCUS",
+    Mouse_Click = "MOUSE_CLICK",
+    Scroll = "SCROLL",
+    Keystroke = "KEYSTROKE",
+    Eye_Movement = "EYE_MOVEMENT",
+    Emotion_Change = "EMOTION_CHANGE",
+    Click = "CLICK",
+    Hover = "HOVER",
+    IDLE = "IDLE",
+}

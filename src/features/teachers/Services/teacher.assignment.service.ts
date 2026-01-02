@@ -1,7 +1,8 @@
 import createHttpError from "http-errors";
 import prisma from "../../../config/database";
 import { NLPService } from "../../nlp/nlp.service";
-import { userRole } from "../../../config/core";
+import { EvaluationMode, userRole } from "../../../config/core";
+import e from "express";
 
 async function logActivity(
   userId: string | null | undefined,
@@ -139,9 +140,9 @@ export const TeacherAssignmentService = {
    */
   async evaluateAssignment(
     studentText: string,
-    mode: "AUTO" | "MANUAL" = "AUTO"
+    mode: EvaluationMode.Manual | EvaluationMode.Auto = EvaluationMode.Auto
   ) {
-    if (mode === "MANUAL") {
+    if (mode === EvaluationMode.Manual) {
       return {
         score: null,
         sentiment: null,
@@ -196,7 +197,7 @@ Final AI Grade: ${score}/100.
   async evaluateSubmission(
     teacherId: string,
     submissionId: string,
-    mode: "AUTO" | "MANUAL" = "AUTO",
+    mode: EvaluationMode.Manual | EvaluationMode.Auto = EvaluationMode.Auto,
     manual: { grade?: number; feedback?: string } = {}
   ) {
     await this.validateTeacher(teacherId);
@@ -212,7 +213,7 @@ Final AI Grade: ${score}/100.
     let result;
 
     // MANUAL MODE
-    if (mode === "MANUAL") {
+    if (mode === EvaluationMode.Manual) {
       if (manual.grade === undefined || !manual.feedback)
         throw createHttpError(400, "Manual evaluation requires grade and feedback.");
 
@@ -225,7 +226,7 @@ Final AI Grade: ${score}/100.
       };
     } else {
       // AUTO MODE
-      result = await this.evaluateAssignment(submission.content, "AUTO");
+      result = await this.evaluateAssignment(submission.content, EvaluationMode.Auto);
     }
 
     await prisma.assignmentSubmission.update({
@@ -312,7 +313,7 @@ Final AI Grade: ${score}/100.
       description?: string;
       studentIds?: string[];
       groupIds?: string[];
-      evaluationMode?: "AUTO" | "MANUAL";
+      evaluationMode?: EvaluationMode.Auto | EvaluationMode.Manual;
     }
   ) {
     await this.validateTeacher(teacherId);

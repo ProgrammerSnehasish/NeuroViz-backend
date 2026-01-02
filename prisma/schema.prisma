@@ -79,7 +79,13 @@ enum EvaluationMode {
 
 enum BehaviorType {
   PAGE_FOCUS
+  MOUSE_CLICK
+  SCROLL
+  KEYSTROKE
+  EYE_MOVEMENT
+  EMOTION_CHANGE
   CLICK
+  HOVER
   IDLE
 }
 
