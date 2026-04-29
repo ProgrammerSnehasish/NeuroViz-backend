@@ -31,7 +31,8 @@ async function postTo(url?: string, body?: any) {
 /* ------------------ Hugging Face Helper ------------------ */
 async function hfRequest(model: string, input: string, extraParams?: any) {
   if (!NLP.hfKey) throw new Error("Missing Hugging Face API key");
-  const url = `https://router.huggingface.co/hf-inference/models/${model}`;
+  const baseUrl = process.env.HF_BASE_URL as string;
+  const url = `${baseUrl}/${model}`;
 
   const { data } = await axios.post(
     url,
@@ -99,7 +100,7 @@ export const NLPService = {
 
   if (NLP.provider === "huggingface") {
     try {
-      const out = await hfRequest("facebook/bart-large-cnn", cleanText, {
+      const out = await hfRequest(process.env.HF_SUMMARIZER_MODEL as string, cleanText, {
         max_length: 100,
         min_length: 25,
         do_sample: false,
@@ -134,21 +135,20 @@ export const NLPService = {
 detectToxicity: async (text: string) => {
   await logNLPActivity("NLP_toxicity_check", `Text length: ${text.length}`);
 
-  if (NLP.provider === "python" && NLP.python.toxicity)
-    return postTo(NLP.python.toxicity, { text });
-
   if (NLP.provider === "huggingface") {
     const models = [
-      "s-nlp/roberta_toxicity_classifier",
-      "unitary/toxic-bert",
+      process.env.HF_TOXICITY_DETECTION_MODEL1 as string,
+      process.env.HF_TOXICITY_DETECTION_MODEL2 as string,
     ];
 
     for (const model of models) {
       try {
         const out = await hfRequest(model, text);
 
-        // Normalize possible nested outputs
+        //console.log("RAW OUTPUT:", JSON.stringify(out, null, 2)); //TODO: We must use this response in future.
+
         let preds: any[] = [];
+
         if (Array.isArray(out?.[0])) preds = out[0];
         else if (Array.isArray(out)) preds = out;
         else if (out?.labels && out?.scores) {
@@ -158,35 +158,50 @@ detectToxicity: async (text: string) => {
           }));
         }
 
-        if (!preds.length) {
-          console.warn(`⚠️ No predictions from ${model}`);
-          continue;
+        if (!preds.length) continue;
+
+        const normalized = preds.map(p => ({
+          label: p.label.toLowerCase(),
+          score: p.score,
+        }));
+
+        const toxicPred =
+          normalized.find(p =>
+            p.label.includes("toxic") ||
+            p.label.includes("insult") ||
+            p.label.includes("offensive") ||
+            p.label.includes("hate")
+          ) || null;
+
+        let score = 0;
+        let isToxic = false;
+
+        if (toxicPred) {
+          score = toxicPred.score;
+          isToxic = score > 0.5;
+        } else if (normalized.length === 2) {
+          // Assume binary classifier → take higher index as toxic
+          const sorted = [...normalized].sort((a, b) => b.score - a.score);
+          score = sorted[0].score;
+          isToxic = score > 0.7; // stricter threshold
         }
 
-        // Pick the highest confidence prediction
-        const best = preds.reduce((a, b) => (a.score > b.score ? a : b));
-        const labelText = best?.label?.toLowerCase?.() || "";
-
-        const isToxic =
-          labelText.includes("toxic") ||
-          labelText.includes("insult") ||
-          labelText.includes("offensive") ||
-          best.score > 0.6;
-
-        // ✅ Return clean JSON — no model name
         return {
           label: isToxic ? "toxic" : "non-toxic",
-          score: best.score ?? 0,
+          score,
         };
       } catch (err: any) {
         console.warn(`⚠️ Model ${model} failed:`, err.message);
       }
     }
 
-    return { label: "non-toxic", score: 0 };
+    return {
+      label: "unknown",
+      score: 0,
+    };
   }
 
-  return { label: "NOT_TOXIC", score: 0.0 };
+  return { label: "unknown", score: 0 };
 },
 
   /* ---------- Sentiment Analysis ---------- */
@@ -197,7 +212,7 @@ detectToxicity: async (text: string) => {
 
   if (NLP.provider === "huggingface") {
     try {
-      const out = await hfRequest("nlptown/bert-base-multilingual-uncased-sentiment", text);
+      const out = await hfRequest(process.env.HF_SENTIMENT_ANALYSIS_MODEL as string, text);
       const predictions = Array.isArray(out) ? out[0] : out;
 
       if (Array.isArray(predictions)) {
@@ -221,25 +236,79 @@ detectToxicity: async (text: string) => {
 
   /* ---------- Keyword Extraction ---------- */
   keywords: async (text: string) => {
-    await logNLPActivity("NLP_keyword_extraction", `Text length: ${text.length}`);
-    if (NLP.provider === "python" && NLP.python.keywords)
-      return postTo(NLP.python.keywords, { text });
+  await logNLPActivity("NLP_keyword_extraction", `Text length: ${text.length}`);
 
-    if (NLP.provider === "huggingface") {
-      try {
-        const out = await hfRequest("ml6team/keyphrase-extraction-distilbert-inspec", text);
-        const keywords = Array.isArray(out)
-          ? out.map((r: any) => r.word || r.text).slice(0, 10)
-          : [];
-        return { keywords };
-      } catch {
-        return { keywords: [] };
+  const cleanText = text.replace(/\s+/g, " ").trim();
+
+  let nerKeywords: string[] = [];
+
+  // 🔹 1. Try HuggingFace NER
+  if (NLP.provider === "huggingface") {
+    try {
+      const out = await hfRequest(
+        process.env.HF_KEY_WORD_EXTRACTION_MODEL as string,
+        cleanText
+      );
+
+      let preds: any[] = [];
+      if (Array.isArray(out?.[0])) preds = out[0];
+      else if (Array.isArray(out)) preds = out;
+
+      const tokens = preds
+        .filter((p: any) => p.entity !== "O")
+        .map((p: any) => p.word)
+        .filter(Boolean);
+
+      // merge subwords
+      let current = "";
+      const merged: string[] = [];
+
+      for (const word of tokens) {
+        if (word.startsWith("##")) {
+          current += word.replace("##", "");
+        } else {
+          if (current) merged.push(current);
+          current = word;
+        }
       }
+      if (current) merged.push(current);
+
+      nerKeywords = merged.map(w => w.toLowerCase());
+    } catch (err) {
+      console.warn("NER failed, fallback only");
     }
+  }
 
-    return { keywords: [] };
-  },
+  // 🔹 2. Frequency-based keywords (IMPORTANT)
+  const stopWords = new Set([
+    "is","a","the","of","and","to","in","that","are","with","for","on","this","these","those"
+  ]);
 
+  const words = cleanText
+    .toLowerCase()
+    .replace(/[^\w\s]/g, "")
+    .split(/\s+/)
+    .filter(w => w.length > 4 && !stopWords.has(w));
+
+  const freq: Record<string, number> = {};
+  for (const w of words) {
+    freq[w] = (freq[w] || 0) + 1;
+  }
+
+  const freqKeywords = Object.entries(freq)
+    .sort((a, b) => b[1] - a[1])
+    .map(([w]) => w);
+
+  // 🔹 3. Combine both
+  const combined = [...nerKeywords, ...freqKeywords];
+
+  // 🔹 4. Remove duplicates
+  const unique = Array.from(new Set(combined));
+
+  return {
+    keywords: unique.slice(0, 10),
+  };
+},
   /* ---------- Text Classification ---------- */
 classify: async (text: string) => {
   await logNLPActivity("NLP_text_classification", `Text length: ${text.length}`);
@@ -254,8 +323,7 @@ classify: async (text: string) => {
     ];
 
     const models = [
-      "joeddav/xlm-roberta-large-xnli",
-      "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
+      process.env.HF_TEXT_CLASSIFICATION_MODEL as string
     ];
 
     for (const model of models) {
@@ -308,7 +376,7 @@ classify: async (text: string) => {
 
   if (NLP.provider === "huggingface") {
     try {
-      const out = await hfRequest("dslim/bert-base-NER", text);
+      const out = await hfRequest(process.env.HF_NER_MODEL as string, text);
 
       if (!Array.isArray(out)) return { entities: [] };
 

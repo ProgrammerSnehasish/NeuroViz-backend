@@ -23,13 +23,13 @@ export const sendMail = async ({
   subject: string;
   html?: string;
   text?: string;
-  teacherId: string;   // ✅ sender (Teacher)
-  studentId?: string | null;  // ✅ recipient (Student, optional if not created yet)
+  teacherId: string;   // sender (Teacher)
+  studentId?: string | null;  // recipient (Student, optional if not created yet)
 }) => {
   const body = html || text || "";
 
   try {
-    // ✅ Send the email
+    // Send the email
     await transporter.sendMail({
       from: `"NeuroViz" <${process.env.MAIL_USER}>`,
       to,
@@ -38,7 +38,7 @@ export const sendMail = async ({
       text,
     });
 
-    // ✅ Log mail as SENT
+    // Log mail as SENT
     await prisma.mailLog.create({
       data: {
         senderId: teacherId,        // Always the teacher
@@ -52,7 +52,7 @@ export const sendMail = async ({
 
     return { success: true, message: "Mail sent successfully" };
   } catch (error: any) {
-    // ❌ Log mail as FAILED
+    // Log mail as FAILED
     await prisma.mailLog.create({
       data: {
         senderId: teacherId,
@@ -65,7 +65,7 @@ export const sendMail = async ({
       },
     });
 
-    console.error("❌ Email send failed:", error);
+    console.error("Email send failed:", error);
     return { success: false, error: error.message };
   }
 };

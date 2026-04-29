@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import express, { Request, Response, json, urlencoded } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -6,12 +7,15 @@ import { responseHandler } from "./middlewares/responseHandler";
 import mainRouter from "./base/base.router";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { scheduleTokenCleanup } from "./utils/tokenCleanup";
 
 dotenv.config();
 
+scheduleTokenCleanup();
+
 const app = express();
 
-// 🧩 Core Middlewares
+// Core Middlewares
 app.use(helmet())
 app.use(cors())
 app.use(json());
@@ -28,10 +32,10 @@ app.use(limiter);
 //   next();
 // }); // We can uncomment this for debugging purposes, for Router level logging use middleware in the router files
 
-// 🧠 API Routes
+// API Routes
 app.use("/api", mainRouter);
 
-// 🩺 Health Check Endpoint
+// Health Check Endpoint
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
     success: true,

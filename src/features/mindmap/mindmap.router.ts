@@ -6,6 +6,7 @@ import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "./mindma
 import createHttpError from "http-errors";
 import { MindmapExportController } from "./export/mindmap.export.controller";
 import { enforceTeacherOrStudent } from "../../middlewares/enforceTeacherorStudent";
+import { requireAuth } from "../../middlewares/requireAuth";
 
 export const mindmapRouter = Router();
 const controller = new MindmapController();
@@ -15,7 +16,7 @@ const getTokenUserId = (req: any) =>
     req.user?.id ||
     req.user?.sub; // support multiple JWT payload formats
 
-mindmapRouter.use(verifyToken, enforceTeacherOrStudent)
+mindmapRouter.use(requireAuth, verifyToken, enforceTeacherOrStudent)
 
 mindmapRouter.post(
   "/create",

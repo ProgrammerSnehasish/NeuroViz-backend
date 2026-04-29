@@ -77,3 +77,24 @@ export enum BehaviorType {
     Hover = "HOVER",
     IDLE = "IDLE",
 }
+
+export enum Subjects {
+    ENGLISH = "ENGLISH",
+    BENGALI = "BENGALI",
+    HINDI = "HINDI",
+    SANSKRIT = "SANSKRIT",
+    MATHEMATICS = "MATHEMATICS",
+    PHYSICS = "PHYSICS",
+    CHEMISTRY = "CHEMISTRY",
+    BIOLOGY = "BIOLOGY",
+    COMPUTER_SCIENCE = "COMPUTER_SCIENCE",
+    COMMERCE = "COMMERCE",
+    ECONOMICS = "ECONOMICS",
+    LAW = "LAW",
+}
+
+export enum Languages {
+    BENGALI = "BENGALI",
+    ENGLISH = "ENGLISH",
+    HINDI = "HINDI",
+}

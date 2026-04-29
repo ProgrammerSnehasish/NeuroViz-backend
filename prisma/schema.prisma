@@ -77,6 +77,27 @@ enum EvaluationMode {
   AUTO
 }
 
+enum Subjects{
+  ENGLISH
+  BENGALI
+  HINDI
+  SANSKRIT
+  MATHEMATICS
+  PHYSICS
+  CHEMISTRY
+  BIOLOGY
+  COMPUTER_SCIENCE
+  COMMERCE
+  ECONOMICS
+  LAW
+}
+
+enum Languages{
+  BENGALI
+  ENGLISH
+  HINDI
+}
+
 enum BehaviorType {
   PAGE_FOCUS
   MOUSE_CLICK
@@ -93,7 +114,8 @@ enum BehaviorType {
    USER MODEL
 ────────────────────────────── */
 model User {
-  id               String    @id @default(uuid())  
+  id               String    @id @default(uuid())
+  googleId         String?   @unique  
   firstName        String
   middleName       String?   @default("")
   lastName         String
@@ -152,6 +174,8 @@ model StudentProfile {
   affiliation      Affiliation      @default(NOT_MENTIONED)
   instituteName    String?          @default("Not mentioned yet.")
   guardianName     String?          @default("Not mentioned yet.")
+  guardianEmail     String?          @default("Not mentioned yet.")
+  guardianPhone     String?          @default("Not mentioned yet.")
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 }
@@ -164,11 +188,43 @@ model TeacherProfile {
   userId           String         @unique  
   user             User           @relation(fields: [userId], references: [id])
   qualification    Qualification  @default(NOT_MENTIONED)
-  experience       Int?
+  experienceYears  Int?
+  experienceDetails String?
   specialization   String?        @default("Not mentioned yet.")
+  subjects         Subjects[]
+  languages        Languages[]
   instituteName    String?        @default("Not mentioned yet.")
+  bio              String?        @default("Not mentioned yet.")
+  phone            String?
+  hourlyRate       Float?
+  availability     String?
+  certifications   String[]
+  rating           Float?         @default(0)
+  totalReviews     Int?           @default(0)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+}
+
+/* ─────────────────────────────
+OTP Model
+──────────────────────────────*/
+model OtpCode {
+  id        String    @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+}
+
+/* ─────────────────────────────
+   Blacklisted Token Model
+────────────────────────────── */
+model BlacklistedToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 /* ─────────────────────────────

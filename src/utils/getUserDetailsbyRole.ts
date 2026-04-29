@@ -1,5 +1,4 @@
 import { Role } from "@prisma/client";
-import { group } from "console";
 import { userRole } from "../config/core";
 
 export default function getUserIncludeByRole(role: Role) {

@@ -81,40 +81,73 @@ export class UserService {
     });
 
     // now update linked profile based on role
-    if (updatedUser.role === userRole.Student) {
-      const studentProfileData: Record<string, any> = {};
+    if (updatedUser.role === userRole.Student && data.studentProfile) {
+  const studentProfileData: Record<string, any> = {};
 
-      if ((data as any).education) studentProfileData.education = (data as any).education;
-      if ((data as any).affiliation) studentProfileData.affiliation = (data as any).affiliation;
-      if ((data as any).instituteName) studentProfileData.instituteName = (data as any).instituteName;
-      if ((data as any).guardianName) studentProfileData.guardianName = (data as any).guardianName; // ✅ fixed spelling
-      if ((data as any).neuroProblemType) studentProfileData.neuroProblemType = (data as any).neuroProblemType;
+  const studentProfileInfo = data.studentProfile;
 
-      if (Object.keys(studentProfileData).length > 0) {
-        await prisma.studentProfile.upsert({
-          where: { userId },
-          update: studentProfileData,
-          create: { userId, ...studentProfileData },
-        });
-      }
-    }
+  if (studentProfileInfo.education)
+    studentProfileData.education = studentProfileInfo.education;
 
-    if (updatedUser.role === userRole.Teacher) {
-    const teacherProfileData: Record<string, any> = {};
+  if (studentProfileInfo.affiliation)
+    studentProfileData.affiliation = studentProfileInfo.affiliation;
 
-    if ((data as any).qualification) teacherProfileData.qualification = (data as any).qualification;
-    if ((data as any).experience !== undefined) teacherProfileData.experience = (data as any).experience;
-    if ((data as any).specialization) teacherProfileData.specialization = (data as any).specialization;
-    if ((data as any).instituteName) teacherProfileData.instituteName = (data as any).instituteName;
+  if (studentProfileInfo.instituteName)
+    studentProfileData.instituteName = studentProfileInfo.instituteName;
 
-    if (Object.keys(teacherProfileData).length > 0) {
-      await prisma.teacherProfile.upsert({
-        where: { userId },
-        update: teacherProfileData,
-        create: { userId, ...teacherProfileData },
-      });
-    }
+  if (studentProfileInfo.guardianName)
+    studentProfileData.guardianName = studentProfileInfo.guardianName;
+
+  if (studentProfileInfo.guardianEmail)
+    studentProfileData.guardianEmail = studentProfileInfo.guardianEmail;
+
+  if (studentProfileInfo.guardianPhone)
+    studentProfileData.guardianPhone = studentProfileInfo.guardianPhone;
+
+  if (studentProfileInfo.neuroProblemType)
+    studentProfileData.neuroProblemType = studentProfileInfo.neuroProblemType;
+
+  if (Object.keys(studentProfileData).length > 0) {
+    await prisma.studentProfile.upsert({
+      where: { userId },
+      update: studentProfileData,
+      create: { userId, ...studentProfileData },
+    });
   }
+}
+
+    if (updatedUser.role === userRole.Teacher && data.teacherProfile) {
+  const teacherProfileData: Record<string, any> = {};
+  const t = data.teacherProfile;
+
+  if (t.qualification) teacherProfileData.qualification = t.qualification;
+  if (t.experienceYears !== undefined)
+    teacherProfileData.experienceYears = t.experienceYears;
+  if (t.experienceDetails)
+    teacherProfileData.experienceDetails = t.experienceDetails;
+  if (t.specialization)
+    teacherProfileData.specialization = t.specialization;
+  if (t.subjects) teacherProfileData.subjects = t.subjects;
+  if (t.languages) teacherProfileData.languages = t.languages;
+  if (t.instituteName)
+    teacherProfileData.instituteName = t.instituteName;
+  if (t.bio) teacherProfileData.bio = t.bio;
+  if (t.phone) teacherProfileData.phone = t.phone;
+  if (t.hourlyRate !== undefined)
+    teacherProfileData.hourlyRate = t.hourlyRate;
+  if (t.availability)
+    teacherProfileData.availability = t.availability;
+  if (t.certifications)
+    teacherProfileData.certifications = t.certifications;
+
+  if (Object.keys(teacherProfileData).length > 0) {
+    await prisma.teacherProfile.upsert({
+      where: { userId },
+      update: teacherProfileData,
+      create: { userId, ...teacherProfileData },
+    });
+  }
+}
 
   // finally return updated full user details
   const finalUser = await prisma.user.findUnique({

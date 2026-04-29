@@ -110,6 +110,7 @@ NeuroViz-backend/
 │ ├── auth/
 │ │ ├── auth.controller.ts
 │ │ ├── auth.service.ts
+│ │ ├── auth.helper.ts
 │ │ ├── auth.dto.ts
 │ │ └── auth.routes.ts
 │ │
@@ -253,6 +254,8 @@ cd NeuroViz-backend
 **and then to get node modules and required packages(dependencies), enter in terminal**
 
 ```bash
+yarn config set nodeLinker node-modules #(If in case you see pnp error.)
+#then
 yarn install
 ```
 **to initialize Prisma**
@@ -285,8 +288,22 @@ yarn dev
 |**Method**|**Route**|**Endpoint Description**|
 |:---------|:--------|:-----------------------|
 |**Authentication**|
+|**Signup**|
 |POST| `/api/auth/signup`| Creating new user / signup|
+|**Primary Signin**|
 |POST| `/api/auth/signin`| Signin / Login |
+|**OTP based signin**|
+|POST|`/api/auth/otp/request`| Reqest OTP for OTP based login |
+|POST|`/api/auth/otp/verify`| OTP verification for OTP based login and login |
+|**Reset Password**|
+|POST|`/api/auth/password/forgot`| Password Forget |
+|POST|`/api/auth/password/verify-otp`| Verify OTP for Password Rest |
+|POST|`/api/auth/password/reset`| Reset Password |
+|**Google OAuth based(Signup & Signin) and Passkey based Signin**|
+|POST|`/api/auth/google`| Google OAuth based Signin/Signup(TODO) |
+|POST|``| Passkey based Signin(TODO) |
+|**Signout**|
+|POST|``| Signout |
 |**User**|
 |GET|`/api/users/email/:email`| Get user by email |
 |GET|`/api/users/:id` | Get user by id |

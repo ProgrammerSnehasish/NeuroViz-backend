@@ -6,6 +6,7 @@ export function getUserResponse(
 ): IUserDetails {
   return {
     id: user.id,
+    googleId: user.googleId,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     deletedAt: user.deletedAt ?? new Date(0),
