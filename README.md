@@ -303,7 +303,7 @@ yarn dev
 |POST|`/api/auth/google`| Google OAuth based Signin/Signup(TODO) |
 |POST|``| Passkey based Signin(TODO) |
 |**Signout**|
-|POST|``| Signout |
+|POST|`/api/auth/signout`| Signout |
 |**User**|
 |GET|`/api/users/email/:email`| Get user by email |
 |GET|`/api/users/:id` | Get user by id |
