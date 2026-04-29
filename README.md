@@ -254,7 +254,7 @@ cd NeuroViz-backend
 **and then to get node modules and required packages(dependencies), enter in terminal**
 
 ```bash
-yarn config set nodeLinker node-modules #(If in case you see pnp error.)
+yarn config set nodeLinker node-modules #(For safety purpose only.)
 #then
 yarn install
 ```
