@@ -248,7 +248,7 @@ NeuroViz-backend/
 ### Clone the repo
 
 ```bash
-git clone https://github.com/ProgrammerSnehasish/NeuroViz-backend.git
+git clone https://github.com/ProgrammerSnehasish/NeuroViz-backend
 cd NeuroViz-backend
 ```
 **and then to get node modules and required packages(dependencies), enter in terminal**
