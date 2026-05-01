@@ -254,13 +254,13 @@ cd NeuroViz-backend
 **and then to get node modules and required packages(dependencies), enter in terminal**
 
 ```bash
-yarn config set nodeLinker node-modules #(For safety purpose only.)
+yarn config set nodeLinker node-modules #(For safety purpose only. As npm and yarn may collide)
 #then
 yarn install
 ```
 **to initialize Prisma**
 ```bash
-yarn prisma migrate
+yarn prisma migrate dev --name update_name #(only for developers)
 #and
 yarn prisma generate
 ```
