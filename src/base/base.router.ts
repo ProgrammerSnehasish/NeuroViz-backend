@@ -12,6 +12,7 @@ import adminRouter from "../features/admin/admin.router";
 import teacherRouter from "../features/teachers/teacher.router";
 import teacherDashboardRouter from "../features/teachers/Dashboard/teacher.dashboard.router";
 import behaviorRouter from "../features/behavior/behavior.router";
+import roomRouter from "../features/live_class/room.routes";
 
 const mainRouter = Router()
 
@@ -23,6 +24,7 @@ mainRouter.use("/nlp", nlpRouter);
 mainRouter.use("/cognitive", cognitiveProfileRouter);
 mainRouter.use("/behavior", behaviorRouter);
 mainRouter.use("/emotion", emotionRouter);
+mainRouter.use("/rooms", roomRouter)
 mainRouter.use("/feedback", feedBackRouter);
 mainRouter.use("/adapt", adaptRouter);
 mainRouter.use("/content", contentRouter);

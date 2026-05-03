@@ -23,7 +23,7 @@ userRouter.get(
         throw createHttpError(400, "Missing path parameter: email");
       }
       const tokenUserId = getTokenUserId(req);
-      const user = await userController.getUserDetails(emailParam, tokenUserId);
+      const user = await userController.getUserDetails(emailParam as string, tokenUserId);
       if (!user) {
         throw createHttpError(404, "User not found");
       }
@@ -46,7 +46,7 @@ userRouter.get(
           throw createHttpError("Missing path paramter: id")
         }
         const tokenUserId = getTokenUserId(req);
-        const user = await userController.getUserDetailsById(req.params["id"], tokenUserId);
+        const user = await userController.getUserDetailsById(req.params["id"] as string, tokenUserId);
         req.body = user;
         next()
       } catch (error) {
@@ -95,7 +95,7 @@ userRouter.delete(
         throw createHttpError("Missing path paramter: userId")
       }
       const tokenUserId = getTokenUserId(req);
-      await userController.deleteUser(req.params["userId"], tokenUserId);
+      await userController.deleteUser(req.params["userId"] as string, tokenUserId);
       res.status(200).send({success: true, message: "User deleted successfully"})
     }catch(err){
       next(err)

@@ -57,7 +57,7 @@ mindmapRouter.get(
 
       if (!userId) throw createHttpError("Missing path parameter: userId");
 
-      const mindmaps = await controller.getMindmapsByUser(userId, tokenUserId);
+      const mindmaps = await controller.getMindmapsByUser(userId as string, tokenUserId);
       res.status(200).json(mindmaps);
     } catch (err) {
       next(err);
@@ -72,7 +72,7 @@ mindmapRouter.get(
       const mindmapId = req.params["mindmapId"];
       const tokenUserId = getTokenUserId(req);
       if (!mindmapId) throw createHttpError("Missing path parameter: mindmapId");
-      const mindmap = await controller.getMindmapById(mindmapId, tokenUserId);
+      const mindmap = await controller.getMindmapById(mindmapId as string, tokenUserId);
       res.status(200).json(mindmap);
     } catch (err) {
       next(err);
@@ -97,7 +97,7 @@ mindmapRouter.put(
 
       const tokenUserId = getTokenUserId(req);
 
-      const updated = await controller.updateMindmap(req.body, mindmapId, userId, tokenUserId);
+      const updated = await controller.updateMindmap(req.body, mindmapId as string, userId, tokenUserId);
 
       res.status(200).json(updated);
     } catch (err) {
@@ -123,7 +123,7 @@ mindmapRouter.delete(
 
       const tokenUserId = getTokenUserId(req);
 
-      await controller.deleteMindmap(mindmapId, userId, tokenUserId);
+      await controller.deleteMindmap(mindmapId as string, userId, tokenUserId);
 
       res.status(200).json({
         success: true,

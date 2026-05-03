@@ -4,7 +4,7 @@ import { MindmapExportService } from "./mindmap.export.service";
 export const MindmapExportController = {
   async downloadPDF(req: Request, res: Response, next: NextFunction) {
     try {
-      const filePath = await MindmapExportService.exportMindmapPDF(req.params.id);
+      const filePath = await MindmapExportService.exportMindmapPDF(req.params.id as string);
       res.download(filePath);
     } catch (err) {
       next(err);
@@ -13,7 +13,7 @@ export const MindmapExportController = {
 
   async downloadJPEG(req: Request, res: Response, next: NextFunction) {
     try {
-      const filePath = await MindmapExportService.exportMindmapJPEG(req.params.id);
+      const filePath = await MindmapExportService.exportMindmapJPEG(req.params.id as string);
       res.download(filePath);
     } catch (err) {
       next(err);

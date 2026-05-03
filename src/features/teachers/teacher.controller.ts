@@ -20,7 +20,7 @@ export const TeacherController = {
 
       if (!studentId) throw createHttpError(400, "Student ID is required.");
 
-      const data = await TeacherService.getStudentAnalytics(teacherId, studentId);
+      const data = await TeacherService.getStudentAnalytics(teacherId, studentId as string);
       res.json({ success: true, data });
     } catch (err) {
       next(err);
@@ -39,7 +39,7 @@ export const TeacherController = {
 
       const data = await TeacherService.summarizeStudentPerformance(
         teacherId,
-        studentId
+        studentId as string
       );
       res.json({ success: true, data });
     } catch (err) {
@@ -64,7 +64,7 @@ export const TeacherController = {
 
       const updated = await TeacherService.reviewMindmap(
         teacherId,
-        mindmapId,
+        mindmapId as string,
         approval,
         comment
       );
@@ -144,7 +144,7 @@ export const TeacherController = {
 
       const data = await TeacherAssignmentService.getAssignmentDetails(
         teacherId,
-        assignmentId
+        assignmentId as string
       );
       res.json({ success: true, data });
     } catch (err) {
@@ -203,7 +203,7 @@ export const TeacherController = {
 
       const result = await TeacherAssignmentService.updateAssignment(
         teacherId,
-        assignmentId,
+        assignmentId as string,
         { title, description, studentIds, groupIds, evaluationMode }
       );
 
@@ -225,7 +225,7 @@ export const TeacherController = {
         return;
       }
 
-      const result = await TeacherAssignmentService.deleteAssignment(teacherId, assignmentId);
+      const result = await TeacherAssignmentService.deleteAssignment(teacherId, assignmentId as string);
 
       res.status(200).json(result);
     } catch (error) {
@@ -286,7 +286,7 @@ export const TeacherController = {
 
       const data = await TeacherReviewService.regenerateSummary(
         teacherId,
-        submissionId
+        submissionId as string
       );
       res.json({ success: true, data });
     } catch (err) {
@@ -326,7 +326,7 @@ export const TeacherController = {
       if (!groupId)
         throw createHttpError(400, "Group ID is required.");
 
-      const data = await TeacherStudentService.updateGroup(teacherId, groupId, {
+      const data = await TeacherStudentService.updateGroup(teacherId, groupId as string, {
         name,
         description,
       });
@@ -349,7 +349,7 @@ export const TeacherController = {
       if (!groupId)
         throw createHttpError(400, "Group ID is required.");
 
-      const result = await TeacherStudentService.deleteGroup(teacherId, groupId);
+      const result = await TeacherStudentService.deleteGroup(teacherId, groupId as string);
       res.json({ success: true, ...result });
     } catch (err) {
       next(err);
@@ -435,8 +435,8 @@ export const TeacherController = {
 
       const result = await TeacherStudentService.removeStudentFromGroup(
         teacherId,
-        groupId,
-        studentId
+        groupId as string,
+        studentId as string
       );
 
       res.json({ success: true, ...result });
@@ -494,7 +494,7 @@ async getTeacherMailLogs(req: Request, res: Response, next: NextFunction) {
       (req.user as any)?._id;
 
     const mailId = req.params.id;
-    const mail = await MailLogService.getMailLogById(teacherId, mailId);
+    const mail = await MailLogService.getMailLogById(teacherId, mailId as string);
 
     res.status(200).json({ success: true, data: mail });
   } catch (err) {

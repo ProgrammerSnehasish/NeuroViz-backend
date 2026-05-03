@@ -37,7 +37,7 @@ export const TeacherDashboardController = {
     try {
       const teacherId = getTeacherId(req);
       const { studentId } = req.params;
-      const data = await TeacherDashboardService.getStudentProgress(teacherId, studentId);
+      const data = await TeacherDashboardService.getStudentProgress(teacherId, studentId as string);
       res.json({ success: true, data });
     } catch (err) {
       next(err);
@@ -49,7 +49,7 @@ export const TeacherDashboardController = {
     try {
       const teacherId = getTeacherId(req);
       const { studentId } = req.params;
-      const data = await TeacherDashboardService.getStudentReport(teacherId, studentId);
+      const data = await TeacherDashboardService.getStudentReport(teacherId, studentId as string);
       res.json({ success: true, data });
     } catch (err) {
       next(err);
@@ -61,7 +61,7 @@ export const TeacherDashboardController = {
     try {
       const teacherId = getTeacherId(req);
       const { studentId } = req.params;
-      const data = await TeacherDashboardService.getStudentStrategy(teacherId, studentId);
+      const data = await TeacherDashboardService.getStudentStrategy(teacherId, studentId as string);
       res.json({ success: true, data });
     } catch (err) {
       next(err);
@@ -148,7 +148,7 @@ export const TeacherDashboardController = {
   markNotificationRead: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const data = await TeacherDashboardService.markRead(id);
+      const data = await TeacherDashboardService.markRead(id as string);
       res.json({ success: true, message: "Notification marked as read", data });
     } catch (err) {
       next(err);

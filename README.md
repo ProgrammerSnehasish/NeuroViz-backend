@@ -318,6 +318,11 @@ yarn dev
 |GET|`/api/mindmaps/:mindmapId/jpeg`|Download Mindmap as JPEG|
 |GET|`/api/mindmaps/:mindmapId/pdf`|Download Mindmap as PDF(Although it is recomended to fetch from frontend, for visualization download, not a part of backend.)|
 |DELETE|`/api/mindmaps/delete/:mindmapId`| Delete Mindmap by mindmap id(Although it is recomended to fetch from frontend, for visualization download, not a part of backend.)|
+|**Live Class**|
+|POST|`/api/rooms/`|Create a new room|
+|POST|`/api/rooms/:roomId/join`|Join a room, get LiveKit token|
+|POST|`/api/rooms/:roomId/end`|Host ends the class|
+|GET|`/api/rooms/:roomId/participants`|Get participants by roomId|
 |**NLP**|
 |POST|`/api/nlp/summarize`| Summarize Text|
 |POST|`/api/nlp/detect-toxicity`| Detect toxicity|

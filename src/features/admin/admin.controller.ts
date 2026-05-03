@@ -90,7 +90,7 @@ export const AdminController = {
       const id = getAdminId(req);
       await AdminService.validateAdmin(id);
       const { userId } = req.params;
-      const data = await AdminService.deleteUser(userId);
+      const data = await AdminService.deleteUser(userId as string);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
@@ -100,7 +100,7 @@ export const AdminController = {
       const id = getAdminId(req);
       await AdminService.validateAdmin(id);
       const { userId } = req.params;
-      const data = await AdminService.resetUserData(userId);
+      const data = await AdminService.resetUserData(userId as string);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   }

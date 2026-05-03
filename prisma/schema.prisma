@@ -110,6 +110,18 @@ enum BehaviorType {
   IDLE
 }
 
+enum RoomStatus {
+  WAITING
+  LIVE
+  ENDED
+}
+
+enum ParticipantRole {
+  HOST
+  CO_HOST
+  VIEWER
+}
+
 /* ─────────────────────────────
    USER MODEL
 ────────────────────────────── */
@@ -139,6 +151,8 @@ model User {
   teacherProfile   TeacherProfile?
   preferences      Json?     @default("{}")
   cognitive        CognitiveProfile?
+  hostedRooms    Room[]        @relation("HostedRooms")
+  participations Participant[] @relation("UserParticipations")
   emotionLogs      EmotionLog[]
   feedbacks        Feedback[]
   mindmaps         Mindmap[]
@@ -224,6 +238,47 @@ model BlacklistedToken {
   id        String   @id @default(cuid())
   token     String   @unique
   expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+/* ─────────────────────────────
+   Live Class Models
+────────────────────────────── */
+model Room {
+  id          String       @id @default(cuid())
+  name        String
+  hostId      String
+  host        User         @relation("HostedRooms", fields: [hostId], references: [id])
+  status      RoomStatus   @default(WAITING)
+  livekitRoom String?      @unique  // LiveKit room name
+  maxParticipants Int      @default(50)
+  participants Participant[]
+  recordings  Recording[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  scheduledAt DateTime?
+  endedAt     DateTime?
+}
+
+model Participant {
+  id        String            @id @default(cuid())
+  roomId    String
+  room      Room              @relation(fields: [roomId], references: [id])
+  userId    String
+  user      User              @relation("UserParticipations",fields: [userId], references: [id])
+  role      ParticipantRole   @default(VIEWER)
+  joinedAt  DateTime          @default(now())
+  leftAt    DateTime?
+
+  @@unique([roomId, userId])
+}
+
+model Recording {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  url       String
+  duration  Int      // seconds
   createdAt DateTime @default(now())
 }
 

@@ -319,7 +319,7 @@ export const TeacherStudentService = {
     update: { token, expiresAt, used: false },
   });
 
-  const inviteLink = `${process.env.FRONTEND_URL}/invite/accept?token=${token}`;
+  const inviteLink = `${process.env.CLIENT_URL}/invite/accept?token=${token}`;
 
   // ✅ Include teacherId
   await sendMail({
@@ -422,7 +422,7 @@ async removeStudentFromGroup(teacherId: string, groupId: string, studentId: stri
 
     // Send notification email to existing student (studentId set)
     const token = crypto.randomBytes(24).toString("hex"); // optional token if you want
-    const inviteLink = `${process.env.FRONTEND_URL}/group/${groupId}`; // link to group page (adjust as needed)
+    const inviteLink = `${process.env.CLIENT_URL}/group/${groupId}`; // link to group page (adjust as needed)
 
     await sendMail({
       to: existingUser.email,
@@ -454,7 +454,7 @@ async removeStudentFromGroup(teacherId: string, groupId: string, studentId: stri
   });
 
   // Make sure FRONTEND_URL is set; otherwise inviteLink will be wrong
-  const inviteLink = `${process.env.FRONTEND_URL}/invite/accept?token=${token}`;
+  const inviteLink = `${process.env.CLIENT_URL}/invite/accept?token=${token}`;
 
   await sendMail({
     to: email,
