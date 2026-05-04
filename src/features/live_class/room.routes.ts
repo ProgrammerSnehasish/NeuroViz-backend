@@ -3,13 +3,15 @@ import { generateToken, createLiveKitRoom, endLiveKitRoom } from '../live_class/
 import { nanoid } from 'nanoid';
 import { verifyToken } from '../../middlewares/jwtVerifiction';
 import prisma from '../../config/database';
+import { dtoValidation } from '../../middlewares/dtoValidation';
+import { CreateClassdto } from './liveClass.dto';
 
 const roomRouter = Router();
 
 // POST /rooms — Create a new room
-roomRouter.post('/', verifyToken, async (req: Request, res: Response) => {
+roomRouter.post('/', verifyToken, dtoValidation(CreateClassdto),async (req: Request, res: Response) => {
   const { name, scheduledAt, maxParticipants } = req.body;
-  const hostId = req.user.id;
+  const hostId = req.user.userId;
 
   const livekitRoomName = `room_${nanoid(10)}`;
 
@@ -18,7 +20,7 @@ roomRouter.post('/', verifyToken, async (req: Request, res: Response) => {
       name,
       hostId,
       livekitRoom: livekitRoomName,
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(),
       maxParticipants: maxParticipants ?? 50,
     },
   });
@@ -27,7 +29,7 @@ roomRouter.post('/', verifyToken, async (req: Request, res: Response) => {
 });
 
 // POST /rooms/:roomId/join — Join a room, get LiveKit token
-roomRouter.post('/:roomId/join', verifyToken, async (req: Request, res: Response) => {
+roomRouter.post('/join/:roomId', verifyToken, async (req: Request, res: Response) => {
   const { roomId } = req.params;
   const userId = req.user.id;
 
