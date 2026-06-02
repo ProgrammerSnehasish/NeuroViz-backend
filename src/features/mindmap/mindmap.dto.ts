@@ -24,7 +24,7 @@ export class GenerateMindmapDto {
   userId!: string;
 
   @IsString() 
-  @IsNotEmpty() 
+  @IsOptional() 
   title!: string;
   
   @IsOptional()
@@ -32,7 +32,7 @@ export class GenerateMindmapDto {
   description?: Record<string, any>;
 
   @IsString() 
-  @IsNotEmpty() 
+  @IsOptional() 
   sourceText!: string;
 }
 
