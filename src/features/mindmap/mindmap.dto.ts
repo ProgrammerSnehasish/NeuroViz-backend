@@ -32,7 +32,7 @@ export class GenerateMindmapDto {
   description?: Record<string, any>;
 
   @IsString() 
-  @IsOptional() 
+  @IsNotEmpty() 
   sourceText!: string;
 }
 
