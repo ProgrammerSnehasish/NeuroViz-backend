@@ -62,7 +62,7 @@ export class AuthService {
 
       throw createHttpError(
         403,
-        `This account is registered as a ${foundUser.role}, not as ${data.role}`
+        `Siging in as ${data.role} is not allowed for this account.`
       );
     }
 
