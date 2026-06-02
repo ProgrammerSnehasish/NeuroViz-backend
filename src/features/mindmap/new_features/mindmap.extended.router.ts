@@ -1,10 +1,10 @@
 import { Router, Request, Response, NextFunction } from "express";
-import multer from "multer";
-import createHttpError from "http-errors";
-import { verifyToken } from "../../middlewares/jwtVerifiction";
-import { requireAuth } from "../../middlewares/requireAuth";
-import { enforceTeacherOrStudent } from "../../middlewares/enforceTeacherorStudent";
 import { MindmapExtendedController } from "./mindmap.extended.controller";
+import createHttpError from "http-errors";
+import { enforceTeacherOrStudent } from "../../../middlewares/enforceTeacherorStudent";
+import { verifyToken } from "../../../middlewares/jwtVerifiction";
+import { requireAuth } from "../../../middlewares/requireAuth";
+import multer from "multer";
 
 export const mindmapExtendedRouter = Router();
 const controller = new MindmapExtendedController();

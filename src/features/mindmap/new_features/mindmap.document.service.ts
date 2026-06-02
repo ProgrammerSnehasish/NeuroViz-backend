@@ -46,7 +46,7 @@ export async function documentToMindmap(
 async function extractPDF(buffer: Buffer): Promise<string> {
   try {
     const pdfParse = await import("pdf-parse").then((m) => m.default ?? m);
-    const data = await pdfParse(buffer);
+    const data = await (pdfParse as any)(buffer);
     return data.text ?? "";
   } catch (err) {
     throw new Error(

@@ -1,6 +1,4 @@
 import createHttpError from "http-errors";
-import prisma from "../../config/database";
-
 import { audioToMindmap } from "./mindmap.audio.service";
 import { documentToMindmap } from "./mindmap.document.service";
 import { videoFileToMindmap, youtubeToMindmap } from "./mindmap.video.service";
@@ -30,6 +28,7 @@ import {
   SimplifyMindmapDto,
   TtsVoice,
 } from "./mindmap.extended.dto";
+import prisma from "../../../config/database";
 
 export class MindmapExtendedService {
 

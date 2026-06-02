@@ -1,6 +1,6 @@
 import axios from "axios";
 import FormData from "form-data";
-import { generateMindmap } from "./mindmap.ai.service";
+import { generateMindmap } from "../mindmap.ai.service";
 
 // ─────────────────────────────────────────────
 // VIDEO FILE → MINDMAP
@@ -133,7 +133,7 @@ async function fetchYouTubeTranscript(videoId: string): Promise<string> {
   const xml: string = transcriptResp.data;
 
   // Step 3: Extract text from XML, strip HTML entities
-  const texts = [...xml.matchAll(/<text[^>]*>(.*?)<\/text>/gs)]
+  const texts = [...xml.matchAll(/<text[^>]*>([\s\S]*?)<\/text>/g)]
     .map(m => m[1]
       .replace(/&#39;/g, "'")
       .replace(/&amp;/g, "&")

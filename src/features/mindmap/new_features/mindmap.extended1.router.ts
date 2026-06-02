@@ -1,10 +1,10 @@
 import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
 import createHttpError from "http-errors";
-import { verifyToken } from "../../middlewares/jwtVerifiction";
-import { requireAuth } from "../../middlewares/requireAuth";
-import { enforceTeacherOrStudent } from "../../middlewares/enforceTeacherorStudent";
 import { MindmapExtendedController } from "./mindmap.extended.controller";
+import { enforceTeacherOrStudent } from "../../../middlewares/enforceTeacherorStudent";
+import { verifyToken } from "../../../middlewares/jwtVerifiction";
+import { requireAuth } from "../../../middlewares/requireAuth";
 
 export const mindmapExtendedRouter = Router();
 const controller = new MindmapExtendedController();
@@ -201,7 +201,7 @@ mindmapExtendedRouter.get(
         throw createHttpError(400, "nodeIndex must be a non-negative integer.");
 
       const result = await controller.getChunkedNode(
-        { userId, mindmapId, nodeIndex },
+        { userId, mindmapId: mindmapId as string, nodeIndex },
         userId
       );
       res.status(200).json({ success: true, data: result });
@@ -222,7 +222,7 @@ mindmapExtendedRouter.get(
       const maxWords = parseInt((req.query["maxWords"] as string) ?? "12", 10);
 
       const result = await controller.getSimplifiedView(
-        { userId, mindmapId, addEmojis, maxWordsPerChild: maxWords },
+        { userId, mindmapId: mindmapId as string, addEmojis, maxWordsPerChild: maxWords },
         userId
       );
       res.status(200).json({ success: true, data: result });
@@ -241,7 +241,7 @@ mindmapExtendedRouter.get(
       const userId = getTokenUserId(req);
 
       const result = await controller.generateQuiz(
-        { userId, mindmapId },
+        { userId, mindmapId: mindmapId as string },
         userId
       );
       res.status(200).json({ success: true, data: result });
@@ -261,7 +261,7 @@ mindmapExtendedRouter.get(
       const nodesPerBlock = parseInt((req.query["nodesPerBlock"] as string) ?? "2", 10);
 
       const result = await controller.generateStudyPlan(
-        { userId, mindmapId, nodesPerBlock },
+        { userId, mindmapId: mindmapId as string, nodesPerBlock },
         userId
       );
       res.status(200).json({ success: true, data: result });
@@ -279,7 +279,7 @@ mindmapExtendedRouter.get(
       const { mindmapId } = req.params;
       const userId = getTokenUserId(req);
 
-      const result = await controller.getColourCoding(mindmapId, userId);
+      const result = await controller.getColourCoding(mindmapId as string, userId);
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -295,7 +295,7 @@ mindmapExtendedRouter.get(
       const { mindmapId } = req.params;
       const userId = getTokenUserId(req);
 
-      const result = await controller.getAnalogyPrompts(mindmapId, userId);
+      const result = await controller.getAnalogyPrompts(mindmapId as string, userId);
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       next(err);
