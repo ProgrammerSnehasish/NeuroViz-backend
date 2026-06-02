@@ -13,6 +13,7 @@ import teacherRouter from "../features/teachers/teacher.router";
 import teacherDashboardRouter from "../features/teachers/Dashboard/teacher.dashboard.router";
 import behaviorRouter from "../features/behavior/behavior.router";
 import roomRouter from "../features/live_class/room.routes";
+import { mindmapExtendedRouter } from "../features/mindmap/new_features/mindmap.extended1.router";
 
 const mainRouter = Router()
 
@@ -20,6 +21,7 @@ const mainRouter = Router()
 mainRouter.use("/users", userRouter);
 mainRouter.use("/auth", authRouter);
 mainRouter.use("/mindmaps", mindmapRouter);
+mainRouter.use("/mindmap/extended", mindmapExtendedRouter) //TODO
 mainRouter.use("/nlp", nlpRouter);
 mainRouter.use("/cognitive", cognitiveProfileRouter);
 mainRouter.use("/behavior", behaviorRouter);
