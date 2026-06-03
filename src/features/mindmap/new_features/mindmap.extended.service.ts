@@ -142,7 +142,7 @@ export class MindmapExtendedService {
   async createFromYouTube(dto: YouTubeMindmapDto, tokenUserId: string) {
     await this.validateUserAccess(dto.userId, tokenUserId);
     // URL format is already validated by @Matches in YouTubeMindmapDto — no re-check needed here
-    const structure = await youtubeToMindmap(dto.youtubeUrl, dto.title);
+    const structure = await youtubeToMindmap(dto.youtubeUrl);
     return this.saveMindmap(
       dto.userId, dto.title,
       `Generated from YouTube: ${dto.youtubeUrl}`,

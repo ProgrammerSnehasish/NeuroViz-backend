@@ -11,7 +11,7 @@ export class CreateMindmapDto {
 
   @IsObject()
   @IsNotEmpty()
-  structure: Record<string, any>; // could be JSON string or node structure
+  structure: Record<string, any>; 
 
   @IsString()
   @IsNotEmpty()
@@ -22,11 +22,7 @@ export class GenerateMindmapDto {
   @IsString()
   @IsNotEmpty()
   userId!: string;
-
-  @IsString() 
-  @IsOptional() 
-  title!: string;
-  
+ 
   @IsOptional()
   @IsObject() 
   description?: Record<string, any>;

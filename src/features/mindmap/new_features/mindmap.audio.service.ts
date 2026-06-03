@@ -1,6 +1,7 @@
 import axios from "axios";
 import FormData from "form-data";
-import { generateMindmap } from "../mindmap.ai.service";
+import { generateMindmap } from "../service/mindmap.ai.service";
+
 
 
 /**
@@ -16,7 +17,7 @@ export async function audioToMindmap(
   if (!transcript || transcript.trim().length < 10) {
     throw new Error("Audio transcription produced insufficient text.");
   }
-  return generateMindmap(title, transcript);
+  return generateMindmap(transcript);
 }
 
 async function transcribeAudio(buffer: Buffer, mimeType: string): Promise<string> {

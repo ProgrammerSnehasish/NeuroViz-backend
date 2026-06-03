@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { MindmapExportService } from "./mindmap.export.service";
+import { MindmapExportService } from "../service/mindmap.export.service";
 
 export const MindmapExportController = {
   async downloadPDF(req: Request, res: Response, next: NextFunction) {

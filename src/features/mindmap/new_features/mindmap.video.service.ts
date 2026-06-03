@@ -1,6 +1,6 @@
 import axios from "axios";
 import FormData from "form-data";
-import { generateMindmap } from "../mindmap.ai.service";
+import { generateMindmap } from "../service/mindmap.ai.service";
 
 // ─────────────────────────────────────────────
 // VIDEO FILE → MINDMAP
@@ -17,7 +17,7 @@ export async function videoFileToMindmap(
   if (!transcript || transcript.trim().length < 10) {
     throw new Error("Video audio transcription produced insufficient text.");
   }
-  return generateMindmap(title, transcript);
+  return generateMindmap(transcript);
 }
 
 async function extractAudioFromVideo(videoBuffer: Buffer, mimeType: string): Promise<Buffer> {
@@ -40,8 +40,8 @@ async function extractAudioFromVideo(videoBuffer: Buffer, mimeType: string): Pro
     const audioBuffer = fs.readFileSync(outputPath);
     return audioBuffer;
   } finally {
-    try { fs.unlinkSync(inputPath); } catch {}
-    try { fs.unlinkSync(outputPath); } catch {}
+    try { fs.unlinkSync(inputPath); } catch { }
+    try { fs.unlinkSync(outputPath); } catch { }
   }
 }
 
@@ -49,7 +49,7 @@ async function extractAudioFromVideo(videoBuffer: Buffer, mimeType: string): Pro
 // YOUTUBE URL → MINDMAP
 // Fetches transcript via YouTube transcript API or yt-dlp subtitle extraction.
 // ─────────────────────────────────────────────
-export async function youtubeToMindmap(youtubeUrl: string, title: string): Promise<any> {
+export async function youtubeToMindmap(youtubeUrl: string): Promise<any> {
   const videoId = extractVideoId(youtubeUrl);
   if (!videoId) throw new Error("Could not extract YouTube video ID from URL.");
 
@@ -92,7 +92,7 @@ export async function youtubeToMindmap(youtubeUrl: string, title: string): Promi
     );
   }
 
-  return generateMindmap(title, transcript.replace(/\s+/g, " ").trim());
+  return generateMindmap(transcript.replace(/\s+/g, " ").trim());
 }
 
 function extractVideoId(url: string): string | null {

@@ -1,7 +1,8 @@
 import createHttpError from "http-errors";
-import prisma from "../../config/database";
-import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "./mindmap.dto";
+import prisma from "../../../config/database";
+import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "../mindmap.dto";
 import { generateMindmap } from "./mindmap.ai.service";
+import { NLPService } from "../../nlp/nlp.service";
 
 export class MindmapService {
 
@@ -23,17 +24,45 @@ export class MindmapService {
     return user;
   }
 
-   async createFromText(dto: GenerateMindmapDto, tokenUserId: string) {
+  async createFromText(dto: GenerateMindmapDto, tokenUserId: string) {
     await this.validateUserAccess(dto.userId, tokenUserId);
 
-    const structure = await generateMindmap(dto.title, dto.sourceText);
+    // Run both simultaneously
+    const structure = await generateMindmap(dto.sourceText);
+
+    let rawDescription: any = {
+      summary: dto.sourceText.slice(0, 300)
+    };
+
+    try {
+      rawDescription = await Promise.race([
+        NLPService.summarize(dto.sourceText),
+        new Promise(resolve =>
+          setTimeout(
+            () =>
+              resolve({
+                summary: dto.sourceText.slice(0, 300)
+              }),
+            5000
+          )
+        )
+      ]);
+    } catch { }
+
+    const derivedTitle = (structure as any)?.topic ?? dto.sourceText.split(/\s+/).slice(0, 5).join(" ");
+
+    const deriveDescription = typeof rawDescription === "object"
+      ? (rawDescription as any).summary ?? ""
+      : rawDescription;
 
     const saved = await prisma.mindmap.create({
       data: {
-        title: dto.title,
-        description: typeof dto.description === "string"
-          ? dto.description
-          : (dto.description ? JSON.stringify(dto.description) : ""),
+        title: derivedTitle,
+        description: dto.description
+          ? (typeof dto.description === "string"
+            ? dto.description
+            : JSON.stringify(dto.description))
+          : deriveDescription ?? "",
         structure: structure as any,
         userId: dto.userId,
       },
@@ -43,7 +72,7 @@ export class MindmapService {
       data: {
         userId: dto.userId,
         action: "CREATE_MINDMAP",
-        details: `Mindmap '${dto.title}' created from text by user '${dto.userId}'.`,
+        details: `Mindmap '${derivedTitle}' created from text by user '${dto.userId}'.`,
       },
     });
 
@@ -108,14 +137,14 @@ export class MindmapService {
     return mindmap;
   }
 
- async updateMindmap(data: UpdateMindmapDto, mindmapId: string, userId?: string, tokenUserId?: string) {
-  const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
-  if (!mindmap) throw createHttpError(404, "Mindmap not found.");
+  async updateMindmap(data: UpdateMindmapDto, mindmapId: string, userId?: string, tokenUserId?: string) {
+    const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
+    if (!mindmap) throw createHttpError(404, "Mindmap not found.");
 
-  await this.validateUserAccess(mindmap.userId, tokenUserId || userId || "");
+    await this.validateUserAccess(mindmap.userId, tokenUserId || userId || "");
 
-  if (userId && mindmap.userId !== userId) {
-    await prisma.activityLog.create({
+    if (userId && mindmap.userId !== userId) {
+      await prisma.activityLog.create({
         data: {
           userId,
           action: "MINDMAP_UPDATE_UNAUTHORIZED",
@@ -123,40 +152,39 @@ export class MindmapService {
         },
       });
 
-    throw createHttpError(403, "You are not authorized to update this mindmap.");
+      throw createHttpError(403, "You are not authorized to update this mindmap.");
+    }
+
+    const updateData: Record<string, any> = {};
+    if (data.title) updateData.title = data.title;
+    if (data.description) updateData.description = data.description;
+    if (data.structure) updateData.structure = data.structure;
+
+    if (Object.keys(updateData).length === 0) {
+      throw createHttpError(400, "Please provide at least one field to update.");
+    }
+
+    const updated = await prisma.mindmap.update({
+      where: { id: mindmapId },
+      data: updateData,
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        userId: mindmap.userId,
+        action: "MINDMAP_UPDATED",
+        details: `Mindmap "${updated.title}" (ID: ${mindmapId}) updated.`,
+      },
+    });
+
+    return updated;
   }
-
-  const updateData: Record<string, any> = {};
-  if (data.title) updateData.title = data.title;
-  if (data.description) updateData.description = data.description;
-  if (data.structure) updateData.structure = data.structure;
-
-  if (Object.keys(updateData).length === 0) {
-    throw createHttpError(400, "Please provide at least one field to update.");
-  }
-
-  const updated = await prisma.mindmap.update({
-    where: { id: mindmapId },
-    data: updateData,
-  });
-
-  await prisma.activityLog.create({
-    data: {
-      userId: mindmap.userId,
-      action: "MINDMAP_UPDATED",
-      details: `Mindmap "${updated.title}" (ID: ${mindmapId}) updated.`,
-    },
-  });
-
-  return updated;
-}
-
 
   async deleteMindmap(mindmapId: string, userId: string, tokenUserId: string): Promise<void> {
     const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
     if (!mindmap) throw createHttpError(404, "Mindmap not found.");
 
-    await this.validateUserAccess(mindmap.userId, tokenUserId|| userId || "");
+    await this.validateUserAccess(mindmap.userId, tokenUserId || userId || "");
 
     if (mindmap.userId !== userId) {
       await prisma.activityLog.create({
@@ -169,6 +197,7 @@ export class MindmapService {
 
       throw createHttpError(403, "Not authorized to delete this mindmap.");
     }
+
     await prisma.mindmap.delete({ where: { id: mindmapId } });
 
     await prisma.activityLog.create({

@@ -1,20 +1,20 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { verifyToken } from "../../middlewares/jwtVerifiction";
 import { dtoValidation } from "../../middlewares/dtoValidation";
-import { MindmapController } from "./mindmap.controller";
+import { MindmapController } from "./controller/mindmap.controller";
 import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "./mindmap.dto";
 import createHttpError from "http-errors";
-import { MindmapExportController } from "./export/mindmap.export.controller";
+import { MindmapExportController } from "./controller/mindmap.export.controller";
 import { enforceTeacherOrStudent } from "../../middlewares/enforceTeacherorStudent";
 import { requireAuth } from "../../middlewares/requireAuth";
 
 export const mindmapRouter = Router();
 const controller = new MindmapController();
 
-const getTokenUserId = (req: any) => 
-    req.user?.userId ||
-    req.user?.id ||
-    req.user?.sub; // support multiple JWT payload formats
+const getTokenUserId = (req: any) =>
+  req.user?.userId ||
+  req.user?.id ||
+  req.user?.sub; // support multiple JWT payload formats
 
 mindmapRouter.use(requireAuth, verifyToken, enforceTeacherOrStudent)
 

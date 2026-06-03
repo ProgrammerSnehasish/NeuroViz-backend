@@ -1,5 +1,5 @@
 import path from "path";
-import { generateMindmap } from "../mindmap.ai.service";
+import { generateMindmap } from "../service/mindmap.ai.service";
 
 
 const MIN_TEXT_LENGTH = 100; // raised from 20 — more meaningful threshold
@@ -40,7 +40,7 @@ export async function documentToMindmap(
     );
   }
 
-  return generateMindmap(title, cleaned);
+  return generateMindmap(cleaned);
 }
 
 async function extractPDF(buffer: Buffer): Promise<string> {

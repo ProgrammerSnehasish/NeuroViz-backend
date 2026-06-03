@@ -48,7 +48,7 @@ class UploadMindmapBase {
   userId!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   title!: string;
   // `file` field handled by multer — not validated here
 }

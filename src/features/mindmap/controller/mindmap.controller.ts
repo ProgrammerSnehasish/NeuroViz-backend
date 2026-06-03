@@ -1,5 +1,5 @@
-import { CreateMindmapDto, UpdateMindmapDto, GenerateMindmapDto } from "./mindmap.dto";
-import { MindmapService } from "./mindmap.service";
+import { CreateMindmapDto, UpdateMindmapDto, GenerateMindmapDto } from "../mindmap.dto";
+import { MindmapService } from "../service/mindmap.service";
 
 export class MindmapController {
   private mindmapService: MindmapService;
@@ -13,7 +13,7 @@ export class MindmapController {
     return await this.mindmapService.createRaw(data, tokenUserId);
   }
 
-  // 🤖 Create a mindmap from plain text (AI-generated structure)
+  // 🤖 Create a mindmap from plain text (AI auto-derives title & structure)
   public async createMindmapFromText(data: GenerateMindmapDto, tokenUserId: string) {
     return await this.mindmapService.createFromText(data, tokenUserId);
   }
