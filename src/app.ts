@@ -43,7 +43,7 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// ⚠️ Global Handlers
+// Global Handlers
 app.use(errorHandler);
 app.use(responseHandler);
 

@@ -10,7 +10,7 @@ export const recordBehavior = async (
   metadata?: any
 ) => {
   const event = await prisma.$transaction(async (tx) => {
-    // 1️⃣ store behavioral event
+    // store behavioral event
     const event = await tx.behaviorEvent.create({
       data: {
         userId,
@@ -19,7 +19,7 @@ export const recordBehavior = async (
       },
     });
 
-    // 2️⃣ derive cognitive delta
+    // derive cognitive delta
     const delta = deriveCognitiveDelta(type, metadata);
 
     const clamp = (val: number, min: number, max: number) =>
@@ -33,7 +33,7 @@ export const recordBehavior = async (
           : undefined,
     };
 
-    // 3️⃣ apply cognitive update (use SAME transaction)
+    // apply cognitive update (use SAME transaction)
     await tx.cognitiveProfile.upsert({
       where: { userId },
       create: {

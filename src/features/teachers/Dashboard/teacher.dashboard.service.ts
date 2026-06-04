@@ -120,7 +120,7 @@ export const TeacherDashboardService = {
           { createdBy: teacherId },
           { createdBy: null },
           { createdBy: "" },
-          { studentTeachers: { some: { teacherId } } }, // ✅ include linked students too
+          { studentTeachers: { some: { teacherId } } }, // include linked students too
         ],
       },
       select: { id: true },

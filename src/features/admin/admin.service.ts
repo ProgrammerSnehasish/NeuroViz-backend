@@ -67,7 +67,7 @@ export const AdminService = {
     });
   },
 
-  // 👥 All users
+  // All users
   async getAllUsers() {
     return prisma.user.findMany({
       select: {

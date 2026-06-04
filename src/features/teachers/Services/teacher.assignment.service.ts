@@ -51,7 +51,7 @@ export const TeacherAssignmentService = {
       },
     });
 
-    // ✅ Assign to individual students (if provided)
+    // Assign to individual students (if provided)
     if (options?.studentIds?.length) {
       await prisma.assignmentStudent.createMany({
         data: options.studentIds.map((studentId) => ({
@@ -61,7 +61,7 @@ export const TeacherAssignmentService = {
       });
     }
 
-    // ✅ Assign to groups (if provided)
+    // Assign to groups (if provided)
     if (options?.groupIds?.length) {
       await prisma.assignmentGroup.createMany({
         data: options.groupIds.map((groupId) => ({
@@ -84,7 +84,7 @@ export const TeacherAssignmentService = {
   },
 
   /**
-   * ✅ Get all assignments created by a teacher
+   * Get all assignments created by a teacher
    */
   async getAssignmentsByTeacher(teacherId: string) {
     await this.validateTeacher(teacherId);
@@ -104,7 +104,7 @@ export const TeacherAssignmentService = {
   },
 
   /**
-   * ✅ View assignment details
+   * View assignment details
    */
   async getAssignmentDetails(teacherId: string, assignmentId: string) {
     await this.validateTeacher(teacherId);
@@ -136,7 +136,7 @@ export const TeacherAssignmentService = {
   },
 
   /**
-   * ✅ Evaluate student submission using AI or manual
+   * Evaluate student submission using AI or manual
    */
   async evaluateAssignment(
     studentText: string,
@@ -192,7 +192,7 @@ Final AI Grade: ${score}/100.
   },
 
   /**
-   * ✅ Evaluate and store submission result
+   * Evaluate and store submission result
    */
   async evaluateSubmission(
     teacherId: string,
@@ -249,7 +249,7 @@ Final AI Grade: ${score}/100.
   },
 
   /**
-   * ✅ Get submissions for a student (under this teacher)
+   * Get submissions for a student (under this teacher)
    */
   async getSubmissionsForStudent(teacherId: string, studentId: string) {
     await this.validateTeacher(teacherId);
@@ -271,7 +271,7 @@ Final AI Grade: ${score}/100.
   },
 
   /**
-   * ✅ Delete assignment
+   * Delete assignment
    */
   async deleteAssignment(teacherId: string, assignmentId: string) {
     const assignment = await prisma.assignment.findUnique({
@@ -303,7 +303,7 @@ Final AI Grade: ${score}/100.
   },
 
   /**
- * ✅ Update an assignment (title, description, student/group assignment, etc.)
+ * Update an assignment (title, description, student/group assignment, etc.)
  */
   async updateAssignment(
     teacherId: string,
@@ -329,7 +329,7 @@ Final AI Grade: ${score}/100.
     if (!assignment || assignment.teacherId !== teacherId)
       throw createHttpError(404, "Assignment not found or unauthorized.");
 
-    // ✅ Update core fields
+    // Update core fields
     const updatedAssignment = await prisma.assignment.update({
       where: { id: assignmentId },
       data: {
@@ -338,7 +338,7 @@ Final AI Grade: ${score}/100.
       },
     });
 
-    // ✅ Handle student assignments update (if provided)
+    // Handle student assignments update (if provided)
     if (updateData.studentIds) {
       // Remove existing student links
       await prisma.assignmentStudent.deleteMany({
@@ -355,7 +355,7 @@ Final AI Grade: ${score}/100.
       }
     }
 
-    // ✅ Handle group assignments update (if provided)
+    // Handle group assignments update (if provided)
     if (updateData.groupIds) {
       // Remove existing group links
       await prisma.assignmentGroup.deleteMany({

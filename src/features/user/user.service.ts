@@ -197,7 +197,7 @@ export class UserService {
     }),
   ]);
 
-  // ✅ Finally delete the user
+  // Finally delete the user
   await prisma.user.delete({ where: { id: userId } });
 }
 }

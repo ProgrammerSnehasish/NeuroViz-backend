@@ -24,7 +24,7 @@ export class GiveFeedbackDto {
 }
 
 // /**
-//  * 📬 Mark a notification as read
+//  * Mark a notification as read
 //  */
 // export class MarkNotificationReadDto {
 //   @IsUUID()

@@ -39,7 +39,7 @@ const getTokenUserId = (req: any): string =>
 // INPUT → MINDMAP
 // ─────────────────────────────────────────────────────────────────────────────
 
-// 🎙 POST /mindmap/extended/audio
+// POST /mindmap/extended/audio
 mindmapExtendedRouter.post(
   "/audio",
   audioUpload.single("file"),
@@ -62,7 +62,7 @@ mindmapExtendedRouter.post(
   }
 );
 
-// 📄 POST /mindmap/extended/document
+// POST /mindmap/extended/document
 mindmapExtendedRouter.post(
   "/document",
   documentUpload.single("file"),
@@ -85,7 +85,7 @@ mindmapExtendedRouter.post(
   }
 );
 
-// 🎬 POST /mindmap/extended/video
+// POST /mindmap/extended/video
 mindmapExtendedRouter.post(
   "/video",
   videoUpload.single("file"),
@@ -108,7 +108,7 @@ mindmapExtendedRouter.post(
   }
 );
 
-// ▶️ POST /mindmap/extended/youtube
+// POST /mindmap/extended/youtube
 mindmapExtendedRouter.post(
   "/youtube",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -132,7 +132,7 @@ mindmapExtendedRouter.post(
 // TEXT-TO-AUDIO (TTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// 🔊 POST /mindmap/extended/tts/text
+// POST /mindmap/extended/tts/text
 mindmapExtendedRouter.post(
   "/tts/text",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -158,7 +158,7 @@ mindmapExtendedRouter.post(
   }
 );
 
-// 📢 POST /mindmap/extended/tts/mindmap
+// POST /mindmap/extended/tts/mindmap
 mindmapExtendedRouter.post(
   "/tts/mindmap",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -188,7 +188,7 @@ mindmapExtendedRouter.post(
 // NEURODIVERGENT FEATURES
 // ─────────────────────────────────────────────────────────────────────────────
 
-// 🎯 GET /mindmap/extended/:mindmapId/focus?nodeIndex=0
+// GET /mindmap/extended/:mindmapId/focus?nodeIndex=0
 mindmapExtendedRouter.get(
   "/:mindmapId/focus",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -211,7 +211,7 @@ mindmapExtendedRouter.get(
   }
 );
 
-// 🧩 GET /mindmap/extended/:mindmapId/simplified?addEmojis=true&maxWords=12
+// GET /mindmap/extended/:mindmapId/simplified?addEmojis=true&maxWords=12
 mindmapExtendedRouter.get(
   "/:mindmapId/simplified",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -232,7 +232,7 @@ mindmapExtendedRouter.get(
   }
 );
 
-// ❓ GET /mindmap/extended/:mindmapId/quiz
+// GET /mindmap/extended/:mindmapId/quiz
 mindmapExtendedRouter.get(
   "/:mindmapId/quiz",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -251,7 +251,7 @@ mindmapExtendedRouter.get(
   }
 );
 
-// 📅 GET /mindmap/extended/:mindmapId/study-plan?nodesPerBlock=2
+// GET /mindmap/extended/:mindmapId/study-plan?nodesPerBlock=2
 mindmapExtendedRouter.get(
   "/:mindmapId/study-plan",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -271,7 +271,7 @@ mindmapExtendedRouter.get(
   }
 );
 
-// 🎨 GET /mindmap/extended/:mindmapId/colours
+// GET /mindmap/extended/:mindmapId/colours
 mindmapExtendedRouter.get(
   "/:mindmapId/colours",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -287,7 +287,7 @@ mindmapExtendedRouter.get(
   }
 );
 
-// 💬 GET /mindmap/extended/:mindmapId/analogies
+// GET /mindmap/extended/:mindmapId/analogies
 mindmapExtendedRouter.get(
   "/:mindmapId/analogies",
   async (req: Request, res: Response, next: NextFunction) => {

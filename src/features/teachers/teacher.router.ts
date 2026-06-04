@@ -46,32 +46,32 @@ teacherRouter.get("/submission/:submissionId/regenerate-summary", TeacherControl
  * -----------------------------
  */
 
-// 👥 Group
+// Group
 teacherRouter.post("/group/create", dtoValidation(CreateGroupDto), TeacherController.createGroup);
 
 teacherRouter.put("/groups/:groupId", dtoValidation(UpdateGroupDto), TeacherController.updateGroup);
 
 teacherRouter.delete("/groups/:groupId", TeacherController.deleteGroup);
 
-// 🔍 Search students
+// Search students
 teacherRouter.get("/students/search", dtoValidation(SearchQueryDto), TeacherController.searchStudents);
 
-// 🧾 Register student (direct add)
+// Register student (direct add)
 teacherRouter.post("/students/register", dtoValidation(RegisterStudentDto), TeacherController.registerStudent);
 
-// ➕ Add multiple students to a group
+// Add multiple students to a group
 teacherRouter.post("/group/members/add", dtoValidation(AddMembersToGroupDto), TeacherController.addMembersToGroup);
 
-// ➕ Add single student to a group
+// Add single student to a group
 teacherRouter.post("/group/student/add", dtoValidation(AddStudentToGroupDto), TeacherController.addStudentToGroup);
 
 // Remove student from group
 teacherRouter.post("/group/:groupId/student/:studentId/remove", TeacherController.removeStudentFromGroup);
 
-// 📩 Invite student by email
+// Invite student by email
 teacherRouter.post("/students/invite", dtoValidation(InviteStudentDto), TeacherController.inviteStudent);
 
-// 📩 Invite student to add a specific group by email
+// Invite student to add a specific group by email
 teacherRouter.post("/students/invite/group", dtoValidation(InviteStudentToGroupDto), TeacherController.inviteStudentToGroup);
 
 //Mail Logs

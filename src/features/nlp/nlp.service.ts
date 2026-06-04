@@ -242,7 +242,7 @@ detectToxicity: async (text: string) => {
 
   let nerKeywords: string[] = [];
 
-  // 🔹 1. Try HuggingFace NER
+  // 1. Try HuggingFace NER
   if (NLP.provider === "huggingface") {
     try {
       const out = await hfRequest(
@@ -279,7 +279,7 @@ detectToxicity: async (text: string) => {
     }
   }
 
-  // 🔹 2. Frequency-based keywords (IMPORTANT)
+  // 2. Frequency-based keywords (IMPORTANT)
   const stopWords = new Set([
     "is","a","the","of","and","to","in","that","are","with","for","on","this","these","those"
   ]);
@@ -299,10 +299,10 @@ detectToxicity: async (text: string) => {
     .sort((a, b) => b[1] - a[1])
     .map(([w]) => w);
 
-  // 🔹 3. Combine both
+  // 3. Combine both
   const combined = [...nerKeywords, ...freqKeywords];
 
-  // 🔹 4. Remove duplicates
+  // 4. Remove duplicates
   const unique = Array.from(new Set(combined));
 
   return {
@@ -333,7 +333,7 @@ classify: async (text: string) => {
           multi_label: false, // can set true for multiple possible topics
         });
 
-        // ✅ Handle both old and new response formats
+        // Handle both old and new response formats
         let labels: string[] = [];
         let scores: number[] = [];
 
@@ -349,7 +349,7 @@ classify: async (text: string) => {
           scores = out.map((r: any) => r.score);
         }
 
-        // ✅ Pick top result if available
+        // Pick top result if available
         if (labels.length && scores.length) {
           const bestIndex = scores.indexOf(Math.max(...scores));
           return {

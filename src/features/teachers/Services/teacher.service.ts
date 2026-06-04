@@ -119,7 +119,7 @@ export const TeacherService = {
   ) {
     await this.validateTeacher(teacherId);
 
-    // 🔁 reuse analytics without re-logging
+    // reuse analytics without re-logging
     const analytics = await this.getStudentAnalytics(
       teacherId,
       studentId,

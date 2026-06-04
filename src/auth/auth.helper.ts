@@ -103,7 +103,7 @@ async function verifyOtpCode(
   }
 
   const secret = getOtpSecret(userId);
-  const isValid = verifyOtp(secret, otp) && record.code === otp;  // ✅
+  const isValid = verifyOtp(secret, otp) && record.code === otp; 
 
   if (!isValid) {
     throw createHttpError(400, "Invalid OTP.");

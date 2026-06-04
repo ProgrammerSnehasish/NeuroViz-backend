@@ -125,7 +125,7 @@ export const TeacherStudentService = {
 ) {
   await this.validateTeacher(teacherId);
 
-  // ✅ Check if the student already exists
+  // Check if the student already exists
   const existingStudent = await prisma.user.findUnique({
     where: { email: studentData.email },
   });
@@ -150,7 +150,7 @@ export const TeacherStudentService = {
       };
     }
 
-    // ✅ Link student to teacher
+    // Link student to teacher
     await prisma.teacherStudent.create({
       data: {
         teacherId,
@@ -158,7 +158,7 @@ export const TeacherStudentService = {
       },
     });
 
-    // ✅ Create notification for student
+    // Create notification for student
     await prisma.notification.create({
       data: {
         studentId: existingStudent.id,
@@ -168,7 +168,7 @@ export const TeacherStudentService = {
       },
     });
 
-    // ✅ Send notification email (optional)
+    // Send notification email (optional)
     await sendMail({
       to: existingStudent.email,
       subject: "You’ve been added under a new teacher",
@@ -204,7 +204,7 @@ export const TeacherStudentService = {
     },
   });
 
-  // ✅ Link to teacher
+  // Link to teacher
   await prisma.teacherStudent.create({
     data: {
       teacherId,
@@ -212,7 +212,7 @@ export const TeacherStudentService = {
     },
   });
 
-  // ✅ Send welcome mail
+  // Send welcome mail
   await sendMail({
     to: newStudent.email,
     subject: "Welcome to NeuroViz!",
@@ -229,7 +229,7 @@ export const TeacherStudentService = {
     studentId: newStudent.id,
   });
 
-  // ✅ Create notification for new student
+  // Create notification for new student
   await prisma.notification.create({
     data: {
       studentId: newStudent.id,
@@ -321,7 +321,7 @@ export const TeacherStudentService = {
 
   const inviteLink = `${process.env.CLIENT_URL}/invite/accept?token=${token}`;
 
-  // ✅ Include teacherId
+  // Include teacherId
   await sendMail({
     to: email,
     subject: "You’ve been invited to NeuroViz",

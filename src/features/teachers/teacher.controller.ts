@@ -8,7 +8,7 @@ import { MailLogService } from "./Services/teacher.mail-log.service";
 
 export const TeacherController = {
   // ------------------------------
-  // 📊 ANALYTICS + PERFORMANCE
+  // ANALYTICS + PERFORMANCE
   // ------------------------------
   async getStudentAnalytics(req: Request, res: Response, next: NextFunction) {
     try {
@@ -88,7 +88,7 @@ export const TeacherController = {
   },
 
   // ------------------------------
-  // 📘 ASSIGNMENTS
+  // ASSIGNMENTS
   // ------------------------------
   async createAssignment(req: Request, res: Response, next: NextFunction) {
     try {
@@ -234,7 +234,7 @@ export const TeacherController = {
   },
 
   // ------------------------------
-  // 🧠 REVIEW + FEEDBACK
+  // REVIEW + FEEDBACK
   // ------------------------------
   async reviewSubmission(req: Request, res: Response, next: NextFunction) {
     try {

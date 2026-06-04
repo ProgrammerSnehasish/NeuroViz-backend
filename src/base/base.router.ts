@@ -17,7 +17,7 @@ import { mindmapExtendedRouter } from "../features/mindmap/new_features/mindmap.
 
 const mainRouter = Router()
 
-// 🧠 API Routes
+// API Routes
 mainRouter.use("/users", userRouter);
 mainRouter.use("/auth", authRouter);
 mainRouter.use("/mindmaps", mindmapRouter);
