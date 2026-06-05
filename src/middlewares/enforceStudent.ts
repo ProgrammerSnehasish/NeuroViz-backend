@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import { userRole } from "../config/core";
 import { resolveUserFromToken } from "../utils/resolveUserFromToken";
 
-export const enforceTeacher = async (
+export const enforceStudent = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -11,11 +11,11 @@ export const enforceTeacher = async (
   try {
     const found = await resolveUserFromToken(req);
 
-    if (found.role !== userRole.Teacher) {
-      throw createHttpError(403, "Teacher access only.");
+    if (found.role !== userRole.Student) {
+      throw createHttpError(403, "Student access only.");
     }
 
-    res.locals.teacherId = found.id;    // ✅ use res.locals
+    res.locals.studentId = found.id;    // ✅ use res.locals
     res.locals.userId = found.id;
 
     next();

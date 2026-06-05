@@ -12,17 +12,9 @@ export class CreateMindmapDto {
   @IsObject()
   @IsNotEmpty()
   structure: Record<string, any>; 
-
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
 }
 
 export class GenerateMindmapDto {
-  @IsString()
-  @IsNotEmpty()
-  userId!: string;
- 
   @IsOptional()
   @IsObject() 
   description?: Record<string, any>;

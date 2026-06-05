@@ -19,22 +19,22 @@ export class MindmapController {
   }
 
   // Get all mindmaps for a given user
-  public async getMindmapsByUser(userId: string, tokenUserId: string) {
-    return await this.mindmapService.getMindmapsByUser(userId, tokenUserId);
+  public async getMindmapsByUser(userId: string) {
+    return await this.mindmapService.getMindmapsByUser(userId);
   }
 
   // Get a single mindmap by its ID
-  public async getMindmapById(mindmapId: string, tokenUserId: string) {
-    return await this.mindmapService.getMindmapById(mindmapId, tokenUserId);
+  public async getMindmapById(mindmapId: string) {
+    return await this.mindmapService.getMindmapById(mindmapId);
   }
 
   // Update a mindmap
   public async updateMindmap(data: UpdateMindmapDto, mindmapId: string, userId: string, tokenUserId: string) {
-    return await this.mindmapService.updateMindmap(data, mindmapId, userId, tokenUserId);
+    return await this.mindmapService.updateMindmap(data, mindmapId, userId);
   }
 
   // Delete a mindmap
-  public async deleteMindmap(mindmapId: string, userId: string, tokenUserId: string) {
-    return await this.mindmapService.deleteMindmap(mindmapId, userId, tokenUserId);
+  public async deleteMindmap(mindmapId: string,tokenUserId: string) {
+    return await this.mindmapService.deleteMindmap(mindmapId, tokenUserId);
   }
 }

@@ -6,27 +6,7 @@ import { NLPService } from "../../nlp/nlp.service";
 
 export class MindmapService {
 
-  private async validateUserAccess(dtoUserId: string, tokenUserId: string) {
-    if (dtoUserId !== tokenUserId) {
-      await prisma.activityLog.create({
-        data: {
-          userId: tokenUserId,
-          action: "UNAUTHORIZED_OPERATION_ATTEMPT",
-          details: `Token user ${tokenUserId} tried to perform action as ${dtoUserId}`,
-        },
-      });
-
-      throw createHttpError(403, "Unauthorized: User token mismatch.");
-    }
-
-    const user = await prisma.user.findUnique({ where: { id: dtoUserId } });
-    if (!user) throw createHttpError(404, "User not found");
-    return user;
-  }
-
   async createFromText(dto: GenerateMindmapDto, tokenUserId: string) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-
     // Run both simultaneously
     const structure = await generateMindmap(dto.sourceText);
 
@@ -64,15 +44,15 @@ export class MindmapService {
             : JSON.stringify(dto.description))
           : deriveDescription ?? "",
         structure: structure as any,
-        userId: dto.userId,
+        userId: tokenUserId,
       },
     });
 
     await prisma.activityLog.create({
       data: {
-        userId: dto.userId,
+        userId: tokenUserId,
         action: "CREATE_MINDMAP",
-        details: `Mindmap '${derivedTitle}' created from text by user '${dto.userId}'.`,
+        details: `Mindmap '${derivedTitle}' created from text by user '${tokenUserId}'.`,
       },
     });
 
@@ -81,29 +61,27 @@ export class MindmapService {
 
   // Create a raw mindmap manually (client provides structure)
   async createRaw(dto: CreateMindmapDto, tokenUserId: string) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
     const mindmap = await prisma.mindmap.create({
       data: {
         title: dto.title,
         description: dto.description ?? "",
         structure: dto.structure as any,
-        userId: dto.userId,
+        userId: tokenUserId,
       },
     });
 
     await prisma.activityLog.create({
       data: {
-        userId: dto.userId,
+        userId: tokenUserId,
         action: "MINDMAP_CREATED_MANUAL",
-        details: `Manual mindmap "${dto.title}" created for user ${dto.userId}`,
+        details: `Manual mindmap "${dto.title}" created for user ${tokenUserId}`,
       },
     });
 
     return mindmap;
   }
 
-  async getMindmapsByUser(userId: string, tokenUserId: string) {
-    await this.validateUserAccess(userId, tokenUserId);
+  async getMindmapsByUser(userId: string) {
     const mindmaps = await prisma.mindmap.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
@@ -120,11 +98,10 @@ export class MindmapService {
     return mindmaps;
   }
 
-  async getMindmapById(mindmapId: string, tokenUserId: string) {
+  async getMindmapById(mindmapId: string) {
     const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
     if (!mindmap) throw createHttpError(404, "Mindmap not found.");
 
-    await this.validateUserAccess(mindmap.userId, tokenUserId);
 
     await prisma.activityLog.create({
       data: {
@@ -137,11 +114,10 @@ export class MindmapService {
     return mindmap;
   }
 
-  async updateMindmap(data: UpdateMindmapDto, mindmapId: string, userId?: string, tokenUserId?: string) {
+  async updateMindmap(data: UpdateMindmapDto, mindmapId: string, userId?: string) {
     const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
     if (!mindmap) throw createHttpError(404, "Mindmap not found.");
 
-    await this.validateUserAccess(mindmap.userId, tokenUserId || userId || "");
 
     if (userId && mindmap.userId !== userId) {
       await prisma.activityLog.create({
@@ -180,11 +156,9 @@ export class MindmapService {
     return updated;
   }
 
-  async deleteMindmap(mindmapId: string, userId: string, tokenUserId: string): Promise<void> {
+  async deleteMindmap(mindmapId: string, userId: string): Promise<void> {
     const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
     if (!mindmap) throw createHttpError(404, "Mindmap not found.");
-
-    await this.validateUserAccess(mindmap.userId, tokenUserId || userId || "");
 
     if (mindmap.userId !== userId) {
       await prisma.activityLog.create({

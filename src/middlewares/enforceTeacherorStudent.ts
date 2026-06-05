@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import createHttpError from "http-errors";
-import prisma from "../config/database";
 import { userRole } from "../config/core";
+import { resolveUserFromToken } from "../utils/resolveUserFromToken";
 
 export const enforceTeacherOrStudent = async (
   req: Request,
@@ -9,33 +9,17 @@ export const enforceTeacherOrStudent = async (
   next: NextFunction
 ) => {
   try {
-    const user = req.user as any;
-
-    if (!user) {
-      throw createHttpError(401, "Unauthorized - Token missing");
-    }
-
-    const tokenUserId = user.userId || user.id || user.sub;
-
-    const found = await prisma.user.findUnique({
-      where: { id: tokenUserId },
-      select: { id: true, role: true },
-    });
-
-    if (!found) {
-      throw createHttpError(401, "Invalid token user");
-    }
+    const found = await resolveUserFromToken(req);
 
     if (found.role !== userRole.Teacher && found.role !== userRole.Student) {
-    throw createHttpError(403, "Teacher or Student access only.");
+      throw createHttpError(403, "Teacher or Student access only.");
+    }
+
+    res.locals.userId = found.id;       // ✅ use res.locals instead of req.body
+    res.locals.userRole = found.role;
+
+    next();
+  } catch (err) {
+    next(err);
   }
-
-    // Attach useful data for downstream controllers
-    req.body.userId = found.id;
-  req.body.userRole = found.role;
-
-  next();
-} catch (err) {
-  next(err);
-}
 };
