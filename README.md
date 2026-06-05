@@ -318,11 +318,11 @@ yarn dev
 |GET|`/api/mindmaps/:mindmapId/jpeg`|Download Mindmap as JPEG|
 |GET|`/api/mindmaps/:mindmapId/pdf`|Download Mindmap as PDF(Although it is recomended to fetch from frontend, for visualization download, not a part of backend.)|
 |DELETE|`/api/mindmaps/delete/:mindmapId`| Delete Mindmap by mindmap id(Although it is recomended to fetch from frontend, for visualization download, not a part of backend.)|
-|**Live Class**|
+<!-- |**Live Class**|
 |POST|`/api/rooms/`|Create a new room|
 |POST|`/api/rooms/:roomId/join`|Join a room, get LiveKit token|
 |POST|`/api/rooms/:roomId/end`|Host ends the class|
-|GET|`/api/rooms/:roomId/participants`|Get participants by roomId|
+|GET|`/api/rooms/:roomId/participants`|Get participants by roomId| -->
 |**NLP**|
 |POST|`/api/nlp/summarize`| Summarize Text|
 |POST|`/api/nlp/detect-toxicity`| Detect toxicity|
@@ -330,7 +330,7 @@ yarn dev
 |POST|`/api/nlp/keywords`| Extract Keywords|
 |POST|`/api/nlp/classify`| Classify Text|
 |POST|`/api/nlp/entities`| Named Entity Recognition|
-|**Behavior Tracking**|
+<!-- |**Behavior Tracking**|
 |POST|`/api/behavior/track`|Track User Behaviour for cognitive profiling.|
 |**Cognitive Profiling**|
 |GET|`/api/cognitive/user/:userId`|Get Cognitive Profile by user Id|
@@ -342,7 +342,7 @@ yarn dev
 |GET|`/api/feedback/user/:userId`|Get feedback by user Id|
 |**Others**|
 |POST|`/api/adapt/trigger/user/:userid`|Trigger Adaptation Manually(Interface Adaptation)|
-|POST|`/api/content/summarize`|Summarize Content|
+|POST|`/api/content/summarize`|Summarize Content| -->
 |**Teacher Routes**|
 |*Analytics & Performance*|		
 |GET|	`/api/teacher/student/:userId/analytics`|	Get analytics for a specific student|
@@ -394,14 +394,14 @@ yarn dev
 |GET|	`/api/teacherDashboard/notifications`|	Get all notifications for teacher|
 |POST|	`/api/teacherDashboard/notifications/create`|	Post a new notification to students|
 |PATCH|	`/api/teacherDashboard/notifications/:id/read`|	Mark notification as read|
-|**Admin Routes**|
+<!-- |**Admin Routes**|
 |GET|`/api/admin/overview`| An Brief overview of System Usage.|
 |GET|`/api/admin/health`|An Brief overview of System health.|
 |GET|`/api/admin/activity/logs`|Fetch details of recent activity log.|
 |GET|`/api/admin/users`|Fetch Brief Details of each Users(incl. Admin).|
 |POST|`/api/admin/user/status`|Change User's status to Activate/Deactivate.|
 |DELETE|`/api/admin/user/:userId`|Delete a User from application database.|
-|DELETE|`/api/admin/user/:userId/reset`|Reset a User's details.|
+|DELETE|`/api/admin/user/:userId/reset`|Reset a User's details.| -->
 
 ---
 

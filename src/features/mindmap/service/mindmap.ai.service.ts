@@ -52,7 +52,7 @@ function isValidMindmap(mindmap: any): boolean {
 
   if (
     !Array.isArray(mindmap.nodes) ||
-    mindmap.nodes.length < 4
+    mindmap.nodes.length < 1
   ) {
     return false;
   }
