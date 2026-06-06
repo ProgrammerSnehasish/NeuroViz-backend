@@ -1,6 +1,6 @@
 import createHttpError from "http-errors";
 import prisma from "../../../config/database";
-import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "../mindmap.dto";
+import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "../dto/mindmap.dto";
 import { generateMindmap } from "./mindmap.ai.service";
 import { NLPService } from "../../nlp/nlp.service";
 

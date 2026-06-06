@@ -1,9 +1,6 @@
 import createHttpError from "http-errors";
-import { MindmapExtendedService } from "./mindmap.extended.service";
+import { MindmapExtendedService } from "../service/mindmap.extended.service";
 import {
-  AudioMindmapDto,
-  DocumentMindmapDto,
-  VideoMindmapDto,
   YouTubeMindmapDto,
   TextToAudioDto,
   MindmapToAudioDto,
@@ -11,7 +8,7 @@ import {
   GenerateQuizDto,
   StudyPlanDto,
   SimplifyMindmapDto,
-} from "./mindmap.extended.dto";
+} from "../dto/mindmap.extended.dto";
 
 export class MindmapExtendedController {
   private service: MindmapExtendedService;
@@ -36,35 +33,32 @@ export class MindmapExtendedController {
   // ─── Input → Mindmap ──────────────────────────────────────────────────────
 
   public createFromAudio(
-    dto: AudioMindmapDto,
     fileBuffer: Buffer,
     mimeType: string,
     tokenUserId: string
   ) {
     return this.run(() =>
-      this.service.createFromAudio(dto, fileBuffer, mimeType, tokenUserId)
+      this.service.createFromAudio(fileBuffer, mimeType, tokenUserId)
     );
   }
 
   public createFromDocument(
-    dto: DocumentMindmapDto,
     fileBuffer: Buffer,
     originalName: string,
     tokenUserId: string
   ) {
     return this.run(() =>
-      this.service.createFromDocument(dto, fileBuffer, originalName, tokenUserId)
+      this.service.createFromDocument(fileBuffer, originalName, tokenUserId)
     );
   }
 
   public createFromVideo(
-    dto: VideoMindmapDto,
     fileBuffer: Buffer,
     mimeType: string,
     tokenUserId: string
   ) {
     return this.run(() =>
-      this.service.createFromVideo(dto, fileBuffer, mimeType, tokenUserId)
+      this.service.createFromVideo(fileBuffer, mimeType, tokenUserId)
     );
   }
 

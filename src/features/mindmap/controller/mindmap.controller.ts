@@ -1,9 +1,8 @@
-import { CreateMindmapDto, UpdateMindmapDto, GenerateMindmapDto } from "../mindmap.dto";
+import { CreateMindmapDto, UpdateMindmapDto, GenerateMindmapDto } from "../dto/mindmap.dto";
 import { MindmapService } from "../service/mindmap.service";
 
 export class MindmapController {
   private mindmapService: MindmapService;
-
   constructor() {
     this.mindmapService = new MindmapService();
   }
@@ -34,7 +33,7 @@ export class MindmapController {
   }
 
   // Delete a mindmap
-  public async deleteMindmap(mindmapId: string,tokenUserId: string) {
+  public async deleteMindmap(mindmapId: string, tokenUserId: string) {
     return await this.mindmapService.deleteMindmap(mindmapId, tokenUserId);
   }
 }

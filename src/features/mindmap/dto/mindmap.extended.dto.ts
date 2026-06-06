@@ -30,10 +30,7 @@ const YOUTUBE_URL_REGEX =
  * Centralises the userId + mindmapId pair used by most neurodivergent endpoints.
  */
 class UserMindmapBase {
-  @IsUUID("4", { message: "userId must be a valid UUID v4." })
-  @IsNotEmpty()
-  userId!: string;
-
+  @IsUUID("4", { message: "mindmapId must be a valid UUID v4." })
   @IsString()
   @IsNotEmpty()
   mindmapId!: string;
@@ -42,22 +39,9 @@ class UserMindmapBase {
 // ─── Input → Mindmap DTOs ─────────────────────────────────────────────────────
 
 /** Shared base for upload-based mindmap creation (audio / document / video). */
-class UploadMindmapBase {
-  @IsUUID("4", { message: "userId must be a valid UUID v4." })
-  @IsNotEmpty()
-  userId!: string;
 
-  @IsString()
-  @IsOptional()
-  title!: string;
-  // `file` field handled by multer — not validated here
-}
+export class YouTubeMindmapDto {
 
-export class AudioMindmapDto extends UploadMindmapBase {}
-export class DocumentMindmapDto extends UploadMindmapBase {}
-export class VideoMindmapDto extends UploadMindmapBase {}
-
-export class YouTubeMindmapDto extends UploadMindmapBase {
   @IsUrl({}, { message: "youtubeUrl must be a valid URL." })
   @Matches(YOUTUBE_URL_REGEX, {
     message: "youtubeUrl must be a valid YouTube URL (youtube.com or youtu.be).",
@@ -82,10 +66,6 @@ class TtsOptionsBase {
 }
 
 export class TextToAudioDto extends TtsOptionsBase {
-  @IsUUID("4", { message: "userId must be a valid UUID v4." })
-  @IsNotEmpty()
-  userId!: string;
-
   @IsString()
   @IsNotEmpty()
   text!: string;
@@ -93,7 +73,6 @@ export class TextToAudioDto extends TtsOptionsBase {
 
 export class MindmapToAudioDto extends UserMindmapBase {
   // UserMindmapBase provides userId + mindmapId
-
   @IsOptional()
   @IsIn(TTS_VOICES, { message: `voice must be one of: ${TTS_VOICES.join(", ")}.` })
   voice?: TtsVoice;

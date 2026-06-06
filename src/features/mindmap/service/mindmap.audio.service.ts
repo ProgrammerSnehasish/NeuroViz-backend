@@ -8,7 +8,7 @@ import ffmpeg from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import wav from "node-wav";
 import { pipeline } from "@xenova/transformers";
-import { generateMindmap } from "../service/mindmap.ai.service";
+import { generateMindmap } from "./mindmap.ai.service";
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -141,8 +141,7 @@ async function transcribeAudio(buffer: Buffer, mimeType: string): Promise<string
  */
 export async function audioToMindmap(
   audioBuffer: Buffer,
-  mimeType: string,
-  title: string
+  mimeType: string
 ): Promise<any> {
   const transcript = await transcribeAudio(audioBuffer, mimeType);
   if (!transcript || transcript.trim().length < 10) {

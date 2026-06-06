@@ -16,9 +16,6 @@ import {
 } from "./mindmap.neurodivergent.service";
 
 import {
-  AudioMindmapDto,
-  DocumentMindmapDto,
-  VideoMindmapDto,
   YouTubeMindmapDto,
   TextToAudioDto,
   MindmapToAudioDto,
@@ -27,8 +24,9 @@ import {
   StudyPlanDto,
   SimplifyMindmapDto,
   TtsVoice,
-} from "./mindmap.extended.dto";
+} from "../dto/mindmap.extended.dto";
 import prisma from "../../../config/database";
+import path from "path";
 
 export class MindmapExtendedService {
 
@@ -44,20 +42,6 @@ export class MindmapExtendedService {
       .catch((err) =>
         console.error(`[ActivityLog] Failed to write "${action}" for user ${userId}:`, err)
       );
-  }
-
-  private async validateUserAccess(dtoUserId: string, tokenUserId: string) {
-    if (dtoUserId !== tokenUserId) {
-      this.logActivity(
-        tokenUserId,
-        "UNAUTHORIZED_OPERATION_ATTEMPT",
-        `Token user ${tokenUserId} tried to act as ${dtoUserId}`
-      );
-      throw createHttpError(403, "Unauthorized: User token mismatch.");
-    }
-    const user = await prisma.user.findUnique({ where: { id: dtoUserId } });
-    if (!user) throw createHttpError(404, "User not found.");
-    return user;
   }
 
   private async loadOwnedMindmap(mindmapId: string, tokenUserId: string) {
@@ -89,91 +73,84 @@ export class MindmapExtendedService {
   // ─── Input → Mindmap ──────────────────────────────────────────────────────
 
   async createFromAudio(
-    dto: AudioMindmapDto,
     fileBuffer: Buffer,
     mimeType: string,
     tokenUserId: string
   ) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-    const structure = await audioToMindmap(fileBuffer, mimeType, dto.title);
+    const structure = await audioToMindmap(fileBuffer, mimeType);
+    const title = structure.topic ?? "Audio Mindmap";
     return this.saveMindmap(
-      dto.userId, dto.title,
+      tokenUserId, title,
       "Generated from audio input",
       structure,
       "MINDMAP_FROM_AUDIO",
-      `Audio mindmap "${dto.title}" created for user ${dto.userId}.`
+      `Audio mindmap "${title}" created for user ${tokenUserId}.`
     );
   }
 
   async createFromDocument(
-    dto: DocumentMindmapDto,
     fileBuffer: Buffer,
     originalName: string,
     tokenUserId: string
   ) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-    const structure = await documentToMindmap(fileBuffer, originalName, dto.title);
-    return this.saveMindmap(
-      dto.userId, dto.title,
-      `Generated from document: ${originalName}`,
-      structure,
-      "MINDMAP_FROM_DOCUMENT",
-      `Document mindmap "${dto.title}" created from "${originalName}" for user ${dto.userId}.`
-    );
+    const structure = await documentToMindmap(fileBuffer, originalName);
+    const title = (structure.description && structure.description.trim().split(/\s+/).length > 5)
+      ? structure.topic
+      : (structure.description ?? structure.topic ?? path.basename(originalName, path.extname(originalName))); return this.saveMindmap(
+        tokenUserId, title,
+        `Generated from document: ${originalName}`,
+        structure,
+        "MINDMAP_FROM_DOCUMENT",
+        `Document mindmap "${title}" created from "${originalName}" for user ${tokenUserId}.`
+      );
   }
 
   async createFromVideo(
-    dto: VideoMindmapDto,
     fileBuffer: Buffer,
     mimeType: string,
     tokenUserId: string
   ) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-    const structure = await videoFileToMindmap(fileBuffer, mimeType, dto.title);
+    const structure = await videoFileToMindmap(fileBuffer, mimeType);
+    const title = structure.topic ?? "Video Mindmap";
     return this.saveMindmap(
-      dto.userId, dto.title,
+      tokenUserId, title,
       "Generated from video input",
       structure,
       "MINDMAP_FROM_VIDEO",
-      `Video mindmap "${dto.title}" created for user ${dto.userId}.`
+      `Video mindmap "${title}" created for user ${tokenUserId}.`
     );
   }
 
-  async createFromYouTube(dto: YouTubeMindmapDto, tokenUserId: string) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-    // URL format is already validated by @Matches in YouTubeMindmapDto — no re-check needed here
+  async createFromYouTube(dto: YouTubeMindmapDto, tokenUserId: string) {    // URL format is already validated by @Matches in YouTubeMindmapDto — no re-check needed here
     const structure = await youtubeToMindmap(dto.youtubeUrl);
+    const title = structure.topic ?? "YouTube Mindmap";
     return this.saveMindmap(
-      dto.userId, dto.title,
+      tokenUserId, title,
       `Generated from YouTube: ${dto.youtubeUrl}`,
       structure,
       "MINDMAP_FROM_YOUTUBE",
-      `YouTube mindmap "${dto.title}" created from ${dto.youtubeUrl} for user ${dto.userId}.`
+      `YouTube mindmap "${title}" created from ${dto.youtubeUrl} for user ${tokenUserId}.`
     );
   }
 
   // ─── Text-to-Audio ────────────────────────────────────────────────────────
 
   async textToAudio(dto: TextToAudioDto, tokenUserId: string) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-
     const result = await ttsTextToAudio(dto.text, {
       voice: dto.voice as TtsVoice,
       speed: dto.speed,
     });
 
     this.logActivity(
-      dto.userId,
+      tokenUserId,
       "TTS_TEXT",
-      `TTS generated for text of length ${dto.text.length} by user ${dto.userId}.`
+      `TTS generated for text of length ${dto.text.length} by user ${tokenUserId}.`
     );
 
     return result;
   }
 
   async mindmapToAudio(dto: MindmapToAudioDto, tokenUserId: string) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-
     const mindmap = await this.loadOwnedMindmap(dto.mindmapId, tokenUserId);
     const script = mindmapToNarration(mindmap.structure as unknown as MindmapStructure);
 
@@ -183,9 +160,9 @@ export class MindmapExtendedService {
     });
 
     this.logActivity(
-      dto.userId,
+      tokenUserId,
       "TTS_MINDMAP",
-      `Mindmap "${mindmap.title}" (${dto.mindmapId}) narrated as audio for user ${dto.userId}.`
+      `Mindmap "${mindmap.title}" (${dto.mindmapId}) narrated as audio for user ${tokenUserId}.`
     );
 
     return result;
@@ -194,8 +171,6 @@ export class MindmapExtendedService {
   // ─── Neurodivergent features ──────────────────────────────────────────────
 
   async getChunkedNode(dto: ChunkedNodeDto, tokenUserId: string) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-
     const mindmap = await this.loadOwnedMindmap(dto.mindmapId, tokenUserId);
     const structure = mindmap.structure as unknown as MindmapStructure;
     const result = chunkedNodeHelper(structure, dto.nodeIndex);
@@ -208,17 +183,15 @@ export class MindmapExtendedService {
     }
 
     this.logActivity(
-      dto.userId,
+      tokenUserId,
       "FOCUS_MODE_NODE_VIEWED",
-      `User ${dto.userId} viewed node ${dto.nodeIndex}/${result.total} of mindmap ${dto.mindmapId}.`
+      `User ${tokenUserId} viewed node ${dto.nodeIndex}/${result.total} of mindmap ${dto.mindmapId}.`
     );
 
     return result;
   }
 
   async getSimplifiedView(dto: SimplifyMindmapDto, tokenUserId: string) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-
     const mindmap = await this.loadOwnedMindmap(dto.mindmapId, tokenUserId);
     let structure = mindmap.structure as unknown as MindmapStructure;
 
@@ -227,32 +200,28 @@ export class MindmapExtendedService {
     if (dto.addEmojis) structure = addEmojiAnchors(structure);
 
     this.logActivity(
-      dto.userId,
+      tokenUserId,
       "SIMPLIFIED_VIEW_ACCESSED",
-      `Simplified view (emojis=${dto.addEmojis}) of mindmap ${dto.mindmapId} for user ${dto.userId}.`
+      `Simplified view (emojis=${dto.addEmojis}) of mindmap ${dto.mindmapId} for user ${tokenUserId}.`
     );
 
     return structure;
   }
 
   async generateQuiz(dto: GenerateQuizDto, tokenUserId: string) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-
     const mindmap = await this.loadOwnedMindmap(dto.mindmapId, tokenUserId);
     const questions = quizHelper(mindmap.structure as unknown as MindmapStructure);
 
     this.logActivity(
-      dto.userId,
+      tokenUserId,
       "QUIZ_GENERATED",
-      `${questions.length} quiz questions generated for mindmap ${dto.mindmapId} by user ${dto.userId}.`
+      `${questions.length} quiz questions generated for mindmap ${dto.mindmapId} by user ${tokenUserId}.`
     );
 
     return questions;
   }
 
   async generateStudyPlan(dto: StudyPlanDto, tokenUserId: string) {
-    await this.validateUserAccess(dto.userId, tokenUserId);
-
     const mindmap = await this.loadOwnedMindmap(dto.mindmapId, tokenUserId);
     const plan = studyPlanHelper(
       mindmap.structure as unknown as MindmapStructure,
@@ -260,9 +229,9 @@ export class MindmapExtendedService {
     );
 
     this.logActivity(
-      dto.userId,
+      tokenUserId,
       "STUDY_PLAN_GENERATED",
-      `Study plan (${plan.length} blocks) for mindmap ${dto.mindmapId} by user ${dto.userId}.`
+      `Study plan (${plan.length} blocks) for mindmap ${dto.mindmapId} by user ${tokenUserId}.`
     );
 
     return plan;

@@ -310,19 +310,31 @@ yarn dev
 |PUT|`/api/users/update`| Update user details|
 |DELETE|`/api/users/delete/:id`| Delete User by id.|
 |**Mindmap**|
-|POST|`/api/mindmaps/create`| Create Mindmap|
-|POST|`/api/mindmaps/generate`| Generate Mindmap using Ai|
-|GET|`/api/mindmaps/:mindmapId`| Get Mindmap by Mindmap id|
-|GET|`/api/mindmaps/user/:userId`| Get Mindmaps by user id|
-|PUT|`/api/mindmaps/update/:mindmapId`| Update mindmap by mindmap id|
+|POST|`/api/mindmap/create`| Create Mindmap|
+|POST|`/api/mindmap/generate`| Generate Mindmap using Ai from Text(Para or Keyword)|
+|POST|`/api/mindmap/audio`|Generate Mindmap from single Audio File.(	audio/mpeg, audio/mp4, audio/webm, audio/ogg, audio/wav, audio/flac, audio/aac -- max 50MB)|
+|POST|`/api/mindmap/document`|Generate Mindmap from single Document File.(application/pdf, .docx, text/plain, text/markdown -- MAX 20MB)|
+|POST|`/api/mindmap/video`|Generate Mindmap from single Video File.(	video/mp4, video/webm, video/quicktime, video/x-msvideo - MAX 500MB)|
+|POST|`/api/mindmap/youtube`|Generate Mindmap from Youtube Link.(https://www.youtube.com/watch?_)|
+|POST|`/api/mindmap/tts/text`|Text to Speech for Text|
+|POST|`/api/mindmap/tts/mindmap`|Text to Speech for Mindmap|
+|GET|`/api/mindmap/:mindmapId/focus?nodeIndex=_`|Focus on Single node at a time of a mindmapby mindmapId|
+|GET|`/api/mindmap/:mindmapId/simplified?addEmojis=true&maxWords=12`|Get Simplified mindmap by mindmapId|
+|GET|`/api/mindmap/:mindmapId/quiz`|Get sample quiz question for a mindmap by mindmapId |
+|GET|`/api/mindmap/:mindmapId/study-plan?nodesPerBlock=_`|Get Study Plan of a mindmap by mindmapId|
+|GET|`/api/mindmap/:mindmapId/colours`|Fetch node colour by mindmapId|
+|GET|`/api/mindmap/:mindmapId/analogies`|Fetch Analogies per node of a mindmap by mindmapId|
+|GET|`/api/mindmap/:mindmapId`| Get Mindmap by Mindmap id|
+|GET|`/api/mindmap/user/:userId`| Get Mindmaps by user id|
+|PUT|`/api/mindmap/update/:mindmapId`| Update mindmap by mindmap id|
 |GET|`/api/mindmaps/:mindmapId/jpeg`|Download Mindmap as JPEG|
 |GET|`/api/mindmaps/:mindmapId/pdf`|Download Mindmap as PDF(Although it is recomended to fetch from frontend, for visualization download, not a part of backend.)|
 |DELETE|`/api/mindmaps/delete/:mindmapId`| Delete Mindmap by mindmap id(Although it is recomended to fetch from frontend, for visualization download, not a part of backend.)|
-<!-- |**Live Class**|
+|**Live Class**|
 |POST|`/api/rooms/`|Create a new room|
 |POST|`/api/rooms/:roomId/join`|Join a room, get LiveKit token|
 |POST|`/api/rooms/:roomId/end`|Host ends the class|
-|GET|`/api/rooms/:roomId/participants`|Get participants by roomId| -->
+|GET|`/api/rooms/:roomId/participants`|Get participants by roomId|
 |**NLP**|
 |POST|`/api/nlp/summarize`| Summarize Text|
 |POST|`/api/nlp/detect-toxicity`| Detect toxicity|

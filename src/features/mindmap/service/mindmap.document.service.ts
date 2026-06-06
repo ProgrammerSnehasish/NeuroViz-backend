@@ -1,6 +1,6 @@
 import path from "path";
 import mammoth from "mammoth";
-import { generateMindmap } from "../service/mindmap.ai.service";
+import { generateMindmap } from "./mindmap.ai.service";
 
 const MIN_TEXT_LENGTH = 100;
 const MAX_INPUT_CHARS = 3000;
@@ -8,7 +8,6 @@ const MAX_INPUT_CHARS = 3000;
 export async function documentToMindmap(
   fileBuffer: Buffer,
   originalName: string,
-  title: string
 ): Promise<any> {
   const ext = path.extname(originalName).toLowerCase();
   let text = "";
@@ -16,7 +15,16 @@ export async function documentToMindmap(
   switch (ext) {
     case ".txt":
     case ".md":
-      text = fileBuffer.toString("utf-8");
+      text = fileBuffer
+        .toString("utf-8")
+        .replace(/^#{1,6}\s+/gm, "")      // remove headings
+        .replace(/\*\*(.+?)\*\*/g, "$1")  // remove bold
+        .replace(/\*(.+?)\*/g, "$1")      // remove italic
+        .replace(/`{1,3}[^`]*`{1,3}/g, "") // remove code
+        .replace(/\[(.+?)\]\(.+?\)/g, "$1") // remove links
+        .replace(/^[-*+]\s+/gm, "")       // remove list bullets
+        .replace(/^>\s+/gm, "")           // remove blockquotes
+        .replace(/\n{3,}/g, "\n\n");      // collapse blank lines
       break;
 
     case ".pdf":
