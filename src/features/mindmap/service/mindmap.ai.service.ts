@@ -75,17 +75,20 @@ export async function generateMindmap(text: string) {
   const derivedTitle = deriveTitleFromText(text);
 
   const cleanText = text.trim();
+const truncatedText = cleanText.length > 4000
+    ? cleanText.slice(0, 4000) + "...[truncated]"
+    : cleanText;
 
   const isShortTopic =
-    cleanText.length <= 60 &&
-    cleanText.split(/\s+/).length <= 8 &&
-    !cleanText.includes(".") &&
-    !cleanText.includes("\n");
+    truncatedText.length <= 60 &&
+    truncatedText.split(/\s+/).length <= 8 &&
+    !truncatedText.includes(".") &&
+    !truncatedText.includes("\n");
 
   const prompt = `
 Generate a comprehensive educational mindmap in valid JSON format.
 
-Topic: ${text}
+Topic: ${truncatedText}
 
 Instructions:
 
@@ -390,7 +393,7 @@ Output JSON Format:
             }
           ],
           temperature: 0.2,
-          max_tokens: 6000
+          max_tokens: 2000
         },
         {
           headers: {

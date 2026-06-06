@@ -4,7 +4,6 @@ import prisma from "../config/database";
 import createHttpError from "http-errors";
 import { sign, SignOptions } from "jsonwebtoken";
 import { userRole } from "../config/core";
-import { runAdaptationForUser } from "../features/adapt/adapt.service";
 import getUserIncludeByRole from "../utils/getUserDetailsbyRole";
 import { Role } from "@prisma/client";
 
@@ -122,9 +121,9 @@ async function buildLoginResponse(userId: string, role: string): Promise<any> {
     { expiresIn: process.env.EXPIRES_IN as SignOptions["expiresIn"] }
   );
 
-  runAdaptationForUser(userId)
-    .then((r) => console.log("Adaptation:", r))
-    .catch((e) => console.error("Adaptation failed:", e));
+  // runAdaptationForUser(userId)
+  //   .then((r) => console.log("Adaptation:", r))
+  //   .catch((e) => console.error("Adaptation failed:", e));
 
   const fullUser = await prisma.user.findUnique({
     where: { id: userId },

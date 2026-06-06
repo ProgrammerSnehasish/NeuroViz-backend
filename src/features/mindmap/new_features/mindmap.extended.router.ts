@@ -52,30 +52,30 @@ function sanitiseField(value: unknown, name: string): string {
   return value.trim();
 }
 
-// ── Audio ────────────────────────────────────────────────────────────────────
-mindmapExtendedRouter.post(
-  "/audio",
-  audioUpload.single("file"),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      if (!req.file) throw createHttpError(400, "No audio file provided.");
+// // ── Audio ────────────────────────────────────────────────────────────────────
+// mindmapExtendedRouter.post(
+//   "/audio",
+//   audioUpload.single("file"),
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//       if (!req.file) throw createHttpError(400, "No audio file provided.");
 
-      const userId = sanitiseField(req.body.userId, "userId");
-      const title  = sanitiseField(req.body.title,  "title");
-      assertOwnership(req, userId);
+//       const userId = sanitiseField(req.body.userId, "userId");
+//       const title  = sanitiseField(req.body.title,  "title");
+//       assertOwnership(req, userId);
 
-      const result = await controller.createFromAudio(
-        { userId, title },
-        req.file.buffer,
-        req.file.mimetype,
-        getTokenUserId(req)
-      );
-      res.status(201).json({ success: true, data: result });
-    } catch (err) {
-      next(err);
-    }
-  }
-);
+//       const result = await controller.createFromAudio(
+//         { userId, title },
+//         req.file.buffer,
+//         req.file.mimetype,
+//         getTokenUserId(req)
+//       );
+//       res.status(201).json({ success: true, data: result });
+//     } catch (err) {
+//       next(err);
+//     }
+//   }
+// );
 
 // ── Document ─────────────────────────────────────────────────────────────────
 mindmapExtendedRouter.post(

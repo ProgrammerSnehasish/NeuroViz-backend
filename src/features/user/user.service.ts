@@ -12,21 +12,7 @@ export class UserService {
     return "created";
   }
 
-  private async validateUserAccess(requestedUserId: string, tokenUserId: string) {
-    if (requestedUserId !== tokenUserId) {
-      await prisma.activityLog.create({
-        data: {
-          userId: tokenUserId,
-          action: "UNAUTHORIZED_USER_OPERATION",
-          details: `Token user ${tokenUserId} attempted to operate on user ${requestedUserId}`,
-        },
-      });
-
-      throw createHttpError(403, "Unauthorized: User token mismatch.");
-    }
-  }
-
-  async getUser(email: string, tokenUserId: string): Promise<IUserDetails> {
+  async getUser(email: string): Promise<IUserDetails> {
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
@@ -37,12 +23,10 @@ export class UserService {
 
     if (!user) throw createHttpError(400, `User with email ${email} not found`);
 
-    await this.validateUserAccess(user.id, tokenUserId);
-
     return getUserResponse(user);
   }
 
-  async getUserById(id: string, tokenUserId: string): Promise<IUserDetails> {
+  async getUserById(id: string): Promise<IUserDetails> {
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
@@ -52,12 +36,11 @@ export class UserService {
     });
 
     if (!user) throw createHttpError(400, "User not found");
-    await this.validateUserAccess(user.id, tokenUserId);
+
     return getUserResponse(user);
   }
 
-  async updateUser(data: UpdateUserDto, userId: string, tokenUserId: string): Promise<IUserDetails> {
-    await this.validateUserAccess(userId, tokenUserId);
+  async updateUser(data: UpdateUserDto, userId: string): Promise<IUserDetails> {
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw createHttpError(404, "User does not exist");
@@ -162,8 +145,7 @@ export class UserService {
 }
 
 
-  async deleteUser(userId: string, tokenUserId: string): Promise < void> {
-  await this.validateUserAccess(userId, tokenUserId);
+  async deleteUser(userId: string): Promise < void> {
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if(!user) throw createHttpError(404, "User not found.");

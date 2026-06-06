@@ -6,6 +6,7 @@ import nlpRouter from "../features/nlp/nlp.router";
 import teacherRouter from "../features/teachers/teacher.router";
 import teacherDashboardRouter from "../features/teachers/Dashboard/teacher.dashboard.router";
 import { mindmapExtendedRouter } from "../features/mindmap/new_features/mindmap.extended1.router";
+import roomRouter from "../features/live_class/room.routes";
 
 const mainRouter = Router()
 
@@ -18,7 +19,7 @@ mainRouter.use("/nlp", nlpRouter);
 // mainRouter.use("/cognitive", cognitiveProfileRouter);
 // mainRouter.use("/behavior", behaviorRouter);
 // mainRouter.use("/emotion", emotionRouter);
-// mainRouter.use("/rooms", roomRouter)
+mainRouter.use("/rooms", roomRouter);
 // mainRouter.use("/feedback", feedBackRouter);
 // mainRouter.use("/adapt", adaptRouter);
 // mainRouter.use("/content", contentRouter);

@@ -8,11 +8,6 @@ import { UpdateUserDto } from "./user.dto";
 export const userRouter = Router();
 const userController = new UserController()
 
-const getTokenUserId = (req: Request) =>
-    (req as any).user?.userId ||
-    (req as any).user?.id ||
-    (req as any).user?.sub;
-
 userRouter.get(
   "/email/:email",
   verifyToken,
@@ -22,8 +17,7 @@ userRouter.get(
       if (!emailParam) {
         throw createHttpError(400, "Missing path parameter: email");
       }
-      const tokenUserId = getTokenUserId(req);
-      const user = await userController.getUserDetails(emailParam as string, tokenUserId);
+      const user = await userController.getUserDetails(emailParam as string);
       if (!user) {
         throw createHttpError(404, "User not found");
       }
@@ -45,8 +39,7 @@ userRouter.get(
         if (!req.params["id"]) {
           throw createHttpError("Missing path paramter: id")
         }
-        const tokenUserId = getTokenUserId(req);
-        const user = await userController.getUserDetailsById(req.params["id"] as string, tokenUserId);
+        const user = await userController.getUserDetailsById(req.params["id"] as string);
         req.body = user;
         next()
       } catch (error) {
@@ -70,9 +63,7 @@ userRouter.put(
         throw createHttpError(401, "Unauthorized - Missing user ID in token");
       }
 
-      const tokenUserId = getTokenUserId(req);
-
-      const result = await userController.updateUser(req.body, userId, tokenUserId);
+      const result = await userController.updateUser(req.body, userId);
 
       res.status(200).json({
         success: true,
@@ -94,8 +85,7 @@ userRouter.delete(
       if(!req.params["userId"]){
         throw createHttpError("Missing path paramter: userId")
       }
-      const tokenUserId = getTokenUserId(req);
-      await userController.deleteUser(req.params["userId"] as string, tokenUserId);
+      await userController.deleteUser(req.params["userId"] as string);
       res.status(200).send({success: true, message: "User deleted successfully"})
     }catch(err){
       next(err)

@@ -8,17 +8,17 @@ export class UserController {
     this.userService = new UserService();
   }
 
-  public async getUserDetails(email: string, tokenUserId: string): Promise<IUserDetails>{
+  public async getUserDetails(email: string): Promise<IUserDetails>{
     //TODO: get user details from user service
-    return await this.userService.getUser(email, tokenUserId);
+    return await this.userService.getUser(email);
   }
-  public async getUserDetailsById(id: string, tokenUserId: string): Promise<IUserDetails>{
-    return await this.userService.getUserById(id, tokenUserId);
+  public async getUserDetailsById(id: string): Promise<IUserDetails>{
+    return await this.userService.getUserById(id);
   }
-  public async updateUser(data:UpdateUserDto, userId: string, tokenUserId: string):Promise<IUserDetails>{
-    return await this.userService.updateUser(data, userId, tokenUserId)
+  public async updateUser(data:UpdateUserDto, userId: string):Promise<IUserDetails>{
+    return await this.userService.updateUser(data, userId)
   }
-  public async deleteUser(userId: string, tokenUserId: string): Promise<void>{
-    return await this.userService.deleteUser(userId, tokenUserId);
+  public async deleteUser(userId: string): Promise<void>{
+    return await this.userService.deleteUser(userId);
   }
 }

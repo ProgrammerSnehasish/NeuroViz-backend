@@ -5,7 +5,6 @@ import { IUserDetails } from "../features/user/user.interface";
 import { getUserResponse } from "../utils/util";
 import { ForgotPasswordRequestDto, ForgotPasswordVerifyOtpDto, GoogleAuthDto, OtpLoginRequestDto, OtpLoginVerifyDto, ResetPasswordDto, SigninDto, SignupDto } from "./auth.dto";
 import prisma from "../config/database";
-import { runAdaptationForUser } from "../features/adapt/adapt.service";
 import getUserIncludeByRole from "../utils/getUserDetailsbyRole";
 import { userRole } from "../config/core";
 import { createAndSendOtp, getOtpSecret, verifyOtpCode } from "./auth.helper";
@@ -76,9 +75,9 @@ export class AuthService {
       {expiresIn: process.env.EXPIRES_IN as SignOptions["expiresIn"]}
     );
 
-    runAdaptationForUser(foundUser.id)
-      .then((result) => console.log("Adaptation run on login:", result))
-      .catch((err) => console.error("Adaptation failed:", err));
+    // runAdaptationForUser(foundUser.id)
+    //   .then((result) => console.log("Adaptation run on login:", result))
+    //   .catch((err) => console.error("Adaptation failed:", err));
 
     const fullUserDetails = await prisma.user.findUnique({
       where: { id: foundUser.id },
@@ -179,9 +178,9 @@ public async verifyLoginOtp(data: OtpLoginVerifyDto): Promise<any> {
     { expiresIn: process.env.EXPIRES_IN as SignOptions["expiresIn"] }
   );
 
-  runAdaptationForUser(user.id)
-    .then((r) => console.log("Adaptation:", r))
-    .catch((e) => console.error("Adaptation failed:", e));
+  // runAdaptationForUser(user.id)
+  //   .then((r) => console.log("Adaptation:", r))
+  //   .catch((e) => console.error("Adaptation failed:", e));
 
   const fullUser = await prisma.user.findUnique({
     where: { id: user.id },
