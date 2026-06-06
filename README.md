@@ -342,19 +342,6 @@ yarn dev
 |POST|`/api/nlp/keywords`| Extract Keywords|
 |POST|`/api/nlp/classify`| Classify Text|
 |POST|`/api/nlp/entities`| Named Entity Recognition|
-<!-- |**Behavior Tracking**|
-|POST|`/api/behavior/track`|Track User Behaviour for cognitive profiling.|
-|**Cognitive Profiling**|
-|GET|`/api/cognitive/user/:userId`|Get Cognitive Profile by user Id|
-|**Emotion Profiling**|
-|POST|`/api/emotion/log`|Log new emotion|
-|GET|`/api/emotion/user/:userId`|Get Emotion Log by user Id|
-|**Feedback**|
-|POST|`/api/feedback/add`|Add new feedback|
-|GET|`/api/feedback/user/:userId`|Get feedback by user Id|
-|**Others**|
-|POST|`/api/adapt/trigger/user/:userid`|Trigger Adaptation Manually(Interface Adaptation)|
-|POST|`/api/content/summarize`|Summarize Content| -->
 |**Teacher Routes**|
 |*Analytics & Performance*|		
 |GET|	`/api/teacher/student/:userId/analytics`|	Get analytics for a specific student|
@@ -414,6 +401,19 @@ yarn dev
 |POST|`/api/admin/user/status`|Change User's status to Activate/Deactivate.|
 |DELETE|`/api/admin/user/:userId`|Delete a User from application database.|
 |DELETE|`/api/admin/user/:userId/reset`|Reset a User's details.| -->
+<!-- |**Behavior Tracking**|
+|POST|`/api/behavior/track`|Track User Behaviour for cognitive profiling.|
+|**Cognitive Profiling**|
+|GET|`/api/cognitive/user/:userId`|Get Cognitive Profile by user Id|
+|**Emotion Profiling**|
+|POST|`/api/emotion/log`|Log new emotion|
+|GET|`/api/emotion/user/:userId`|Get Emotion Log by user Id|
+|**Feedback**|
+|POST|`/api/feedback/add`|Add new feedback|
+|GET|`/api/feedback/user/:userId`|Get feedback by user Id|
+|**Others**|
+|POST|`/api/adapt/trigger/user/:userid`|Trigger Adaptation Manually(Interface Adaptation)|
+|POST|`/api/content/summarize`|Summarize Content| -->
 
 ---
 
