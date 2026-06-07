@@ -7,15 +7,28 @@
 
 export type MindmapStructure = {
   topic: string;
+  description?: string;
   nodes: Array<{
     label: string;
-    children?: Array<{ label: string }>;
+    description?: string;
+    children?: Array<{
+      label: string;
+      description?: string;
+    }>;
+  }>;
+};
+
+export type SimplifiedMindmapStructure = {
+  topic: string;
+  description?: string;
+  nodes: Array<{
+    label: string;
+    description?: string;
   }>;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. CHUNKED / FOCUS MODE
-//    Returns one node at a time to prevent overwhelm (ADHD / anxiety support).
 // ─────────────────────────────────────────────────────────────────────────────
 export function getChunkedNode(
   mindmap: MindmapStructure,
@@ -24,7 +37,7 @@ export function getChunkedNode(
   total: number;
   current: number;
   node: MindmapStructure["nodes"][0] | null;
-  progress: number; // 0–100
+  progress: number;
 } {
   const nodes = mindmap.nodes;
   const node = nodes[nodeIndex] ?? null;
@@ -38,20 +51,21 @@ export function getChunkedNode(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. SIMPLIFIED VIEW
-//    Removes children, returns only top-level labels for low-cognitive-load overview.
-//    Useful for first exposure or revision sessions.
+//    Removes children, returns only top-level labels + descriptions.
 // ─────────────────────────────────────────────────────────────────────────────
-export function simplifyMindmap(mindmap: MindmapStructure): MindmapStructure {
+export function simplifyMindmap(mindmap: MindmapStructure): SimplifiedMindmapStructure {
   return {
     topic: mindmap.topic,
-    nodes: mindmap.nodes.map(n => ({ label: n.label })),
+    description: mindmap.description,
+    nodes: mindmap.nodes.map(n => ({
+      label: n.label,
+      ...(n.description ? { description: n.description } : {}),
+    })),
   };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. EMOJI ANCHORS
-//    Attaches a contextual emoji to each top-level node label.
-//    Visual anchors help dyslexic learners and those with visual-spatial strengths.
 // ─────────────────────────────────────────────────────────────────────────────
 const EMOJI_MAP: [RegExp, string][] = [
   [/definition|meaning|what is/i, "📖"],
@@ -83,7 +97,7 @@ function pickEmoji(label: string): string {
   return "📌";
 }
 
-export function addEmojiAnchors(mindmap: MindmapStructure): MindmapStructure {
+export function addEmojiAnchors(mindmap: SimplifiedMindmapStructure): SimplifiedMindmapStructure {
   return {
     ...mindmap,
     nodes: mindmap.nodes.map(n => ({
@@ -95,8 +109,6 @@ export function addEmojiAnchors(mindmap: MindmapStructure): MindmapStructure {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. READING LEVEL SIMPLIFICATION
-//    Breaks long child labels into shorter, simpler sentences.
-//    Helps dyslexic learners and those with working memory difficulties.
 // ─────────────────────────────────────────────────────────────────────────────
 export function simplifyChildLabels(
   mindmap: MindmapStructure,
@@ -106,8 +118,15 @@ export function simplifyChildLabels(
     ...mindmap,
     nodes: mindmap.nodes.map(n => ({
       ...n,
+      description: n.description
+        ? truncateToWords(n.description, maxWords)
+        : undefined,
       children: n.children?.map(c => ({
+        ...c,
         label: truncateToWords(c.label, maxWords),
+        description: c.description
+          ? truncateToWords(c.description, maxWords)
+          : undefined,
       })),
     })),
   };
@@ -121,8 +140,6 @@ function truncateToWords(text: string, maxWords: number): string {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. QUIZ / SELF-TEST GENERATOR
-//    Converts mindmap nodes into simple fill-in-the-blank or recall questions.
-//    Active recall is scientifically proven to aid memory retention.
 // ─────────────────────────────────────────────────────────────────────────────
 export interface QuizQuestion {
   question: string;
@@ -133,7 +150,6 @@ export interface QuizQuestion {
 export function generateQuiz(mindmap: MindmapStructure): QuizQuestion[] {
   const questions: QuizQuestion[] = [];
 
-  // Q1: Overall topic recall
   questions.push({
     question: `What are the main topics in "${mindmap.topic}"?`,
     answer: mindmap.nodes.map(n => n.label.replace(/^[^\w]*/, "")).join(", "),
@@ -144,7 +160,6 @@ export function generateQuiz(mindmap: MindmapStructure): QuizQuestion[] {
     const cleanLabel = node.label.replace(/^[^\w]*/, "");
 
     if (node.children && node.children.length > 0) {
-      // Pick the most information-dense child as the answer
       const longestChild = node.children.reduce((a, b) =>
         a.label.length >= b.label.length ? a : b
       );
@@ -163,8 +178,6 @@ export function generateQuiz(mindmap: MindmapStructure): QuizQuestion[] {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 6. COLOUR CODING PALETTE ASSIGNMENTS
-//    Assigns a consistent colour category to each node.
-//    Colour coding is widely used in neurodivergent learning strategies.
 // ─────────────────────────────────────────────────────────────────────────────
 const COLOUR_PALETTE = [
   { name: "Calm Blue",   hex: "#4A90D9", bg: "#E8F2FC" },
@@ -186,8 +199,6 @@ export function assignColours(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 7. POMODORO-AWARE STUDY PLAN
-//    Splits the mindmap nodes into timed study blocks.
-//    Based on Pomodoro technique (25-min focus + 5-min break).
 // ─────────────────────────────────────────────────────────────────────────────
 export interface StudyBlock {
   blockNumber: number;
@@ -220,7 +231,7 @@ export function generateStudyPlan(
       blockNumber: blockNum,
       nodes: chunk,
       focusMinutes: 25,
-      breakMinutes: blockNum % 4 === 0 ? 15 : 5, // Long break every 4 pomodoros
+      breakMinutes: blockNum % 4 === 0 ? 15 : 5,
       tip: STUDY_TIPS[(blockNum - 1) % STUDY_TIPS.length],
     });
   }
@@ -230,8 +241,6 @@ export function generateStudyPlan(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 8. ANALOGY PROMPTS
-//    Returns prompts to ask the AI to explain each node via analogy.
-//    Analogy-based learning is highly effective for abstract thinkers.
 // ─────────────────────────────────────────────────────────────────────────────
 export function generateAnalogyPrompts(mindmap: MindmapStructure): string[] {
   return mindmap.nodes.map(
