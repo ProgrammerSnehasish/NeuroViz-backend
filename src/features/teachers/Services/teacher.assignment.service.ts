@@ -2,56 +2,144 @@ import createHttpError from "http-errors";
 import prisma from "../../../config/database";
 import { NLPService } from "../../nlp/nlp.service";
 import { EvaluationMode, userRole } from "../../../config/core";
-import e from "express";
 
 async function logActivity(
   userId: string | null | undefined,
   action: string,
   details?: string
 ) {
-  if (!userId) return; // do not log if no userId
-
+  if (!userId) return;
   try {
-    await prisma.activityLog.create({
-      data: {
-        userId,
-        action,
-        details,
-      },
-    });
+    await prisma.activityLog.create({ data: { userId, action, details } });
   } catch (err) {
     console.error("⚠️ Failed to write activity log:", err);
   }
 }
 
 export const TeacherAssignmentService = {
+  // ─── Validate teacher ─────────────────────────────────────────────────────
   async validateTeacher(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== userRole.Teacher)
-    throw createHttpError(403, "Only teachers can manage assignments.");
+      throw createHttpError(403, "Only teachers can manage assignments.");
     return user;
   },
 
+  // ─── ASSIGNMENT MANAGEMENT PAGE ───────────────────────────────────────────
+  /**
+   * Returns the 4 KPI cards + enriched assignment list for the
+   * Assignment Management page:
+   *   totalAssignments, active, pendingGrading, avgCompletion (%)
+   *   assignments[]: each row includes submissions, graded, pending counts
+   */
+  async getAssignmentManagementOverview(teacherId: string) {
+    await this.validateTeacher(teacherId);
+
+    const assignments = await prisma.assignment.findMany({
+      where: { teacherId },
+      include: {
+        assignedTo: {
+          include: {
+            student: { select: { id: true, firstName: true, lastName: true } },
+          },
+        },
+        assignmentGroups: {
+          include: { group: true },
+        },
+        submissions: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Enrich each assignment with derived counts
+    const now = new Date();
+    const enriched = assignments.map((a) => {
+      const totalSubmissions = a.submissions.length;
+      const graded = a.submissions.filter(
+        (s) => s.grade !== null && s.grade !== undefined
+      ).length;
+      const pending = a.submissions.filter(
+        (s) => s.status === "SUBMITTED" && (s.grade === null || s.grade === undefined)
+      ).length;
+
+      // Total assignees = individual students + all members of assigned groups
+      const individualCount = a.assignedTo.length;
+      const groupMemberCount = a.assignmentGroups.reduce(
+        (acc, ag) => acc + (ag.group?._count?.members ?? 0),
+        0
+      );
+      const totalAssignees = individualCount + groupMemberCount || 1;
+
+      const completionPct = Math.round((totalSubmissions / totalAssignees) * 100);
+
+      const isActive = a.dueDate ? new Date(a.dueDate) >= now : true;
+
+      return {
+        id: a.id,
+        title: a.title,
+        description: a.description,
+        dueDate: a.dueDate,
+        status: isActive ? "Active" : "Closed",
+        totalSubmissions,
+        graded,
+        pending,
+        completionPct,
+        assignedStudents: a.assignedTo.map((as) => as.student),
+        assignedGroups: a.assignmentGroups.map((ag) => ag.group),
+      };
+    });
+
+    // KPI counts
+    const activeCount = enriched.filter((a) => a.status === "Active").length;
+    const pendingGradingTotal = enriched.reduce((acc, a) => acc + a.pending, 0);
+    const avgCompletion =
+      enriched.length > 0
+        ? Math.round(
+            enriched.reduce((acc, a) => acc + a.completionPct, 0) / enriched.length
+          )
+        : 0;
+
+    await logActivity(teacherId, "VIEW_ASSIGNMENT_MANAGEMENT_OVERVIEW", `assignments=${assignments.length}`);
+
+    return {
+      totalAssignments: assignments.length,
+      active: activeCount,
+      pendingGrading: pendingGradingTotal,
+      avgCompletion, // e.g. 78 → "78%"
+      assignments: enriched,
+    };
+  },
+
+  // ─── CREATE ASSIGNMENT ────────────────────────────────────────────────────
   async createAssignment(
     teacherId: string,
     title: string,
     description?: string,
-    options: { studentIds?: string[]; groupIds?: string[]; evaluationMode?: 'AUTO' | 'MANUAL' } = {}
+    options: {
+      studentIds?: string[];
+      groupIds?: string[];
+      evaluationMode?: "AUTO" | "MANUAL";
+      dueDate?: Date;
+    } = {}
   ) {
     await this.validateTeacher(teacherId);
-    if ((!options?.studentIds || options.studentIds.length === 0) &&
-      (!options?.groupIds || options.groupIds.length === 0)) {
+
+    if (
+      (!options?.studentIds || options.studentIds.length === 0) &&
+      (!options?.groupIds || options.groupIds.length === 0)
+    ) {
       throw createHttpError(400, "You must assign to at least one student or group.");
     }
+
     const assignment = await prisma.assignment.create({
       data: {
         title,
         description,
         teacherId,
+        dueDate: options.dueDate,
       },
     });
 
-    // Assign to individual students (if provided)
     if (options?.studentIds?.length) {
       await prisma.assignmentStudent.createMany({
         data: options.studentIds.map((studentId) => ({
@@ -61,7 +149,6 @@ export const TeacherAssignmentService = {
       });
     }
 
-    // Assign to groups (if provided)
     if (options?.groupIds?.length) {
       await prisma.assignmentGroup.createMany({
         data: options.groupIds.map((groupId) => ({
@@ -71,41 +158,27 @@ export const TeacherAssignmentService = {
       });
     }
 
-    await logActivity(
-      teacherId,
-      "CREATE_ASSIGNMENT",
-      `assignmentId=${assignment.id}, title=${title}`
-    );
-
-    return {
-      message: "Assignment created successfully.",
-      assignment,
-    };
+    await logActivity(teacherId, "CREATE_ASSIGNMENT", `assignmentId=${assignment.id}, title=${title}`);
+    return { message: "Assignment created successfully.", assignment };
   },
 
-  /**
-   * Get all assignments created by a teacher
-   */
+  // ─── GET ALL ASSIGNMENTS (plain list) ────────────────────────────────────
   async getAssignmentsByTeacher(teacherId: string) {
     await this.validateTeacher(teacherId);
     await logActivity(teacherId, "VIEW_ASSIGNMENTS", `teacherId=${teacherId}`);
-    return await prisma.assignment.findMany({
+    return prisma.assignment.findMany({
       where: { teacherId },
       include: {
         assignedTo: {
           include: { student: { select: { id: true, firstName: true, lastName: true } } },
         },
-        assignmentGroups: {
-          include: { group: true },
-        },
+        assignmentGroups: { include: { group: true } },
         submissions: true,
       },
     });
   },
 
-  /**
-   * View assignment details
-   */
+  // ─── GET ASSIGNMENT DETAILS ───────────────────────────────────────────────
   async getAssignmentDetails(teacherId: string, assignmentId: string) {
     await this.validateTeacher(teacherId);
 
@@ -127,17 +200,11 @@ export const TeacherAssignmentService = {
     if (!assignment || assignment.teacherId !== teacherId)
       throw createHttpError(404, "Assignment not found or unauthorized.");
 
-    await logActivity(
-      teacherId,
-      "VIEW_ASSIGNMENT_DETAILS",
-      `assignmentId=${assignmentId}`
-    );
+    await logActivity(teacherId, "VIEW_ASSIGNMENT_DETAILS", `assignmentId=${assignmentId}`);
     return assignment;
   },
 
-  /**
-   * Evaluate student submission using AI or manual
-   */
+  // ─── EVALUATE (AI helper) ─────────────────────────────────────────────────
   async evaluateAssignment(
     studentText: string,
     mode: EvaluationMode.Manual | EvaluationMode.Auto = EvaluationMode.Auto
@@ -158,7 +225,6 @@ export const TeacherAssignmentService = {
       NLPService.summarize(studentText),
     ]);
 
-    // Fix toxicity false positives
     let toxicityScore = toxicity?.score ?? 0;
     if (studentText.length < 10) toxicityScore = 0;
     if (!/[a-zA-Z]/.test(studentText)) toxicityScore = 0;
@@ -174,7 +240,7 @@ ${summary?.summary ?? "No summary available."}
 Tone: ${sentiment?.label}
 Toxicity: ${(toxicityScore * 100).toFixed(2)}%
 Final AI Grade: ${score}/100.
-`;
+    `.trim();
 
     await logActivity(
       null,
@@ -191,9 +257,7 @@ Final AI Grade: ${score}/100.
     };
   },
 
-  /**
-   * Evaluate and store submission result
-   */
+  // ─── EVALUATE & STORE SUBMISSION ──────────────────────────────────────────
   async evaluateSubmission(
     teacherId: string,
     submissionId: string,
@@ -212,11 +276,9 @@ Final AI Grade: ${score}/100.
 
     let result;
 
-    // MANUAL MODE
     if (mode === EvaluationMode.Manual) {
       if (manual.grade === undefined || !manual.feedback)
         throw createHttpError(400, "Manual evaluation requires grade and feedback.");
-
       result = {
         score: manual.grade,
         sentiment: null,
@@ -225,7 +287,6 @@ Final AI Grade: ${score}/100.
         feedback: manual.feedback,
       };
     } else {
-      // AUTO MODE
       result = await this.evaluateAssignment(submission.content, EvaluationMode.Auto);
     }
 
@@ -244,25 +305,27 @@ Final AI Grade: ${score}/100.
       "EVALUATE_SUBMISSION",
       `submissionId=${submissionId}, mode=${mode}, score=${result.score}`
     );
-
     return { message: "Evaluation completed.", result };
   },
 
-  /**
-   * Get submissions for a student (under this teacher)
-   */
+  // ─── SUBMISSIONS FOR A STUDENT ────────────────────────────────────────────
   async getSubmissionsForStudent(teacherId: string, studentId: string) {
     await this.validateTeacher(teacherId);
 
     const student = await prisma.user.findFirst({
-      where: { id: studentId, createdBy: teacherId, role: userRole.Student },
+      where: {
+        id: studentId,
+        role: userRole.Student,
+        OR: [
+          { createdBy: teacherId },
+          { studentTeachers: { some: { teacherId } } },
+        ],
+      },
     });
-    if (!student) throw createHttpError(403, "Student not found under your class.");
-    await logActivity(
-      teacherId,
-      "VIEW_STUDENT_SUBMISSIONS",
-      `studentId=${studentId}`
-    );
+    if (!student)
+      throw createHttpError(403, "Student not found under your class.");
+
+    await logActivity(teacherId, "VIEW_STUDENT_SUBMISSIONS", `studentId=${studentId}`);
     return prisma.assignmentSubmission.findMany({
       where: { studentId },
       include: { assignment: true },
@@ -270,9 +333,7 @@ Final AI Grade: ${score}/100.
     });
   },
 
-  /**
-   * Delete assignment
-   */
+  // ─── DELETE ASSIGNMENT ────────────────────────────────────────────────────
   async deleteAssignment(teacherId: string, assignmentId: string) {
     const assignment = await prisma.assignment.findUnique({
       where: { id: assignmentId },
@@ -291,26 +352,19 @@ Final AI Grade: ${score}/100.
       where: { id: assignmentId },
       select: { id: true, title: true, createdAt: true },
     });
-    await logActivity(
-      teacherId,
-      "DELETE_ASSIGNMENT",
-      `assignmentId=${assignmentId}`
-    );
-    return {
-      message: "Assignment deleted successfully.",
-      assignment: deleted,
-    };
+
+    await logActivity(teacherId, "DELETE_ASSIGNMENT", `assignmentId=${assignmentId}`);
+    return { message: "Assignment deleted successfully.", assignment: deleted };
   },
 
-  /**
- * Update an assignment (title, description, student/group assignment, etc.)
- */
+  // ─── UPDATE ASSIGNMENT ────────────────────────────────────────────────────
   async updateAssignment(
     teacherId: string,
     assignmentId: string,
     updateData: {
       title?: string;
       description?: string;
+      dueDate?: Date;
       studentIds?: string[];
       groupIds?: string[];
       evaluationMode?: EvaluationMode.Auto | EvaluationMode.Manual;
@@ -320,66 +374,40 @@ Final AI Grade: ${score}/100.
 
     const assignment = await prisma.assignment.findUnique({
       where: { id: assignmentId },
-      include: {
-        assignmentGroups: true,
-        assignedTo: true,
-      },
+      include: { assignmentGroups: true, assignedTo: true },
     });
 
     if (!assignment || assignment.teacherId !== teacherId)
       throw createHttpError(404, "Assignment not found or unauthorized.");
 
-    // Update core fields
     const updatedAssignment = await prisma.assignment.update({
       where: { id: assignmentId },
       data: {
         title: updateData.title ?? assignment.title,
         description: updateData.description ?? assignment.description,
+        dueDate: updateData.dueDate ?? assignment.dueDate,
       },
     });
 
-    // Handle student assignments update (if provided)
     if (updateData.studentIds) {
-      // Remove existing student links
-      await prisma.assignmentStudent.deleteMany({
-        where: { assignmentId },
-      });
-      // Add new ones
+      await prisma.assignmentStudent.deleteMany({ where: { assignmentId } });
       if (updateData.studentIds.length > 0) {
         await prisma.assignmentStudent.createMany({
-          data: updateData.studentIds.map((studentId) => ({
-            assignmentId,
-            studentId,
-          })),
+          data: updateData.studentIds.map((studentId) => ({ assignmentId, studentId })),
         });
       }
     }
 
-    // Handle group assignments update (if provided)
     if (updateData.groupIds) {
-      // Remove existing group links
-      await prisma.assignmentGroup.deleteMany({
-        where: { assignmentId },
-      });
-      // Add new ones
+      await prisma.assignmentGroup.deleteMany({ where: { assignmentId } });
       if (updateData.groupIds.length > 0) {
         await prisma.assignmentGroup.createMany({
-          data: updateData.groupIds.map((groupId) => ({
-            assignmentId,
-            groupId,
-          })),
+          data: updateData.groupIds.map((groupId) => ({ assignmentId, groupId })),
         });
       }
     }
-    await logActivity(
-      teacherId,
-      "UPDATE_ASSIGNMENT",
-      `assignmentId=${assignmentId}`
-    );
-    return {
-      message: "Assignment updated successfully.",
-      assignment: updatedAssignment,
-    };
-  },
 
+    await logActivity(teacherId, "UPDATE_ASSIGNMENT", `assignmentId=${assignmentId}`);
+    return { message: "Assignment updated successfully.", assignment: updatedAssignment };
+  },
 };

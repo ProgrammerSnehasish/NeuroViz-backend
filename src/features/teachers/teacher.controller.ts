@@ -1,504 +1,451 @@
 import { Request, Response, NextFunction } from "express";
-import createHttpError from "http-errors";
-import { TeacherAssignmentService } from "./Services/teacher.assignment.service";
-import { TeacherService } from "./Services/teacher.service";
-import { TeacherReviewService } from "./Services/teacher.review.service";
-import { TeacherStudentService } from "./Services/teacher.student.service";
-import { MailLogService } from "./Services/teacher.mail-log.service";
-
-export const TeacherController = {
-  // ------------------------------
-  // ANALYTICS + PERFORMANCE
-  // ------------------------------
-  async getStudentAnalytics(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { userId: studentId } = req.params;
-
-      if (!studentId) throw createHttpError(400, "Student ID is required.");
-
-      const data = await TeacherService.getStudentAnalytics(teacherId, studentId as string);
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async summarizeStudent(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { userId: studentId } = req.params;
-
-      if (!studentId) throw createHttpError(400, "Student ID is required.");
-
-      const data = await TeacherService.summarizeStudentPerformance(
-        teacherId,
-        studentId as string
-      );
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async reviewMindmap(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { mindmapId } = req.params;
-      let { approval, comment } = req.body;
-
-      if (!mindmapId) throw createHttpError(400, "Mindmap ID is required.");
-
-      if (typeof approval === "string") {
-        approval = approval.toLowerCase() === "true";
-      }
-
-      const updated = await TeacherService.reviewMindmap(
-        teacherId,
-        mindmapId as string,
-        approval,
-        comment
-      );
-      res.json({ success: true, data: updated });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async getClassOverview(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const data = await TeacherService.getClassOverview(teacherId);
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  // ------------------------------
-  // ASSIGNMENTS
-  // ------------------------------
-  async createAssignment(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { title, description, studentIds, groupIds, evaluationMode } = req.body;
-
-      if (!title)
-        throw createHttpError(400, "Assignment title is required.");
-      if ((!studentIds || !studentIds.length) && (!groupIds || !groupIds.length))
-        throw createHttpError(
-          400,
-          "You must assign to at least one student or group."
-        );
-
-      const data = await TeacherAssignmentService.createAssignment(
-        teacherId,
-        title,
-        description,
-        { studentIds, groupIds, evaluationMode }
-      );
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async getAssignments(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const data = await TeacherAssignmentService.getAssignmentsByTeacher(teacherId);
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async getAssignmentDetails(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { assignmentId } = req.params;
-
-      if (!assignmentId)
-        throw createHttpError(400, "Assignment ID is required.");
-
-      const data = await TeacherAssignmentService.getAssignmentDetails(
-        teacherId,
-        assignmentId as string
-      );
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async evaluateAssignment(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { text, mode } = req.body;
-      if (!text) throw createHttpError(400, "Assignment text is required.");
-
-      const result = await TeacherAssignmentService.evaluateAssignment(
-        text,
-        mode || "AUTO"
-      );
-
-      res.json({ success: true, data: result });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async evaluateSubmission(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-
-      const { submissionId, mode, grade, feedback } = req.body;
-
-      if (!submissionId)
-        throw createHttpError(400, "Submission ID is required.");
-
-      const data = await TeacherAssignmentService.evaluateSubmission(
-        teacherId,
-        submissionId,
-        mode || "AUTO",
-        { grade, feedback } // pass manual inputs
-      );
-
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async updateAssignment(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId = (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { assignmentId } = req.params;
-      const { title, description, studentIds, groupIds, evaluationMode } = req.body;
-
-      const result = await TeacherAssignmentService.updateAssignment(
-        teacherId,
-        assignmentId as string,
-        { title, description, studentIds, groupIds, evaluationMode }
-      );
-
-      res.json({success: true, result});
-    } catch (error) {
-      next(error);
-    }
-  },
-
-   async deleteAssignment(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const teacherId = (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id; // assume added by verifyToken
-      const { assignmentId } = req.params;
-
-      if (!teacherId || !assignmentId) {
-        res.status(400).json({ success: false, message: "Missing teacherId or assignmentId." });
-        return;
-      }
-
-      const result = await TeacherAssignmentService.deleteAssignment(teacherId, assignmentId as string);
-
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
-  },
-
-  // ------------------------------
-  // REVIEW + FEEDBACK
-  // ------------------------------
-  async reviewSubmission(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { submissionId, grade, feedback } = req.body;
-
-      if (!submissionId || grade === undefined)
-        throw createHttpError(400, "Submission ID and grade are required.");
-
-      const data = await TeacherReviewService.reviewSubmission(
-        teacherId,
-        submissionId,
-        grade,
-        feedback
-      );
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async getSubmissionsForTeacher(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-
-      const data = await TeacherReviewService.getSubmissionsForTeacher(teacherId);
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async regenerateSummary(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { submissionId } = req.params;
-
-      if (!submissionId)
-        throw createHttpError(400, "Submission ID is required.");
-
-      const data = await TeacherReviewService.regenerateSummary(
-        teacherId,
-        submissionId as string
-      );
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  // --------------------------------
-  // Teacher Services for Student
-  // --------------------------------
-  createGroup: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const teacherId = (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { name, description } = req.body;
-
-      if (!name) throw createHttpError(400, "Group name is required.");
-      const group = await TeacherStudentService.createGroup(teacherId, name, description);
-
-      res.status(201).json({ success: true, data: group });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  updateGroup: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-
-      const { groupId } = req.params;
-      const { name, description } = req.body;
-
-      if (!groupId)
-        throw createHttpError(400, "Group ID is required.");
-
-      const data = await TeacherStudentService.updateGroup(teacherId, groupId as string, {
-        name,
-        description,
-      });
-
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  deleteGroup: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-
-      const { groupId } = req.params;
-
-      if (!groupId)
-        throw createHttpError(400, "Group ID is required.");
-
-      const result = await TeacherStudentService.deleteGroup(teacherId, groupId as string);
-      res.json({ success: true, ...result });
-    } catch (err) {
-      next(err);
-    }
-  },
-  
-  searchStudents: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const teacherId = (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;;
-      const { query } = req.query;
-      const data = await TeacherStudentService.searchStudents(teacherId, String(query || ""));
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  registerStudent: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const teacherId = (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { firstName, lastName, email } = req.body;
-      if (!firstName || !email)
-        throw createHttpError(400, "First name and email are required.");
-
-      const student = await TeacherStudentService.registerStudent(teacherId, {
-        firstName,
-        lastName,
-        email,
-      });
-      res.status(201).json({ success: true, data: student });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  addMembersToGroup: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const teacherId = (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { groupId, studentIds } = req.body;
-      if (!groupId || !Array.isArray(studentIds))
-        throw createHttpError(400, "Group ID and student IDs are required.");
-
-      const data = await TeacherStudentService.addMembersToGroup(teacherId, groupId, studentIds);
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  addStudentToGroup: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const teacherId = (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { groupId, studentId } = req.body;
-      if (!groupId || !studentId)
-        throw createHttpError(400, "Group ID and student ID are required.");
-
-      const data = await TeacherStudentService.addStudentToGroup(teacherId, groupId, studentId);
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  removeStudentFromGroup: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const teacherId =
-        (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-
-      const { groupId, studentId } = req.params;
-
-      if (!groupId || !studentId)
-        throw createHttpError(400, "Group ID and Student ID are required.");
-
-      const result = await TeacherStudentService.removeStudentFromGroup(
-        teacherId,
-        groupId as string,
-        studentId as string
-      );
-
-      res.json({ success: true, ...result });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  inviteStudent: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const teacherId = (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id;
-      const { email } = req.body;
-      if (!email) throw createHttpError(400, "Email is required.");
-
-      const data = await TeacherStudentService.inviteStudent(teacherId, email);
-      res.json({ success: true, data });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  inviteStudentToGroup: async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const teacherId = (req.user as any)?.id || (req.user as any)?.userId;
-    const { email, groupId } = req.body;
-
-    const data = await TeacherStudentService.inviteStudentToGroup(teacherId, email, groupId);
-    res.status(201).json({ success: true, data });
-  } catch (err) {
-    next(err);
-  }
-},
-
-async getTeacherMailLogs(req: Request, res: Response, next: NextFunction) {
-    try {
-      const teacherId = (req.user as any)?.id ||
-        (req.user as any)?.userId ||
-        (req.user as any)?._id; // ensure req.user is set by auth middleware
-      const limit = Number(req.query.limit) || 50;
-
-      const logs = await MailLogService.getTeacherMailLogs(teacherId, limit);
-      res.status(200).json({ count: logs.length, logs });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async getMailLogById(req: Request, res: Response, next: NextFunction) {
-  try {
-    const teacherId =
-      (req.user as any)?.id ||
-      (req.user as any)?.userId ||
-      (req.user as any)?._id;
-
-    const mailId = req.params.id;
-    const mail = await MailLogService.getMailLogById(teacherId, mailId as string);
-
-    res.status(200).json({ success: true, data: mail });
-  } catch (err) {
-    next(err);
-  }
-  }
-};
+import { TeacherDashboardService }  from "./services/teacher.dashboard.service";
+import { TeacherService }           from "./services/teacher.service";
+import { TeacherStudentService }    from "./services/teacher.student.service";
+import { TeacherAssignmentService } from "./services/teacher.assignment.service";
+import { TeacherReviewService }     from "./services/teacher.review.service";
+import { MailLogService }           from "./services/teacher.mail-log.service";
+import { EvaluationMode }           from "../../config/core";
+import {
+  PostNotificationDto,
+  BroadcastAnnouncementDto,
+  GiveFeedbackDto,
+  RegisterStudentDto,
+  InviteStudentDto,
+  SearchStudentsDto,
+  CreateGroupDto,
+  UpdateGroupDto,
+  AddMembersToGroupDto,
+  InviteStudentToGroupDto,
+  CreateAssignmentDto,
+  UpdateAssignmentDto,
+  EvaluateSubmissionDto,
+  ReviewSubmissionDto,
+  ReviewMindmapDto,
+  GenerateMindmapDto,
+  MindmapFilterDto,
+  StudentStrategyDto,
+} from "./teacher.dto";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Pull authenticated teacher ID from JWT middleware */
+const tid = (req: Request): string => req.user!.id;
+
+/** Wrap async handlers so unhandled promise rejections hit the error middleware */
+const wrap =
+  (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
+  (req: Request, res: Response, next: NextFunction) =>
+    fn(req, res, next).catch(next);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD CONTROLLERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /teacher/dashboard */
+export const getDashboardOverview = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getDashboardOverview(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/dashboard/analytics */
+export const getAnalyticsOverview = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getAnalyticsOverview(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/dashboard/heatmap */
+export const getClassHeatmap = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getClassHeatmap(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/dashboard/insights */
+export const getAdaptiveTeachingInsights = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getAdaptiveTeachingInsights(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/dashboard/assignment-insights */
+export const getAssignmentInsights = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getAssignmentInsights(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/dashboard/compare */
+export const compareStudents = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.compareStudents(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/dashboard/class-strategy */
+export const getClassStrategy = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getClassStrategy(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/dashboard/strategy/:studentId */
+export const getStudentStrategy = wrap(async (req, res) => {
+  const { studentId } = StudentStrategyDto.pick({ studentId: true }).parse(req.params);
+  const data = await TeacherDashboardService.getStudentStrategy(tid(req), studentId);
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/dashboard/report/:studentId */
+export const getStudentReport = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getStudentReport(tid(req), req.params.studentId);
+  res.json({ success: true, data });
+});
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+/** GET /teacher/dashboard/notifications */
+export const getNotifications = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getNotifications(tid(req));
+  res.json({ success: true, data });
+});
+
+/** PATCH /teacher/dashboard/notifications/:id/read */
+export const markNotificationRead = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.markRead(req.params.id);
+  res.json({ success: true, data });
+});
+
+/** PATCH /teacher/dashboard/notifications/read-all */
+export const markAllNotificationsRead = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.markAllRead(tid(req));
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/dashboard/notifications */
+export const postNotification = wrap(async (req, res) => {
+  const { title, message } = PostNotificationDto.parse(req.body);
+  const data = await TeacherDashboardService.postNotification(tid(req), title, message);
+  res.status(201).json({ success: true, data });
+});
+
+/** POST /teacher/dashboard/broadcast */
+export const broadcastAnnouncement = wrap(async (req, res) => {
+  const { title, message } = BroadcastAnnouncementDto.parse(req.body);
+  const data = await TeacherDashboardService.broadcastAnnouncement(tid(req), title, message);
+  res.status(201).json({ success: true, data });
+});
+
+// ── Feedback ──────────────────────────────────────────────────────────────────
+
+/** POST /teacher/dashboard/feedback */
+export const giveFeedback = wrap(async (req, res) => {
+  const { studentId, feedback } = GiveFeedbackDto.parse(req.body);
+  const data = await TeacherDashboardService.giveFeedback(tid(req), studentId, feedback);
+  res.status(201).json({ success: true, data });
+});
+
+/** GET /teacher/dashboard/feedback */
+export const getFeedbackOverview = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getFeedbackOverview(tid(req));
+  res.json({ success: true, data });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STUDENT CONTROLLERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /teacher/students */
+export const getStudentManagementOverview = wrap(async (req, res) => {
+  const data = await TeacherStudentService.getStudentManagementOverview(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/students/search?query= */
+export const searchStudents = wrap(async (req, res) => {
+  const { query } = SearchStudentsDto.parse(req.query);
+  const data = await TeacherStudentService.searchStudents(tid(req), query);
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/students/register */
+export const registerStudent = wrap(async (req, res) => {
+  const studentData = RegisterStudentDto.parse(req.body);
+  const data = await TeacherStudentService.registerStudent(tid(req), studentData);
+  res.status(201).json({ success: true, data });
+});
+
+/** POST /teacher/students/invite */
+export const inviteStudent = wrap(async (req, res) => {
+  const { email } = InviteStudentDto.parse(req.body);
+  const data = await TeacherStudentService.inviteStudent(tid(req), email);
+  res.status(201).json({ success: true, data });
+});
+
+// ── Analytics per student ─────────────────────────────────────────────────────
+
+/** GET /teacher/students/:studentId/analytics */
+export const getStudentAnalytics = wrap(async (req, res) => {
+  const data = await TeacherService.getStudentAnalytics(tid(req), req.params.studentId);
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/students/:studentId/summary */
+export const summarizeStudentPerformance = wrap(async (req, res) => {
+  const data = await TeacherService.summarizeStudentPerformance(tid(req), req.params.studentId);
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/students/:studentId/progress */
+export const getStudentProgress = wrap(async (req, res) => {
+  const data = await TeacherDashboardService.getStudentProgress(tid(req), req.params.studentId);
+  res.json({ success: true, data });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GROUP CONTROLLERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /teacher/students/groups */
+export const getGroups = wrap(async (req, res) => {
+  const data = await TeacherStudentService.getGroups(tid(req));
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/students/groups */
+export const createGroup = wrap(async (req, res) => {
+  const { name, description } = CreateGroupDto.parse(req.body);
+  const data = await TeacherStudentService.createGroup(tid(req), name, description);
+  res.status(201).json({ success: true, data });
+});
+
+/** PATCH /teacher/students/groups/:groupId */
+export const updateGroup = wrap(async (req, res) => {
+  const updateData = UpdateGroupDto.parse(req.body);
+  const data = await TeacherStudentService.updateGroup(tid(req), req.params.groupId, updateData);
+  res.json({ success: true, data });
+});
+
+/** DELETE /teacher/students/groups/:groupId */
+export const deleteGroup = wrap(async (req, res) => {
+  const data = await TeacherStudentService.deleteGroup(tid(req), req.params.groupId);
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/students/groups/:groupId/members */
+export const addMembersToGroup = wrap(async (req, res) => {
+  const { studentIds } = AddMembersToGroupDto.parse(req.body);
+  const data = await TeacherStudentService.addMembersToGroup(tid(req), req.params.groupId, studentIds);
+  res.status(201).json({ success: true, data });
+});
+
+/** POST /teacher/students/groups/:groupId/members/:studentId */
+export const addStudentToGroup = wrap(async (req, res) => {
+  const data = await TeacherStudentService.addStudentToGroup(
+    tid(req),
+    req.params.groupId,
+    req.params.studentId
+  );
+  res.status(201).json({ success: true, data });
+});
+
+/** DELETE /teacher/students/groups/:groupId/members/:studentId */
+export const removeStudentFromGroup = wrap(async (req, res) => {
+  const data = await TeacherStudentService.removeStudentFromGroup(
+    tid(req),
+    req.params.groupId,
+    req.params.studentId
+  );
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/students/groups/:groupId/invite */
+export const inviteStudentToGroup = wrap(async (req, res) => {
+  const { email } = InviteStudentToGroupDto.parse(req.body);
+  const data = await TeacherStudentService.inviteStudentToGroup(
+    tid(req),
+    email,
+    req.params.groupId
+  );
+  res.status(201).json({ success: true, data });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ASSIGNMENT CONTROLLERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /teacher/assignments */
+export const getAssignmentManagementOverview = wrap(async (req, res) => {
+  const data = await TeacherAssignmentService.getAssignmentManagementOverview(tid(req));
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/assignments */
+export const createAssignment = wrap(async (req, res) => {
+  const { title, description, dueDate, studentIds, groupIds, evaluationMode } =
+    CreateAssignmentDto.parse(req.body);
+  const data = await TeacherAssignmentService.createAssignment(
+    tid(req),
+    title,
+    description,
+    { studentIds, groupIds, evaluationMode, dueDate }
+  );
+  res.status(201).json({ success: true, data });
+});
+
+/** GET /teacher/assignments/:assignmentId */
+export const getAssignmentDetails = wrap(async (req, res) => {
+  const data = await TeacherAssignmentService.getAssignmentDetails(
+    tid(req),
+    req.params.assignmentId
+  );
+  res.json({ success: true, data });
+});
+
+/** PATCH /teacher/assignments/:assignmentId */
+export const updateAssignment = wrap(async (req, res) => {
+  const updateData = UpdateAssignmentDto.parse(req.body);
+  const data = await TeacherAssignmentService.updateAssignment(
+    tid(req),
+    req.params.assignmentId,
+    updateData
+  );
+  res.json({ success: true, data });
+});
+
+/** DELETE /teacher/assignments/:assignmentId */
+export const deleteAssignment = wrap(async (req, res) => {
+  const data = await TeacherAssignmentService.deleteAssignment(
+    tid(req),
+    req.params.assignmentId
+  );
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/assignments/:assignmentId/evaluate/:submissionId */
+export const evaluateSubmission = wrap(async (req, res) => {
+  const { mode, grade, feedback } = EvaluateSubmissionDto.parse(req.body);
+  const data = await TeacherAssignmentService.evaluateSubmission(
+    tid(req),
+    req.params.submissionId,
+    mode === "MANUAL" ? EvaluationMode.Manual : EvaluationMode.Auto,
+    { grade, feedback }
+  );
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/assignments/student/:studentId/submissions */
+export const getSubmissionsForStudent = wrap(async (req, res) => {
+  const data = await TeacherAssignmentService.getSubmissionsForStudent(
+    tid(req),
+    req.params.studentId
+  );
+  res.json({ success: true, data });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REVIEW CONTROLLERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /teacher/review/submissions */
+export const getAllSubmissions = wrap(async (req, res) => {
+  const data = await TeacherReviewService.getSubmissionsForTeacher(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/review/submissions/pending */
+export const getPendingSubmissions = wrap(async (req, res) => {
+  const data = await TeacherReviewService.getPendingSubmissions(tid(req));
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/review/submissions/:submissionId */
+export const getSubmissionById = wrap(async (req, res) => {
+  const data = await TeacherReviewService.getSubmissionById(
+    tid(req),
+    req.params.submissionId
+  );
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/review/:submissionId */
+export const reviewSubmission = wrap(async (req, res) => {
+  const { grade, feedback } = ReviewSubmissionDto.parse(req.body);
+  const data = await TeacherReviewService.reviewSubmission(
+    tid(req),
+    req.params.submissionId,
+    grade,
+    feedback
+  );
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/review/bulk/:assignmentId */
+export const bulkReviewSubmissions = wrap(async (req, res) => {
+  const data = await TeacherReviewService.bulkReviewSubmissions(
+    tid(req),
+    req.params.assignmentId
+  );
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/review/:submissionId/regenerate */
+export const regenerateSummary = wrap(async (req, res) => {
+  const data = await TeacherReviewService.regenerateSummary(
+    tid(req),
+    req.params.submissionId
+  );
+  res.json({ success: true, data });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MINDMAP CONTROLLERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /teacher/mindmaps */
+export const getMindmapManagementOverview = wrap(async (req, res) => {
+  const filter = MindmapFilterDto.parse(req.query);
+  const data = await TeacherService.getMindmapManagementOverview(tid(req), filter);
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/mindmaps/:mindmapId/review */
+export const reviewMindmap = wrap(async (req, res) => {
+  const { approval, comment } = ReviewMindmapDto.parse(req.body);
+  const data = await TeacherService.reviewMindmap(
+    tid(req),
+    req.params.mindmapId,
+    approval,
+    comment
+  );
+  res.json({ success: true, data });
+});
+
+/** POST /teacher/mindmaps/generate */
+export const generateMindmap = wrap(async (req, res) => {
+  const { studentId, topic } = GenerateMindmapDto.parse(req.body);
+  const data = await TeacherService.generateMindmap(tid(req), studentId, topic);
+  res.status(201).json({ success: true, data });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIL LOG CONTROLLERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /teacher/mail-logs */
+export const getMailLogs = wrap(async (req, res) => {
+  const limit = req.query.limit ? Number(req.query.limit) : 50;
+  const data = await MailLogService.getTeacherMailLogs(tid(req), limit);
+  res.json({ success: true, data });
+});
+
+/** GET /teacher/mail-logs/:mailId */
+export const getMailLogById = wrap(async (req, res) => {
+  const data = await MailLogService.getMailLogById(tid(req), req.params.mailId);
+  res.json({ success: true, data });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLASS OVERVIEW CONTROLLERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /teacher/class-overview */
+export const getClassOverview = wrap(async (req, res) => {
+  const data = await TeacherService.getClassOverview(tid(req));
+  res.json({ success: true, data });
+});

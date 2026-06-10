@@ -1,82 +1,161 @@
 import { Router } from "express";
-import { verifyToken } from "../../middlewares/jwtVerifiction";
-import { TeacherController } from "./teacher.controller";
-import { dtoValidation } from "../../middlewares/dtoValidation";
-import { AddMembersToGroupDto, AddStudentToGroupDto, AssignmentDto, CreateGroupDto, InviteStudentDto, InviteStudentToGroupDto, RegisterStudentDto, ReviewDto, SearchQueryDto, SubmissionDto, UpdateAssignmentDto, UpdateGroupDto } from "./teacher.dto";
-import { enforceTeacher } from "../../middlewares/enforceTeacher";
+import { authenticate } from "../../middlewares/auth.middleware";
+import { authorizeRole } from "../../middlewares/role.middleware";
+import { userRole } from "../../config/core";
+import {
+  // Dashboard
+  getDashboardOverview,
+  getAnalyticsOverview,
+  getClassHeatmap,
+  getAdaptiveTeachingInsights,
+  getAssignmentInsights,
+  compareStudents,
+  getClassStrategy,
+  getStudentStrategy,
+  getStudentReport,
+  // Notifications
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  postNotification,
+  broadcastAnnouncement,
+  // Feedback
+  giveFeedback,
+  getFeedbackOverview,
+  // Students
+  getStudentManagementOverview,
+  searchStudents,
+  registerStudent,
+  inviteStudent,
+  getStudentAnalytics,
+  summarizeStudentPerformance,
+  getStudentProgress,
+  // Groups
+  getGroups,
+  createGroup,
+  updateGroup,
+  deleteGroup,
+  addMembersToGroup,
+  addStudentToGroup,
+  removeStudentFromGroup,
+  inviteStudentToGroup,
+  // Assignments
+  getAssignmentManagementOverview,
+  createAssignment,
+  getAssignmentDetails,
+  updateAssignment,
+  deleteAssignment,
+  evaluateSubmission,
+  getSubmissionsForStudent,
+  // Review
+  getAllSubmissions,
+  getPendingSubmissions,
+  getSubmissionById,
+  reviewSubmission,
+  bulkReviewSubmissions,
+  regenerateSummary,
+  // Mindmaps
+  getMindmapManagementOverview,
+  reviewMindmap,
+  generateMindmap,
+  // Mail logs
+  getMailLogs,
+  getMailLogById,
+  // Class
+  getClassOverview,
+} from "./teacher.controller";
 
-const teacherRouter = Router();
-teacherRouter.use(verifyToken, enforceTeacher);
+const router = Router();
 
-/**
- * -----------------------------
- * 📊 ANALYTICS + PERFORMANCE
- * -----------------------------
- */
-teacherRouter.get("/student/:userId/analytics", TeacherController.getStudentAnalytics);
-teacherRouter.get("/student/:userId/summarize", TeacherController.summarizeStudent);
-teacherRouter.post("/mindmap/:mindmapId/review", TeacherController.reviewMindmap);
-teacherRouter.get("/class/overview", TeacherController.getClassOverview);
+// Apply auth + teacher role guard to every route in this file
+router.use(authenticate, authorizeRole(userRole.Teacher));
 
-/**
- * -----------------------------
- * 📘 ASSIGNMENTS
- * -----------------------------
- */
-teacherRouter.post("/assignment/create", dtoValidation(AssignmentDto), TeacherController.createAssignment);
-teacherRouter.get("/get/assignments", TeacherController.getAssignments);
-teacherRouter.get("/assignment/:assignmentId", TeacherController.getAssignmentDetails);
-teacherRouter.put("/assignment/update/:assignmentId", dtoValidation(UpdateAssignmentDto), TeacherController.updateAssignment);
-teacherRouter.delete("/assignment/:assignmentId", TeacherController.deleteAssignment);
-teacherRouter.post("/assignment/evaluate", TeacherController.evaluateAssignment);
-teacherRouter.post("/assignment/submission/evaluate", dtoValidation(SubmissionDto), TeacherController.evaluateSubmission);
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD  ·  /teacher/dashboard
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/dashboard",                          getDashboardOverview);
+router.get("/dashboard/analytics",                getAnalyticsOverview);
+router.get("/dashboard/heatmap",                  getClassHeatmap);
+router.get("/dashboard/insights",                 getAdaptiveTeachingInsights);
+router.get("/dashboard/assignment-insights",      getAssignmentInsights);
+router.get("/dashboard/compare",                  compareStudents);
+router.get("/dashboard/class-strategy",           getClassStrategy);
+router.get("/dashboard/strategy/:studentId",      getStudentStrategy);
+router.get("/dashboard/report/:studentId",        getStudentReport);
 
-/**
- * -----------------------------
- * 🧠 REVIEW + FEEDBACK
- * -----------------------------
- */
-teacherRouter.post("/review", dtoValidation(ReviewDto), TeacherController.reviewSubmission);
-teacherRouter.get("/submissions/teacher", TeacherController.getSubmissionsForTeacher);
-teacherRouter.get("/submission/:submissionId/regenerate-summary", TeacherController.regenerateSummary);
+// Notifications
+router.get("/dashboard/notifications",            getNotifications);
+router.patch("/dashboard/notifications/read-all", markAllNotificationsRead);
+router.patch("/dashboard/notifications/:id/read", markNotificationRead);
+router.post("/dashboard/notifications",           postNotification);
+router.post("/dashboard/broadcast",               broadcastAnnouncement);
 
-/**
- * -----------------------------
- * 👩‍🏫 TEACHER → STUDENT MGMT
- * -----------------------------
- */
+// Feedback
+router.post("/dashboard/feedback",                giveFeedback);
+router.get("/dashboard/feedback",                 getFeedbackOverview);
 
-// Group
-teacherRouter.post("/group/create", dtoValidation(CreateGroupDto), TeacherController.createGroup);
+// ─────────────────────────────────────────────────────────────────────────────
+// CLASS OVERVIEW  ·  /teacher/class-overview
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/class-overview", getClassOverview);
 
-teacherRouter.put("/groups/:groupId", dtoValidation(UpdateGroupDto), TeacherController.updateGroup);
+// ─────────────────────────────────────────────────────────────────────────────
+// STUDENTS  ·  /teacher/students
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/students",          getStudentManagementOverview);
+router.get("/students/search",   searchStudents);
+router.post("/students/register", registerStudent);
+router.post("/students/invite",   inviteStudent);
 
-teacherRouter.delete("/groups/:groupId", TeacherController.deleteGroup);
+// Per-student analytics
+router.get("/students/:studentId/analytics", getStudentAnalytics);
+router.get("/students/:studentId/summary",   summarizeStudentPerformance);
+router.get("/students/:studentId/progress",  getStudentProgress);
+router.get("/students/:studentId/submissions", getSubmissionsForStudent);
 
-// Search students
-teacherRouter.get("/students/search", dtoValidation(SearchQueryDto), TeacherController.searchStudents);
+// ─────────────────────────────────────────────────────────────────────────────
+// GROUPS  ·  /teacher/students/groups
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/students/groups",                                    getGroups);
+router.post("/students/groups",                                   createGroup);
+router.patch("/students/groups/:groupId",                         updateGroup);
+router.delete("/students/groups/:groupId",                        deleteGroup);
+router.post("/students/groups/:groupId/members",                  addMembersToGroup);
+router.post("/students/groups/:groupId/members/:studentId",       addStudentToGroup);
+router.delete("/students/groups/:groupId/members/:studentId",     removeStudentFromGroup);
+router.post("/students/groups/:groupId/invite",                   inviteStudentToGroup);
 
-// Register student (direct add)
-teacherRouter.post("/students/register", dtoValidation(RegisterStudentDto), TeacherController.registerStudent);
+// ─────────────────────────────────────────────────────────────────────────────
+// ASSIGNMENTS  ·  /teacher/assignments
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/assignments",                                        getAssignmentManagementOverview);
+router.post("/assignments",                                       createAssignment);
+router.get("/assignments/:assignmentId",                          getAssignmentDetails);
+router.patch("/assignments/:assignmentId",                        updateAssignment);
+router.delete("/assignments/:assignmentId",                       deleteAssignment);
+router.post("/assignments/:assignmentId/evaluate/:submissionId",  evaluateSubmission);
 
-// Add multiple students to a group
-teacherRouter.post("/group/members/add", dtoValidation(AddMembersToGroupDto), TeacherController.addMembersToGroup);
+// ─────────────────────────────────────────────────────────────────────────────
+// REVIEW  ·  /teacher/review
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/review/submissions",                   getAllSubmissions);
+router.get("/review/submissions/pending",           getPendingSubmissions);
+router.get("/review/submissions/:submissionId",     getSubmissionById);
+router.post("/review/:submissionId",                reviewSubmission);
+router.post("/review/bulk/:assignmentId",           bulkReviewSubmissions);
+router.post("/review/:submissionId/regenerate",     regenerateSummary);
 
-// Add single student to a group
-teacherRouter.post("/group/student/add", dtoValidation(AddStudentToGroupDto), TeacherController.addStudentToGroup);
+// ─────────────────────────────────────────────────────────────────────────────
+// MINDMAPS  ·  /teacher/mindmaps
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/mindmaps",                      getMindmapManagementOverview);
+router.post("/mindmaps/generate",            generateMindmap);
+router.post("/mindmaps/:mindmapId/review",   reviewMindmap);
 
-// Remove student from group
-teacherRouter.post("/group/:groupId/student/:studentId/remove", TeacherController.removeStudentFromGroup);
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIL LOGS  ·  /teacher/mail-logs
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/mail-logs",          getMailLogs);
+router.get("/mail-logs/:mailId",  getMailLogById);
 
-// Invite student by email
-teacherRouter.post("/students/invite", dtoValidation(InviteStudentDto), TeacherController.inviteStudent);
-
-// Invite student to add a specific group by email
-teacherRouter.post("/students/invite/group", dtoValidation(InviteStudentToGroupDto), TeacherController.inviteStudentToGroup);
-
-//Mail Logs
-teacherRouter.get("/mail/logs", TeacherController.getTeacherMailLogs);
-teacherRouter.get("/mail/log/:id", TeacherController.getMailLogById);
-
-export default teacherRouter;
-
+export default router;

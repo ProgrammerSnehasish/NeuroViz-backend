@@ -1,225 +1,181 @@
-import {
-  IsArray,
-  IsEmail,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-  Max,
-} from "class-validator";
-import { userRole } from "../../config/core";
+import { z } from "zod";
 
-/**
- * 🎓 Assignment creation DTO
- */
-export class AssignmentDto {
-  @IsString()
-  @IsNotEmpty()
-  title!: string;
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED
+// ─────────────────────────────────────────────────────────────────────────────
 
-  @IsString()
-  @IsOptional()
-  description?: string;
+export const PaginationDto = z.object({
+  page:  z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type PaginationDto = z.infer<typeof PaginationDto>;
 
-  @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty()
-  studentIds!: string[];
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────────────────────────────────────
 
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  groupIds!: string[];
-}
+/** POST /teacher/dashboard/notifications */
+export const PostNotificationDto = z.object({
+  title:   z.string().min(1, "Title is required").max(120),
+  message: z.string().min(1, "Message is required").max(1000),
+});
+export type PostNotificationDto = z.infer<typeof PostNotificationDto>;
 
-/**
- * 📤 Submission DTO (student uploads work)
- */
-export class SubmissionDto {
-  @IsString()
-  @IsNotEmpty()
-  assignmentId!: string;
+/** POST /teacher/dashboard/broadcast */
+export const BroadcastAnnouncementDto = z.object({
+  title:   z.string().min(1, "Title is required").max(120),
+  message: z.string().min(1, "Message is required").max(1000),
+});
+export type BroadcastAnnouncementDto = z.infer<typeof BroadcastAnnouncementDto>;
 
-  @IsString()
-  @IsNotEmpty()
-  content!: string;
-}
+/** POST /teacher/dashboard/feedback */
+export const GiveFeedbackDto = z.object({
+  studentId: z.string().uuid("Invalid student ID"),
+  feedback:  z.string().min(1, "Feedback text is required").max(2000),
+});
+export type GiveFeedbackDto = z.infer<typeof GiveFeedbackDto>;
 
-/**
- * 🧑‍🏫 Create a new group (by teacher)
- */
-export class CreateGroupDto {
-  @IsNotEmpty()
-  @IsString()
-  name!: string;
+// ─────────────────────────────────────────────────────────────────────────────
+// STUDENTS
+// ─────────────────────────────────────────────────────────────────────────────
 
-  @IsOptional()
-  @IsString()
-  description?: string;
-}
+/** POST /teacher/students/register */
+export const RegisterStudentDto = z.object({
+  firstName: z.string().min(1, "First name is required").max(50),
+  lastName:  z.string().min(1, "Last name is required").max(50),
+  email:     z.string().email("Invalid email address"),
+});
+export type RegisterStudentDto = z.infer<typeof RegisterStudentDto>;
 
-/**
- * 🧾 Review DTO (teacher grades a submission)
- */
-export class ReviewDto {
-  @IsString()
-  @IsNotEmpty()
-  submissionId!: string;
+/** POST /teacher/students/invite */
+export const InviteStudentDto = z.object({
+  email: z.string().email("Invalid email address"),
+});
+export type InviteStudentDto = z.infer<typeof InviteStudentDto>;
 
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  grade!: number;
+/** GET /teacher/students/search?query= */
+export const SearchStudentsDto = z.object({
+  query: z.string().min(1, "Search query is required").max(100),
+});
+export type SearchStudentsDto = z.infer<typeof SearchStudentsDto>;
 
-  @IsString()
-  @IsOptional()
-  feedback?: string;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// GROUPS
+// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * 👩‍🎓 Register student manually (by teacher)
- */
-export class RegisterStudentDto {
-  @IsNotEmpty()
-  @IsString()
-  firstName!: string;
+/** POST /teacher/students/groups */
+export const CreateGroupDto = z.object({
+  name:        z.string().min(1, "Group name is required").max(80),
+  description: z.string().max(300).optional(),
+});
+export type CreateGroupDto = z.infer<typeof CreateGroupDto>;
 
-  @IsNotEmpty()
-  @IsString()
-  lastName!: string;
+/** PATCH /teacher/students/groups/:groupId */
+export const UpdateGroupDto = z.object({
+  name:        z.string().min(1).max(80).optional(),
+  description: z.string().max(300).optional(),
+}).refine((d) => d.name !== undefined || d.description !== undefined, {
+  message: "Provide at least one field to update",
+});
+export type UpdateGroupDto = z.infer<typeof UpdateGroupDto>;
 
-  @IsNotEmpty()
-  @IsEmail()
-  email!: string;
-}
+/** POST /teacher/students/groups/:groupId/members */
+export const AddMembersToGroupDto = z.object({
+  studentIds: z.array(z.string().uuid()).min(1, "Provide at least one student ID"),
+});
+export type AddMembersToGroupDto = z.infer<typeof AddMembersToGroupDto>;
 
-/**
- * 📩 Invite student via email (by teacher)
- */
-export class InviteStudentDto {
-  @IsNotEmpty()
-  @IsEmail()
-  email!: string;
-}
+/** POST /teacher/students/groups/:groupId/invite */
+export const InviteStudentToGroupDto = z.object({
+  email: z.string().email("Invalid email address"),
+});
+export type InviteStudentToGroupDto = z.infer<typeof InviteStudentToGroupDto>;
 
-export class InviteStudentToGroupDto {
-  @IsNotEmpty()
-  @IsEmail()
-  email!: string;
+// ─────────────────────────────────────────────────────────────────────────────
+// ASSIGNMENTS
+// ─────────────────────────────────────────────────────────────────────────────
 
-  @IsNotEmpty()
-  @IsString()
-  groupId!: string;
-}
-/**
- * ✅ Accept invite (student side)
- */
-export class AcceptInviteDto {
-  @IsNotEmpty()
-  @IsString()
-  token!: string;
+/** POST /teacher/assignments */
+export const CreateAssignmentDto = z.object({
+  title:          z.string().min(1, "Title is required").max(200),
+  description:    z.string().max(2000).optional(),
+  dueDate:        z.coerce.date().optional(),
+  studentIds:     z.array(z.string().uuid()).optional(),
+  groupIds:       z.array(z.string().uuid()).optional(),
+  evaluationMode: z.enum(["AUTO", "MANUAL"]).default("AUTO"),
+}).refine(
+  (d) => (d.studentIds?.length ?? 0) + (d.groupIds?.length ?? 0) > 0,
+  { message: "Assign to at least one student or group" }
+);
+export type CreateAssignmentDto = z.infer<typeof CreateAssignmentDto>;
 
-  @IsNotEmpty()
-  @IsString()
-  password!: string;
+/** PATCH /teacher/assignments/:assignmentId */
+export const UpdateAssignmentDto = z.object({
+  title:          z.string().min(1).max(200).optional(),
+  description:    z.string().max(2000).optional(),
+  dueDate:        z.coerce.date().optional(),
+  studentIds:     z.array(z.string().uuid()).optional(),
+  groupIds:       z.array(z.string().uuid()).optional(),
+  evaluationMode: z.enum(["AUTO", "MANUAL"]).optional(),
+}).refine(
+  (d) => Object.values(d).some((v) => v !== undefined),
+  { message: "Provide at least one field to update" }
+);
+export type UpdateAssignmentDto = z.infer<typeof UpdateAssignmentDto>;
 
-  @IsNotEmpty()
-  @IsString()
-  firstName!: string;
+/** POST /teacher/assignments/:assignmentId/evaluate/:submissionId */
+export const EvaluateSubmissionDto = z.object({
+  mode:     z.enum(["AUTO", "MANUAL"]).default("AUTO"),
+  grade:    z.number().int().min(0).max(100).optional(),
+  feedback: z.string().max(2000).optional(),
+}).refine(
+  (d) => d.mode !== "MANUAL" || (d.grade !== undefined && d.feedback !== undefined),
+  { message: "Manual mode requires both grade and feedback" }
+);
+export type EvaluateSubmissionDto = z.infer<typeof EvaluateSubmissionDto>;
 
-  @IsNotEmpty()
-  @IsString()
-  lastName!: string;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// REVIEW
+// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * 👥 Add multiple members to a group
- */
-export class AddMembersToGroupDto {
-  @IsNotEmpty()
-  @IsString()
-  groupId!: string;
+/** POST /teacher/review/:submissionId */
+export const ReviewSubmissionDto = z.object({
+  grade:    z.number().int().min(0).max(100),
+  feedback: z.string().max(2000).optional(),
+});
+export type ReviewSubmissionDto = z.infer<typeof ReviewSubmissionDto>;
 
-  @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty({ each: true })
-  studentIds!: string[];
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// MINDMAPS
+// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * ➕ Add single student to a group
- */
-export class AddStudentToGroupDto {
-  @IsNotEmpty()
-  @IsString()
-  groupId!: string;
+/** POST /teacher/mindmaps/:mindmapId/review */
+export const ReviewMindmapDto = z.object({
+  approval: z.boolean(),
+  comment:  z.string().max(1000).optional(),
+});
+export type ReviewMindmapDto = z.infer<typeof ReviewMindmapDto>;
 
-  @IsString()
-  @IsNotEmpty()
-  studentId!: string;
-}
+/** POST /teacher/mindmaps/generate */
+export const GenerateMindmapDto = z.object({
+  studentId: z.string().uuid("Invalid student ID"),
+  topic:     z.string().min(1, "Topic is required").max(200),
+});
+export type GenerateMindmapDto = z.infer<typeof GenerateMindmapDto>;
 
-/**
- * remove single student to a group
- */
-export class RemoveStudentFromGroupDto {
-  @IsNotEmpty()
-  @IsString()
-  groupId!: string;
+/** GET /teacher/mindmaps?status=&search= */
+export const MindmapFilterDto = z.object({
+  status: z.enum(["APPROVED", "PENDING", "REJECTED"]).optional(),
+  search: z.string().max(100).optional(),
+});
+export type MindmapFilterDto = z.infer<typeof MindmapFilterDto>;
 
-  @IsString()
-  @IsNotEmpty()
-  studentId!: string;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// ANALYTICS
+// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * 🔍 Search DTO (for admin or teacher filtering)
- */
-export class SearchQueryDto {
-  @IsOptional()
-  @IsString()
-  query?: string;
-
-  @IsOptional()
-  @IsString()
-  role?: userRole.Teacher | userRole.Student;
-
-  @IsOptional()
-  @IsNumber()
-  page?: number;
-
-  @IsOptional()
-  @IsNumber()
-  limit?: number;
-}
-
-export class UpdateAssignmentDto {
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  studentIds?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  groupIds?: string[];
-}
-
-export class UpdateGroupDto {
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-}
+/** POST /teacher/analytics/strategy/student */
+export const StudentStrategyDto = z.object({
+  studentId: z.string().uuid("Invalid student ID"),
+});
+export type StudentStrategyDto = z.infer<typeof StudentStrategyDto>;
