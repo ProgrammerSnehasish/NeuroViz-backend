@@ -44,7 +44,9 @@ export const TeacherAssignmentService = {
           },
         },
         assignmentGroups: {
-          include: { group: true },
+          include: { group: {
+            include: { _count: { select: { members: true } } }
+          } },
         },
         submissions: true,
       },
@@ -261,7 +263,7 @@ Final AI Grade: ${score}/100.
   async evaluateSubmission(
     teacherId: string,
     submissionId: string,
-    mode: EvaluationMode.Manual | EvaluationMode.Auto = EvaluationMode.Auto,
+    evaluationMode: EvaluationMode.Manual | EvaluationMode.Auto = EvaluationMode.Auto,
     manual: { grade?: number; feedback?: string } = {}
   ) {
     await this.validateTeacher(teacherId);
@@ -276,7 +278,7 @@ Final AI Grade: ${score}/100.
 
     let result;
 
-    if (mode === EvaluationMode.Manual) {
+    if (evaluationMode === EvaluationMode.Manual) {
       if (manual.grade === undefined || !manual.feedback)
         throw createHttpError(400, "Manual evaluation requires grade and feedback.");
       result = {
@@ -303,7 +305,7 @@ Final AI Grade: ${score}/100.
     await logActivity(
       teacherId,
       "EVALUATE_SUBMISSION",
-      `submissionId=${submissionId}, mode=${mode}, score=${result.score}`
+      `submissionId=${submissionId}, evaluationMode=${evaluationMode}, score=${result.score}`
     );
     return { message: "Evaluation completed.", result };
   },
@@ -367,7 +369,7 @@ Final AI Grade: ${score}/100.
       dueDate?: Date;
       studentIds?: string[];
       groupIds?: string[];
-      evaluationMode?: EvaluationMode.Auto | EvaluationMode.Manual;
+      evaluationMode?: EvaluationMode;
     }
   ) {
     await this.validateTeacher(teacherId);
@@ -386,6 +388,7 @@ Final AI Grade: ${score}/100.
         title: updateData.title ?? assignment.title,
         description: updateData.description ?? assignment.description,
         dueDate: updateData.dueDate ?? assignment.dueDate,
+        evaluationMode: updateData.evaluationMode ?? assignment.evaluationMode,
       },
     });
 

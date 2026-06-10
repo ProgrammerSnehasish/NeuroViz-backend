@@ -168,36 +168,36 @@ export const TeacherService = {
    * Let the teacher generate a new mindmap for a student using NLP.
    * Maps to the "+ Generate New Mindmap" button.
    */
-  async generateMindmap(teacherId: string, studentId: string, topic: string) {
-    await this.validateTeacher(teacherId);
-    await this.validateStudent(studentId);
+  // async generateMindmap(teacherId: string, studentId: string, topic: string) {
+  //   await this.validateTeacher(teacherId);
+  //   await this.validateStudent(studentId);
 
-    const prompt = `
-      Generate a detailed mindmap outline for the topic: "${topic}".
-      Return a JSON object with:
-      - title: string
-      - nodes: Array<{ id: string, label: string, children?: string[] }>
-    `;
+  //   const prompt = `
+  //     Generate a detailed mindmap outline for the topic: "${topic}".
+  //     Return a JSON object with:
+  //     - title: string
+  //     - nodes: Array<{ id: string, label: string, children?: string[] }>
+  //   `;
 
-    const generated = await NLPService.generate(prompt);
+  //   const generated = await NLPService.generate(prompt);
 
-    const mindmap = await prisma.mindmap.create({
-      data: {
-        title: topic,
-        userId: studentId,
-        content: typeof generated === "string" ? generated : JSON.stringify(generated),
-        reviewedById: teacherId,
-        approval: null, // pending review by default
-      },
-    });
+  //   const mindmap = await prisma.mindmap.create({
+  //     data: {
+  //       title: topic,
+  //       userId: studentId,
+  //       content: typeof generated === "string" ? generated : JSON.stringify(generated),
+  //       reviewedById: teacherId,
+  //       approval: false, // pending review by default
+  //     },
+  //   });
 
-    await logActivity(
-      teacherId,
-      "GENERATE_MINDMAP",
-      `mindmapId=${mindmap.id}, studentId=${studentId}, topic=${topic}`
-    );
-    return { message: "Mindmap generated successfully.", mindmap };
-  },
+  //   await logActivity(
+  //     teacherId,
+  //     "GENERATE_MINDMAP",
+  //     `mindmapId=${mindmap.id}, studentId=${studentId}, topic=${topic}`
+  //   );
+  //   return { message: "Mindmap generated successfully.", mindmap };
+  // },
 
   // ─── STUDENT ANALYTICS ───────────────────────────────────────────────────
   async getStudentAnalytics(

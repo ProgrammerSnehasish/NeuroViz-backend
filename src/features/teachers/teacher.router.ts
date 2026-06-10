@@ -1,7 +1,4 @@
 import { Router } from "express";
-import { authenticate } from "../../middlewares/auth.middleware";
-import { authorizeRole } from "../../middlewares/role.middleware";
-import { userRole } from "../../config/core";
 import {
   // Dashboard
   getDashboardOverview,
@@ -57,18 +54,19 @@ import {
   // Mindmaps
   getMindmapManagementOverview,
   reviewMindmap,
-  generateMindmap,
   // Mail logs
   getMailLogs,
   getMailLogById,
   // Class
   getClassOverview,
 } from "./teacher.controller";
+import { verifyToken } from "../../middlewares/jwtVerifiction";
+import { enforceTeacher } from "../../middlewares/enforceTeacher";
 
 const router = Router();
 
 // Apply auth + teacher role guard to every route in this file
-router.use(authenticate, authorizeRole(userRole.Teacher));
+router.use(verifyToken, enforceTeacher);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD  ·  /teacher/dashboard
@@ -149,7 +147,7 @@ router.post("/review/:submissionId/regenerate",     regenerateSummary);
 // MINDMAPS  ·  /teacher/mindmaps
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/mindmaps",                      getMindmapManagementOverview);
-router.post("/mindmaps/generate",            generateMindmap);
+// router.post("/mindmaps/generate",            generateMindmap);
 router.post("/mindmaps/:mindmapId/review",   reviewMindmap);
 
 // ─────────────────────────────────────────────────────────────────────────────

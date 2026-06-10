@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EvaluationMode } from "../../config/core";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED
@@ -102,7 +103,7 @@ export const CreateAssignmentDto = z.object({
   dueDate:        z.coerce.date().optional(),
   studentIds:     z.array(z.string().uuid()).optional(),
   groupIds:       z.array(z.string().uuid()).optional(),
-  evaluationMode: z.enum(["AUTO", "MANUAL"]).default("AUTO"),
+  evaluationMode: z.nativeEnum(EvaluationMode).default(EvaluationMode.Auto), // ← fixed
 }).refine(
   (d) => (d.studentIds?.length ?? 0) + (d.groupIds?.length ?? 0) > 0,
   { message: "Assign to at least one student or group" }
@@ -116,7 +117,7 @@ export const UpdateAssignmentDto = z.object({
   dueDate:        z.coerce.date().optional(),
   studentIds:     z.array(z.string().uuid()).optional(),
   groupIds:       z.array(z.string().uuid()).optional(),
-  evaluationMode: z.enum(["AUTO", "MANUAL"]).optional(),
+  evaluationMode: z.nativeEnum(EvaluationMode).optional(),                   // ← fixed
 }).refine(
   (d) => Object.values(d).some((v) => v !== undefined),
   { message: "Provide at least one field to update" }
@@ -125,11 +126,11 @@ export type UpdateAssignmentDto = z.infer<typeof UpdateAssignmentDto>;
 
 /** POST /teacher/assignments/:assignmentId/evaluate/:submissionId */
 export const EvaluateSubmissionDto = z.object({
-  mode:     z.enum(["AUTO", "MANUAL"]).default("AUTO"),
+  mode:     z.nativeEnum(EvaluationMode).default(EvaluationMode.Auto),       // ← fixed
   grade:    z.number().int().min(0).max(100).optional(),
   feedback: z.string().max(2000).optional(),
 }).refine(
-  (d) => d.mode !== "MANUAL" || (d.grade !== undefined && d.feedback !== undefined),
+  (d) => d.mode !== EvaluationMode.Manual || (d.grade !== undefined && d.feedback !== undefined),
   { message: "Manual mode requires both grade and feedback" }
 );
 export type EvaluateSubmissionDto = z.infer<typeof EvaluateSubmissionDto>;

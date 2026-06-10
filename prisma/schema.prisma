@@ -380,6 +380,7 @@ model Assignment {
   teacherId     String
   createdAt     DateTime            @default(now())
   assignedTo    AssignmentStudent[]
+  dueDate       DateTime            @default(now())
   submissions   AssignmentSubmission[] @relation("AssignmentToSubmissions")
   teacher       User                @relation("TeacherAssignments", fields: [teacherId], references: [id])
   assignmentGroups AssignmentGroup[]  @relation("AssignmentGroupRelation")

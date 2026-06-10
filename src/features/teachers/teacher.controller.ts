@@ -1,10 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { TeacherDashboardService }  from "./services/teacher.dashboard.service";
-import { TeacherService }           from "./services/teacher.service";
-import { TeacherStudentService }    from "./services/teacher.student.service";
-import { TeacherAssignmentService } from "./services/teacher.assignment.service";
-import { TeacherReviewService }     from "./services/teacher.review.service";
-import { MailLogService }           from "./services/teacher.mail-log.service";
 import { EvaluationMode }           from "../../config/core";
 import {
   PostNotificationDto,
@@ -26,6 +20,12 @@ import {
   MindmapFilterDto,
   StudentStrategyDto,
 } from "./teacher.dto";
+import { TeacherDashboardService } from "./Dashboard/teacher.dashboard.service";
+import { TeacherAssignmentService } from "./Services/teacher.assignment.service";
+import { MailLogService } from "./Services/teacher.mail-log.service";
+import { TeacherReviewService } from "./Services/teacher.review.service";
+import { TeacherService } from "./Services/teacher.service";
+import { TeacherStudentService } from "./Services/teacher.student.service";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -93,7 +93,7 @@ export const getStudentStrategy = wrap(async (req, res) => {
 
 /** GET /teacher/dashboard/report/:studentId */
 export const getStudentReport = wrap(async (req, res) => {
-  const data = await TeacherDashboardService.getStudentReport(tid(req), req.params.studentId);
+  const data = await TeacherDashboardService.getStudentReport(tid(req), req.params.studentId as string);
   res.json({ success: true, data });
 });
 
@@ -107,7 +107,7 @@ export const getNotifications = wrap(async (req, res) => {
 
 /** PATCH /teacher/dashboard/notifications/:id/read */
 export const markNotificationRead = wrap(async (req, res) => {
-  const data = await TeacherDashboardService.markRead(req.params.id);
+  const data = await TeacherDashboardService.markRead(req.params.id as string);
   res.json({ success: true, data });
 });
 
@@ -181,19 +181,19 @@ export const inviteStudent = wrap(async (req, res) => {
 
 /** GET /teacher/students/:studentId/analytics */
 export const getStudentAnalytics = wrap(async (req, res) => {
-  const data = await TeacherService.getStudentAnalytics(tid(req), req.params.studentId);
+  const data = await TeacherService.getStudentAnalytics(tid(req), req.params.studentId as string);
   res.json({ success: true, data });
 });
 
 /** GET /teacher/students/:studentId/summary */
 export const summarizeStudentPerformance = wrap(async (req, res) => {
-  const data = await TeacherService.summarizeStudentPerformance(tid(req), req.params.studentId);
+  const data = await TeacherService.summarizeStudentPerformance(tid(req), req.params.studentId as string);
   res.json({ success: true, data });
 });
 
 /** GET /teacher/students/:studentId/progress */
 export const getStudentProgress = wrap(async (req, res) => {
-  const data = await TeacherDashboardService.getStudentProgress(tid(req), req.params.studentId);
+  const data = await TeacherDashboardService.getStudentProgress(tid(req), req.params.studentId as string);
   res.json({ success: true, data });
 });
 
@@ -217,20 +217,20 @@ export const createGroup = wrap(async (req, res) => {
 /** PATCH /teacher/students/groups/:groupId */
 export const updateGroup = wrap(async (req, res) => {
   const updateData = UpdateGroupDto.parse(req.body);
-  const data = await TeacherStudentService.updateGroup(tid(req), req.params.groupId, updateData);
+  const data = await TeacherStudentService.updateGroup(tid(req), req.params.groupId as string, updateData);
   res.json({ success: true, data });
 });
 
 /** DELETE /teacher/students/groups/:groupId */
 export const deleteGroup = wrap(async (req, res) => {
-  const data = await TeacherStudentService.deleteGroup(tid(req), req.params.groupId);
+  const data = await TeacherStudentService.deleteGroup(tid(req), req.params.groupId as string);
   res.json({ success: true, data });
 });
 
 /** POST /teacher/students/groups/:groupId/members */
 export const addMembersToGroup = wrap(async (req, res) => {
   const { studentIds } = AddMembersToGroupDto.parse(req.body);
-  const data = await TeacherStudentService.addMembersToGroup(tid(req), req.params.groupId, studentIds);
+  const data = await TeacherStudentService.addMembersToGroup(tid(req), req.params.groupId as string, studentIds);
   res.status(201).json({ success: true, data });
 });
 
@@ -238,8 +238,8 @@ export const addMembersToGroup = wrap(async (req, res) => {
 export const addStudentToGroup = wrap(async (req, res) => {
   const data = await TeacherStudentService.addStudentToGroup(
     tid(req),
-    req.params.groupId,
-    req.params.studentId
+    req.params.groupId as string,
+    req.params.studentId as string
   );
   res.status(201).json({ success: true, data });
 });
@@ -248,8 +248,8 @@ export const addStudentToGroup = wrap(async (req, res) => {
 export const removeStudentFromGroup = wrap(async (req, res) => {
   const data = await TeacherStudentService.removeStudentFromGroup(
     tid(req),
-    req.params.groupId,
-    req.params.studentId
+    req.params.groupId as string,
+    req.params.studentId as string
   );
   res.json({ success: true, data });
 });
@@ -260,7 +260,7 @@ export const inviteStudentToGroup = wrap(async (req, res) => {
   const data = await TeacherStudentService.inviteStudentToGroup(
     tid(req),
     email,
-    req.params.groupId
+    req.params.groupId as string
   );
   res.status(201).json({ success: true, data });
 });
@@ -292,7 +292,7 @@ export const createAssignment = wrap(async (req, res) => {
 export const getAssignmentDetails = wrap(async (req, res) => {
   const data = await TeacherAssignmentService.getAssignmentDetails(
     tid(req),
-    req.params.assignmentId
+    req.params.assignmentId as string
   );
   res.json({ success: true, data });
 });
@@ -302,7 +302,7 @@ export const updateAssignment = wrap(async (req, res) => {
   const updateData = UpdateAssignmentDto.parse(req.body);
   const data = await TeacherAssignmentService.updateAssignment(
     tid(req),
-    req.params.assignmentId,
+    req.params.assignmentId as string,
     updateData
   );
   res.json({ success: true, data });
@@ -312,7 +312,7 @@ export const updateAssignment = wrap(async (req, res) => {
 export const deleteAssignment = wrap(async (req, res) => {
   const data = await TeacherAssignmentService.deleteAssignment(
     tid(req),
-    req.params.assignmentId
+    req.params.assignmentId as string
   );
   res.json({ success: true, data });
 });
@@ -322,7 +322,7 @@ export const evaluateSubmission = wrap(async (req, res) => {
   const { mode, grade, feedback } = EvaluateSubmissionDto.parse(req.body);
   const data = await TeacherAssignmentService.evaluateSubmission(
     tid(req),
-    req.params.submissionId,
+    req.params.submissionId as string,
     mode === "MANUAL" ? EvaluationMode.Manual : EvaluationMode.Auto,
     { grade, feedback }
   );
@@ -333,7 +333,7 @@ export const evaluateSubmission = wrap(async (req, res) => {
 export const getSubmissionsForStudent = wrap(async (req, res) => {
   const data = await TeacherAssignmentService.getSubmissionsForStudent(
     tid(req),
-    req.params.studentId
+    req.params.studentId as string
   );
   res.json({ success: true, data });
 });
@@ -358,7 +358,7 @@ export const getPendingSubmissions = wrap(async (req, res) => {
 export const getSubmissionById = wrap(async (req, res) => {
   const data = await TeacherReviewService.getSubmissionById(
     tid(req),
-    req.params.submissionId
+    req.params.submissionId as string
   );
   res.json({ success: true, data });
 });
@@ -368,7 +368,7 @@ export const reviewSubmission = wrap(async (req, res) => {
   const { grade, feedback } = ReviewSubmissionDto.parse(req.body);
   const data = await TeacherReviewService.reviewSubmission(
     tid(req),
-    req.params.submissionId,
+    req.params.submissionId as string,
     grade,
     feedback
   );
@@ -379,7 +379,7 @@ export const reviewSubmission = wrap(async (req, res) => {
 export const bulkReviewSubmissions = wrap(async (req, res) => {
   const data = await TeacherReviewService.bulkReviewSubmissions(
     tid(req),
-    req.params.assignmentId
+    req.params.assignmentId as string
   );
   res.json({ success: true, data });
 });
@@ -388,7 +388,7 @@ export const bulkReviewSubmissions = wrap(async (req, res) => {
 export const regenerateSummary = wrap(async (req, res) => {
   const data = await TeacherReviewService.regenerateSummary(
     tid(req),
-    req.params.submissionId
+    req.params.submissionId as string
   );
   res.json({ success: true, data });
 });
@@ -409,7 +409,7 @@ export const reviewMindmap = wrap(async (req, res) => {
   const { approval, comment } = ReviewMindmapDto.parse(req.body);
   const data = await TeacherService.reviewMindmap(
     tid(req),
-    req.params.mindmapId,
+    req.params.mindmapId as string,
     approval,
     comment
   );
@@ -417,11 +417,11 @@ export const reviewMindmap = wrap(async (req, res) => {
 });
 
 /** POST /teacher/mindmaps/generate */
-export const generateMindmap = wrap(async (req, res) => {
-  const { studentId, topic } = GenerateMindmapDto.parse(req.body);
-  const data = await TeacherService.generateMindmap(tid(req), studentId, topic);
-  res.status(201).json({ success: true, data });
-});
+// export const generateMindmap = wrap(async (req, res) => {
+//   const { studentId, topic } = GenerateMindmapDto.parse(req.body);
+//   const data = await TeacherService.generateMindmap(tid(req), studentId, topic);
+//   res.status(201).json({ success: true, data });
+// });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIL LOG CONTROLLERS
@@ -436,7 +436,7 @@ export const getMailLogs = wrap(async (req, res) => {
 
 /** GET /teacher/mail-logs/:mailId */
 export const getMailLogById = wrap(async (req, res) => {
-  const data = await MailLogService.getMailLogById(tid(req), req.params.mailId);
+  const data = await MailLogService.getMailLogById(tid(req), req.params.mailId as string);
   res.json({ success: true, data });
 });
 
