@@ -2,3 +2,4 @@ node_modules/
 build/
 prisma/migrations/
 .yarn/
+.env
