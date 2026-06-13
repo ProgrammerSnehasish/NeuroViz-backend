@@ -100,12 +100,12 @@ NeuroViz-backend/
 │ └── install-state.gz
 │
 ├── prisma/
-│ ├── schema.prisma # Prisma schema for DB models
-│ └── migrations/ # Prisma migration history
+│ ├── schema.prisma
+│ └── migrations/ # Not Commited.
 │
 ├── src/
-│ ├── app.ts # Express app configuration
-│ ├── server.ts # Entry point to start server
+│ ├── app.ts
+│ ├── server.ts
 │ │
 │ ├── auth/
 │ │ ├── auth.controller.ts
@@ -115,121 +115,106 @@ NeuroViz-backend/
 │ │ └── auth.routes.ts
 │ │
 │ ├── base/
-│ │ ├── base.router.ts # Central router entry point
+│ │ ├── base.router.ts
 │ │ ├── ActivityLogService.ts
 │ │ └── interface.ts
 │ │
 │ ├── config/
-│ │ ├── core.ts # Common enums
+│ │ ├── core.ts
 │ │ └── database.ts
 │ │
 │ ├── features/
-│ │   ├── user/
-│ │   │   ├── user.controller.ts
-│ │   │   ├── user.service.ts
-│ │   │   ├── user.dto.ts
-│ │   │   ├── user.interface.ts
-│ │   │   └── user.router.ts
-│ │   │
-│ │   ├── mindmap/
-│ │   │   ├── export/
-│ │   │   │ ├── mindmap.export.controller.ts
-│ │   │   │ └── mindmap.export.service.ts
-│ │   │   ├── mindmap.controller.ts
-│ │   │   ├── mindmap.ai.service.ts
-│ │   │   ├── mindmap.service.ts
-│ │   │   ├── mindmap.dto.ts
-│ │   │   ├── mindmap.type.ts
-│ │   │   └── mindmap.router.ts
-│ │   │
-│ │   ├── nlp/
-│ │   │   ├── nlp.dto.ts
-│ │   │   ├── nlp.controller.ts
-│ │   │   ├── nlp.router.ts
-│ │   │   └── nlp.service.ts
-│ │   │
-│ │   ├── behavior/
-│ │   │   ├── behavior.controller.ts
-│ │   │   ├── behavior.service.ts
-│ │   │   └── behavior.router.ts
-│ │   │
-│ │   ├── cognitive_profile/
-│ │   │   ├── cognitive.engine.ts
-│ │   │   ├── cognitiveProfile.dto.ts
-│ │   │   ├── cognitiveProfile.controller.ts
-│ │   │   ├── cognitiveProfile.service.ts
-│ │   │   └── cognitiveProfile.router.ts
-│ │   │
-│ │   ├── emotion/
-│ │   │   ├── emotion.dto.ts
-│ │   │   ├── emotion.controller.ts
-│ │   │   ├── emotion.service.ts
-│ │   │   └── emotion.router.ts
-│ │   │
-│ │   ├── feedback/
-│ │   │   ├── feedback.dto.ts
-│ │   │   ├── feedback.controller.ts
-│ │   │   ├── feedback.service.ts
-│ │   │   └── feedback.router.ts
-│ │   │
-│ │   ├── adapt/
-│ │   │   ├── adapt.controller.ts
-│ │   │   ├── adapt.service.ts
-│ │   │   └── adapt.router.ts
-│ │   │
-│ │   ├── admin/
-│ │   │   ├── admin.controller.ts
-│ │   │   ├── admin.dto.ts
-│ │   │   ├── admin.service.ts
-│ │   │   └── admin.router.ts
-│ │   │
-│ │   ├── teachers/
-│ │   │   ├── Dashboard/
-│ │   │   │   ├── teacher.dashboard.controller.ts
-│ │   │   │   ├── teacher.dashboard.dto.ts
-│ │   │   │   ├── teacher.dashboard.router.ts
-│ │   │   │   └── teacher.dashboard.service.ts
-│ │   │   │
-│ │   │   ├── Services/
-│ │   │   │   ├── teacher.assignment.service.ts
-│ │   │   │   ├── teacher.review.service.ts
-│ │   │   │   ├── teacher.mail-log.service.ts
-│ │   │   │   ├── teacher.service.ts
-│ │   │   │   └── teacher.student.service.ts
-│ │   │   │
-│ │   │   ├── teacher.controller.ts
-│ │   │   ├── teacher.dto.ts
-│ │   │   └── teacher.router.ts
-│ │   │
-│ │   ├── content/
-│ │   │   ├── content.controller.ts
-│ │   │   ├── content.service.ts
-│ │   │   └── content.routes.ts
-│ │   │
-│ │   └── admin/
-│ │       ├── admin.controller.ts
-│ │       ├── admin.dto.ts
-│ │       ├── admin.service.ts
-│ │       └── admin.routes.ts
+│ │ ├── live_class/
+│ │ │ ├── liveClass.dto.ts
+│ │ │ ├── livekit.service.ts
+│ │ │ └── room.routes.ts
+│ │ │
+│ │ ├── mindmap/
+│ │ │ ├── controller/
+│ │ │ │ ├── mindmap.controller.ts
+│ │ │ │ ├── mindmap.export.controller.ts
+│ │ │ │ └── mindmap.extended.controller.ts
+│ │ │ ├── dto/
+│ │ │ │ ├── mindmap.dto.ts
+│ │ │ │ └── mindmap.extended.dto.ts
+│ │ │ ├── service/
+│ │ │ │ ├── mindmap.ai.service.ts
+│ │ │ │ ├── mindmap.audio.service.ts
+│ │ │ │ ├── mindmap.document.service.ts
+│ │ │ │ ├── mindmap.export.service.ts
+│ │ │ │ ├── mindmap.extended.service.ts
+│ │ │ │ ├── mindmap.neurodivergent.service.ts
+│ │ │ │ ├── mindmap.service.ts
+│ │ │ │ ├── mindmap.tts.service.ts
+│ │ │ │ └── mindmap.video.service.ts
+│ │ │ ├── mindmap.router.ts
+│ │ │ └── mindmap.type.ts
+│ │ │
+│ │ ├── nlp/
+│ │ │ ├── nlp.controller.ts
+│ │ │ ├── nlp.dto.ts
+│ │ │ ├── nlp.router.ts
+│ │ │ └── nlp.service.ts
+│ │ │
+│ │ ├── student/
+│ │ │ ├── student.controller.ts
+│ │ │ ├── student.router.ts
+│ │ │ └── student.service.ts
+│ │ │
+│ │ ├── teachers/
+│ │ │ ├── Dashboard/
+│ │ │ │ ├── teacher.dashboard.controller.ts
+│ │ │ │ ├── teacher.dashboard.dto.ts
+│ │ │ │ ├── teacher.dashboard.router.ts
+│ │ │ │ └── teacher.dashboard.service.ts
+│ │ │ ├── Services/
+│ │ │ │ ├── teacher.assignment.service.ts
+│ │ │ │ ├── teacher.mail-log.service.ts
+│ │ │ │ ├── teacher.review.service.ts
+│ │ │ │ ├── teacher.service.ts
+│ │ │ │ └── teacher.student.service.ts
+│ │ │ ├── teacher.controller.ts
+│ │ │ ├── teacher.dto.ts
+│ │ │ └── teacher.router.ts
+│ │ │
+│ │ └── user/
+│ │ ├── user.controller.ts
+│ │ ├── user.dto.ts
+│ │ ├── user.interface.ts
+│ │ ├── user.router.ts
+│ │ └── user.service.ts
 │ │
 │ ├── middlewares/
-│ │ ├── errorHandler.ts # Global error handling middleware
-│ │ ├── enforceAdmin.ts
-│ │ ├── enforceTeacher.ts
-│ │ ├── enforceTeacherStudentRelation.ts
 │ │ ├── dtoValidation.ts
-│ │ ├── jwtVerification.ts
-│ │ └── responseHandler.ts # Unified response format
-│ ├─ utils/
-│ │  ├─ env.ts
-│ │  └─ util.ts
-│ └─ types/
-│     └─ express.d.ts
+│ │ ├── enforceAdmin.ts
+│ │ ├── enforceStudent.ts
+│ │ ├── enforceTeacher.ts
+│ │ ├── enforceTeacherorStudent.ts
+│ │ ├── enforceTeacherStudentRelation.ts
+│ │ ├── errorHandler.ts
+│ │ ├── jwtVerifiction.ts
+│ │ ├── requireAuth.ts
+│ │ └── responseHandler.ts
+│ │
+│ ├── sockets/
+│ │ └── room.socket.ts
+│ │
+│ ├── types/
+│ │ ├── express.d.ts
+│ │ ├── node-wav.d.ts
+│ │ └── whisper-node.d.ts
+│ │
+│ └── utils/
+│ ├── env.ts
+│ ├── getUserDetailsbyRole.ts
+│ ├── mailer.ts
+│ ├── resolveUserFromToken.ts
+│ ├── tokenCleanup.ts
+│ └── util.ts
 │
-├── .env # Environment variables (not committed)
+├── .env # Not Commited
 ├── .gitignore
 ├── .yarnrc.yml
-├── LICENSE
 ├── LICENSE # MIT License
 ├── package-lock.json
 ├── prisma.config.js
@@ -285,6 +270,9 @@ yarn dev
 |`yarn lint`|	Check TypeScript errors|
 ---
 ## 🌐 API Endpoints
+
+***Base Route for Backend(vercel):***
+
 |**Method**|**Route**|**Endpoint Description**|
 |:---------|:--------|:-----------------------|
 |**Authentication**|

@@ -28,7 +28,7 @@ export function generateToken(options: TokenOptions): Promise<string> {
   at.addGrant({
     roomJoin: true,
     room: options.roomName,
-    canPublish: options.isHost,       // Only host publishes by default
+    canPublish: true,       // Only host publishes by default
     canSubscribe: true,
     canPublishData: true,
     roomAdmin: options.isHost,

@@ -28,46 +28,122 @@ roomRouter.post('/', verifyToken, dtoValidation(CreateClassdto),async (req: Requ
   res.status(201).json({ room });
 });
 
+// // POST /rooms/:roomId/join — Join a room, get LiveKit token
+// roomRouter.post('/join/:roomId', verifyToken, async (req: Request, res: Response) => {
+//   const { roomId } = req.params;
+//   const userId = req.user.id;
+
+//   const room = await prisma.room.findUnique({ where: { id: roomId as string} });
+
+//   if (!room) return res.status(404).json({ error: 'Room not found' });
+//   if (room.status === 'ENDED') return res.status(400).json({ error: 'Class has ended' });
+
+//   const isHost = room.hostId === userId;
+
+//   // Upsert participant record
+//   await prisma.participant.upsert({
+//     where: { roomId_userId: { roomId: roomId as string, userId } },
+//     update: { leftAt: null },
+//     create: {
+//       roomId: roomId as string,
+//       userId,
+//       role: isHost ? 'HOST' : 'VIEWER',
+//     },
+//   });
+
+//   // If host is joining, mark room as LIVE and create LiveKit room
+//   if (isHost && room.status === 'WAITING') {
+//     await createLiveKitRoom(room.livekitRoom!);
+//     await prisma.room.update({
+//       where: { id: roomId as string},
+//       data: { status: 'LIVE' },
+//     });
+//   }
+
+//   const token = generateToken({
+//     roomName: room.livekitRoom!,
+//     participantId: userId,
+//     participantName: req.user.name,
+//     isHost,
+//   });
+
+//   res.json({ token, livekitUrl: process.env.LIVEKIT_URL, room });
+// });
+
 // POST /rooms/:roomId/join — Join a room, get LiveKit token
 roomRouter.post('/join/:roomId', verifyToken, async (req: Request, res: Response) => {
   const { roomId } = req.params;
-  const userId = req.user.id;
-
-  const room = await prisma.room.findUnique({ where: { id: roomId as string} });
-
-  if (!room) return res.status(404).json({ error: 'Room not found' });
-  if (room.status === 'ENDED') return res.status(400).json({ error: 'Class has ended' });
-
-  const isHost = room.hostId === userId;
-
-  // Upsert participant record
-  await prisma.participant.upsert({
-    where: { roomId_userId: { roomId: roomId as string, userId } },
-    update: { leftAt: null },
-    create: {
-      roomId: roomId as string,
-      userId,
-      role: isHost ? 'HOST' : 'VIEWER',
-    },
-  });
-
-  // If host is joining, mark room as LIVE and create LiveKit room
-  if (isHost && room.status === 'WAITING') {
-    await createLiveKitRoom(room.livekitRoom!);
-    await prisma.room.update({
-      where: { id: roomId as string},
-      data: { status: 'LIVE' },
-    });
+  
+  // 1. Get User ID from token
+  const userId = 
+    req.user?.userId || 
+    req.user?.id || 
+    res.locals?.userId || 
+    res.locals?.studentId || 
+    res.locals?.teacherId;
+  
+  if (!userId) {
+    console.error("Join Room Error: Missing userId in request. Found user object:", req.user);
+    return res.status(400).json({ error: 'User ID is missing from token/request' });
   }
 
-  const token = generateToken({
-    roomName: room.livekitRoom!,
-    participantId: userId,
-    participantName: req.user.name,
-    isHost,
-  });
+  try {
+    // 2. FETCH REAL NAME FROM DATABASE
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId as string },
+      select: { firstName: true, lastName: true, role: true }
+    });
 
-  res.json({ token, livekitUrl: process.env.LIVEKIT_URL, room });
+    // 3. FORMAT THE NAME
+    let userName = 'Unknown';
+    if (dbUser) {
+      if (dbUser.firstName) {
+        userName = `${dbUser.firstName} ${dbUser.lastName || ''}`.trim();
+      } else {
+        userName = dbUser.role === 'TEACHER' ? 'Teacher' : 'Student';
+      }
+    }
+
+    const room = await prisma.room.findUnique({ where: { id: roomId as string} });
+
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+    if (room.status === 'ENDED') return res.status(400).json({ error: 'Class has ended' });
+
+    const isHost = room.hostId === userId;
+
+    // 4. Upsert participant record
+    await prisma.participant.upsert({
+      where: { roomId_userId: { roomId: roomId as string, userId: userId as string } },
+      update: { leftAt: null },
+      create: {
+        roomId: roomId as string,
+        userId: userId as string,
+        role: isHost ? 'HOST' : 'VIEWER',
+      },
+    });
+
+    // 5. If host is joining, mark room as LIVE and create LiveKit room
+    if (isHost && room.status === 'WAITING') {
+      await createLiveKitRoom(room.livekitRoom!);
+      await prisma.room.update({
+        where: { id: roomId as string},
+        data: { status: 'LIVE' },
+      });
+    }
+
+    // 6. Generate LiveKit Token WITH REAL NAME
+    const token = await generateToken({
+      roomName: room.livekitRoom!,
+      participantId: userId as string,
+      participantName: userName,
+      isHost,
+    });
+
+    res.json({ token, livekitUrl: process.env.LIVEKIT_URL, room });
+  } catch (error) {
+    console.error("Database error while joining room:", error);
+    res.status(500).json({ error: 'Internal server error while joining room' });
+  }
 });
 
 // POST /rooms/:roomId/end — Host ends the class
@@ -99,3 +175,4 @@ roomRouter.get('/:roomId/participants', verifyToken, async (req: Request, res: R
 });
 
 export default roomRouter;
+
