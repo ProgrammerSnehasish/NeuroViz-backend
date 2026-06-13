@@ -18,10 +18,6 @@ const app = express();
 // Core Middlewares
 app.use(helmet())
 app.use(cors())
-// app.use(cors({
-//   origin: ['http://localhost:5173'], // add your frontend's local port
-//   credentials: true,
-// }))
 app.use(json());
 app.use(cors());
 app.use(urlencoded({ extended: true }));
