@@ -271,7 +271,7 @@ yarn dev
 ---
 ## 🌐 API Endpoints
 
-***Base Route for Backend(vercel):***
+***Base Route for Backend(vercel):*** https://neuroviz-backend.onrender.com/api
 
 |**Method**|**Route**|**Endpoint Description**|
 |:---------|:--------|:-----------------------|
