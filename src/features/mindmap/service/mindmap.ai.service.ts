@@ -7,7 +7,6 @@ const nlp = wink(model);
 
 function deriveTitleFromText(text: string): string {
   const clean = text.trim();
-
   if (
     clean.length <= 60 &&
     clean.split(/\s+/).length <= 8
@@ -71,11 +70,11 @@ function isValidMindmap(mindmap: any): boolean {
   return true;
 }
 
-export async function generateMindmap(text: string) {
+export async function generateMindmap(text: string, attempt: number = 1): Promise<any> {
   const derivedTitle = deriveTitleFromText(text);
 
   const cleanText = text.trim();
-const truncatedText = cleanText.length > 4000
+  const truncatedText = cleanText.length > 4000
     ? cleanText.slice(0, 4000) + "...[truncated]"
     : cleanText;
 
@@ -105,17 +104,17 @@ Structure Requirements:
 * Each main node must contain:
 
   * label
-  * description
+  * description(descriptive and complete enough to understand the concept without external references)
   * children
 
 * Each child must contain:
 
   * label
-  * description
+  * description(descriptive and complete enough to understand the concept without external references)
 
 * Generate 8-10 children per node whenever applicable.
 
-* Use concise but informative descriptions.
+* Use detailed informative descriptions.
 
 * Avoid duplicate information.
 
@@ -225,9 +224,9 @@ Quality Rules:
 * If the topic belongs to a specific domain, adapt the structure accordingly.
 * If the topic does not clearly belong to any domain, identify the most suitable educational structure and generate a complete mindmap.
 * Node descriptions:
-- Maximum 15 words.
+- Maximum 25 words.
 * Child descriptions:
-- Maximum 20 words.
+- Maximum 35 words.
 
 Before returning JSON:
 
@@ -393,7 +392,7 @@ Output JSON Format:
             }
           ],
           temperature: 0.2,
-          max_tokens: 2000
+          max_tokens: 4000
         },
         {
           headers: {
@@ -416,9 +415,11 @@ Output JSON Format:
           );
 
           if (!isValidMindmap(parsed)) {
-            throw new Error(
-              "Generated mindmap is incomplete"
-            );
+            if (attempt < 2) {
+              console.warn("Incomplete mindmap, retrying...");
+              return generateMindmap(text, attempt + 1);
+            }
+            throw new Error("Generated mindmap is incomplete after retry");
           }
 
           return parsed;

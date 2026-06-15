@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { TeacherDashboardService } from "./teacher.dashboard.service";
+import { BroadcastAnnouncementDto } from "../teacher.dto";
 
 const getTeacherId = (req: Request): string => {
   return (
@@ -26,6 +27,16 @@ export const TeacherDashboardController = {
     try {
       const teacherId = getTeacherId(req);
       const data = await TeacherDashboardService.getClassHeatmap(teacherId);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  getAnalyticsOverview: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const teacherId = getTeacherId(req);
+      const data = await TeacherDashboardService.getAnalyticsOverview(teacherId);
       res.json({ success: true, data });
     } catch (err) {
       next(err);
@@ -161,6 +172,27 @@ export const TeacherDashboardController = {
       const { title, message } = req.body;
       const data = await TeacherDashboardService.postNotification(teacherId, title, message);
       res.json({ success: true, message: "Notification posted successfully", data });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  markAllNotificationsRead: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const teacherId = getTeacherId(req);
+      const data = await TeacherDashboardService.markAllRead(teacherId);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  broadcastAnnouncement: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { title, message } = BroadcastAnnouncementDto.parse(req.body);
+      const teacherId = getTeacherId(req);
+      const data = await TeacherDashboardService.broadcastAnnouncement(teacherId, title, message);
+      res.status(201).json({ success: true, data });
     } catch (err) {
       next(err);
     }

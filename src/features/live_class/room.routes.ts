@@ -5,11 +5,12 @@ import { verifyToken } from '../../middlewares/jwtVerifiction';
 import prisma from '../../config/database';
 import { dtoValidation } from '../../middlewares/dtoValidation';
 import { CreateClassdto } from './liveClass.dto';
+import { enforceTeacher } from '../../middlewares/enforceTeacher';
 
 const roomRouter = Router();
 
 // POST /rooms — Create a new room
-roomRouter.post('/', verifyToken, dtoValidation(CreateClassdto),async (req: Request, res: Response) => {
+roomRouter.post('/', verifyToken, dtoValidation(CreateClassdto), enforceTeacher,async (req: Request, res: Response) => {
   const { name, scheduledAt, maxParticipants } = req.body;
   const hostId = req.user.userId;
 
@@ -27,48 +28,6 @@ roomRouter.post('/', verifyToken, dtoValidation(CreateClassdto),async (req: Requ
 
   res.status(201).json({ room });
 });
-
-// // POST /rooms/:roomId/join — Join a room, get LiveKit token
-// roomRouter.post('/join/:roomId', verifyToken, async (req: Request, res: Response) => {
-//   const { roomId } = req.params;
-//   const userId = req.user.id;
-
-//   const room = await prisma.room.findUnique({ where: { id: roomId as string} });
-
-//   if (!room) return res.status(404).json({ error: 'Room not found' });
-//   if (room.status === 'ENDED') return res.status(400).json({ error: 'Class has ended' });
-
-//   const isHost = room.hostId === userId;
-
-//   // Upsert participant record
-//   await prisma.participant.upsert({
-//     where: { roomId_userId: { roomId: roomId as string, userId } },
-//     update: { leftAt: null },
-//     create: {
-//       roomId: roomId as string,
-//       userId,
-//       role: isHost ? 'HOST' : 'VIEWER',
-//     },
-//   });
-
-//   // If host is joining, mark room as LIVE and create LiveKit room
-//   if (isHost && room.status === 'WAITING') {
-//     await createLiveKitRoom(room.livekitRoom!);
-//     await prisma.room.update({
-//       where: { id: roomId as string},
-//       data: { status: 'LIVE' },
-//     });
-//   }
-
-//   const token = generateToken({
-//     roomName: room.livekitRoom!,
-//     participantId: userId,
-//     participantName: req.user.name,
-//     isHost,
-//   });
-
-//   res.json({ token, livekitUrl: process.env.LIVEKIT_URL, room });
-// });
 
 // POST /rooms/:roomId/join — Join a room, get LiveKit token
 roomRouter.post('/join/:roomId', verifyToken, async (req: Request, res: Response) => {

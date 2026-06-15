@@ -172,9 +172,9 @@ export const TeacherDashboardService = {
     const avgEngagement =
       cognitiveProfiles.length > 0
         ? Math.round(
-            cognitiveProfiles.reduce((a, p) => a + (p.attentionScore ?? 0), 0) /
-              cognitiveProfiles.length
-          )
+          cognitiveProfiles.reduce((a, p) => a + (p.attentionScore ?? 0), 0) /
+          cognitiveProfiles.length
+        )
         : 0;
 
     // cognitiveLoad = inverse of avgEngagement, clamped to 0-100
@@ -393,10 +393,30 @@ export const TeacherDashboardService = {
 
   // ─── FEEDBACK SERVICES ────────────────────────────────────────────────────
   async giveFeedback(teacherId: string, studentId: string, feedback: string) {
+    // 1. Verify the teacher-student relationship exists
+    const relationship = await prisma.teacherStudent.findUnique({
+      where: {
+        UniqueTeacherStudent: { teacherId, studentId },
+      },
+    });
+
+    if (!relationship) {
+      throw new Error(
+        `No teacher-student relationship found for teacherId=${teacherId}, studentId=${studentId}`
+      );
+    }
+
+    // 2. Now safe to create — studentId is guaranteed to exist in User
     const feed = await prisma.teacherFeedback.create({
       data: { teacherId, studentId, feedback },
     });
-    await logActivity(teacherId, "GIVE_FEEDBACK", `studentId=${studentId}, feedbackId=${feed.id}`);
+
+    await logActivity(
+      teacherId,
+      "GIVE_FEEDBACK",
+      `studentId=${studentId}, feedbackId=${feed.id}`
+    );
+
     return feed;
   },
 

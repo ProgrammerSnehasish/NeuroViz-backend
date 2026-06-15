@@ -157,13 +157,6 @@ export const ReviewMindmapDto = z.object({
 });
 export type ReviewMindmapDto = z.infer<typeof ReviewMindmapDto>;
 
-/** POST /teacher/mindmaps/generate */
-export const GenerateMindmapDto = z.object({
-  studentId: z.string().uuid("Invalid student ID"),
-  topic:     z.string().min(1, "Topic is required").max(200),
-});
-export type GenerateMindmapDto = z.infer<typeof GenerateMindmapDto>;
-
 /** GET /teacher/mindmaps?status=&search= */
 export const MindmapFilterDto = z.object({
   status: z.enum(["APPROVED", "PENDING", "REJECTED"]).optional(),

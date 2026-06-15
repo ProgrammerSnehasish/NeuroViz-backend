@@ -111,12 +111,7 @@ export const TeacherService = {
       studentId: m.user.id,
       topics: (m as any).topics ?? [],        // adjust to your schema field
       date: m.createdAt,
-      status:
-        m.approval === true
-          ? "Approved"
-          : m.approval === false
-          ? "Rejected"
-          : "Pending",
+      status: m.reviewedById === null ? "Pending" : m.approval === true ? "Approved" : "Rejected",
       comments: (m as any).comments ?? null,
     }));
 
@@ -225,9 +220,9 @@ export const TeacherService = {
     const weightedEmotion =
       emotions.length > 0 && weightSum > 0
         ? emotions.reduce(
-            (acc, e, i) => acc + (e.intensity ?? 0) * (1 / (i + 1)),
-            0
-          ) / weightSum
+          (acc, e, i) => acc + (e.intensity ?? 0) * (1 / (i + 1)),
+          0
+        ) / weightSum
         : 0;
 
     const avgFeedback =
@@ -237,12 +232,12 @@ export const TeacherService = {
 
     const normalizedProfile = profile
       ? {
-          ...profile,
-          avgFocusPerInteraction:
-            profile.interactions && profile.interactions > 0
-              ? Math.round((profile.focusDuration ?? 0) / profile.interactions)
-              : 0,
-        }
+        ...profile,
+        avgFocusPerInteraction:
+          profile.interactions && profile.interactions > 0
+            ? Math.round((profile.focusDuration ?? 0) / profile.interactions)
+            : 0,
+      }
       : null;
 
     if (log) {
@@ -283,11 +278,10 @@ Student Performance Overview:
       summary.summary === "No summary generated." ||
       summary.summary.trim().length < 10
     ) {
-      summary.summary = `The student demonstrates an attention score of ${
-        analytics.profile?.attentionScore ?? "N/A"
-      }, with an average feedback rating of ${analytics.avgFeedback.toFixed(
-        2
-      )}. Their emotional trend appears stable, and they engage meaningfully with the content.`;
+      summary.summary = `The student demonstrates an attention score of ${analytics.profile?.attentionScore ?? "N/A"
+        }, with an average feedback rating of ${analytics.avgFeedback.toFixed(
+          2
+        )}. Their emotional trend appears stable, and they engage meaningfully with the content.`;
     }
 
     await logActivity(teacherId, "SUMMARIZE_STUDENT_PERFORMANCE", `studentId=${studentId}`);

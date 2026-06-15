@@ -9,6 +9,7 @@ import { requireAuth } from "../../middlewares/requireAuth";
 import { CreateMindmapDto, GenerateMindmapDto, UpdateMindmapDto } from "./dto/mindmap.dto";
 import multer from "multer";
 import { MindmapExtendedController } from "./controller/mindmap.extended.controller";
+import { MindmapFeedbackController } from "./feedback/mindmap-feedback.controller";
 
 export const mindmapRouter = Router();
 const controller = new MindmapController();
@@ -418,3 +419,14 @@ mindmapRouter.delete(
 
 mindmapRouter.get("/:id/pdf", MindmapExportController.downloadPDF);
 mindmapRouter.get("/:id/jpeg", MindmapExportController.downloadJPEG);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MINDMAP FEEDBACK Routes
+// ─────────────────────────────────────────────────────────────────────────────
+
+mindmapRouter.post("/feedback",               MindmapFeedbackController.giveFeedback);
+mindmapRouter.get("/my/feedbacks",              MindmapFeedbackController.getMyFeedbacks);
+mindmapRouter.get("/:mapId/all/feedbacks",      MindmapFeedbackController.getFeedbacksForMindmap);
+mindmapRouter.get("/:mapId/my/feedback",       MindmapFeedbackController.getMyFeedbackForMindmap);
+mindmapRouter.patch("/:feedbackId",   MindmapFeedbackController.updateFeedback);
+mindmapRouter.delete("/:feedbackId",  MindmapFeedbackController.deleteFeedback);

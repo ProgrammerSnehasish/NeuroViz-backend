@@ -98,3 +98,17 @@ export enum Languages {
     ENGLISH = "ENGLISH",
     HINDI = "HINDI",
 }
+
+export enum SiteFeedbackType {
+  BUG = "BUG",
+  SUGGESTION = "SUGGESTION",
+  COMPLAINT = "COMPLAINT",
+  GENERAL = "GENERAL",
+}
+
+export enum SiteFeedbackStatus {
+  PENDING = "PENDING",
+  REVIEWED = "REVIEWED",
+  RESOLVED = "RESOLVED",
+  DISMISSED = "DISMISSED",
+}

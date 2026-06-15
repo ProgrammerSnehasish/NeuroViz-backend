@@ -122,6 +122,20 @@ enum ParticipantRole {
   VIEWER
 }
 
+enum SiteFeedbackType {
+  BUG
+  SUGGESTION
+  COMPLAINT
+  GENERAL
+}
+
+enum SiteFeedbackStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
 /* ─────────────────────────────
    USER MODEL
 ────────────────────────────── */
@@ -172,6 +186,7 @@ model User {
   receivedMails  MailLog[] @relation("UserReceivedMails")
   teacherStudents TeacherStudent[] @relation("TeacherToStudents")
   studentTeachers TeacherStudent[] @relation("StudentToTeachers")
+  siteFeedbacks     SiteFeedback[]    @relation("UserSiteFeedbacks")
   activityLogs ActivityLog[]
   behaviorEvents BehaviorEvent[]
 }
@@ -298,6 +313,7 @@ model Mindmap {
   reviewedBy   User?    @relation("ReviewedMindmaps", fields: [reviewedById], references: [id])
   approval     Boolean  @default(false)
   comments     String?  @default("No comments added.")
+  feedbacks Feedback[]
 }
 
 /* ─────────────────────────────
@@ -356,6 +372,7 @@ model Feedback {
   timeSpent Int?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+  mindMap   Mindmap? @relation(fields: [mapId], references: [id])
 }
 
 /* ─────────────────────────────
@@ -537,4 +554,22 @@ model ActivityLog {
   createdAt DateTime @default(now())
 
   user      User?     @relation(fields: [userId], references: [id])
+}
+
+/*─────────────────────────────
+ GENERAL FEEDBACK MODEL
+──────────────────────────────*/
+model SiteFeedback {
+  id        String               @id @default(uuid())
+  userId    String
+  type      SiteFeedbackType
+  title     String
+  message   String
+  rating    Int?
+  status    SiteFeedbackStatus   @default(PENDING)
+  adminNote String?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  user      User                 @relation("UserSiteFeedbacks", fields: [userId], references: [id])
 }

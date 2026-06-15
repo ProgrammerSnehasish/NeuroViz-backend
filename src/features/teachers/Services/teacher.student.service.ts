@@ -20,6 +20,15 @@ async function logActivity(
 
 // Threshold below which a student is considered "at risk"
 const AT_RISK_ATTENTION_THRESHOLD = 40;
+const safeUserSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  role: true,
+  createdBy: true,
+  createdAt: true,
+} as const;
 
 export const TeacherStudentService = {
   // ─── Validate teacher ─────────────────────────────────────────────────────
@@ -268,6 +277,7 @@ export const TeacherStudentService = {
 
     const existingStudent = await prisma.user.findUnique({
       where: { email: studentData.email },
+      select: safeUserSelect,
     });
 
     if (existingStudent) {
@@ -351,6 +361,35 @@ export const TeacherStudentService = {
     };
   },
 
+  async unregisterStudent(teacherId: string, studentId: string) {
+    await this.validateTeacher(teacherId);
+
+    const link = await prisma.teacherStudent.findUnique({
+      where: { UniqueTeacherStudent: { teacherId, studentId } },
+    });
+
+    if (!link) {
+      throw createHttpError(404, "This student is not registered under you.");
+    }
+
+    await prisma.teacherStudent.delete({
+      where: { UniqueTeacherStudent: { teacherId, studentId } },
+    });
+
+    await prisma.notification.create({
+      data: {
+        studentId,
+        title: "Teacher Connection Removed",
+        message: `You have been removed from a teacher's class on NeuroViz.`,
+        type: "INFO",
+      },
+    });
+
+    await logActivity(teacherId, "STUDENT_UNREGISTERED", `studentId=${studentId}`);
+
+    return { message: "Student unregistered successfully.", studentId };
+  },
+
   async inviteStudent(teacherId: string, email: string) {
     await this.validateTeacher(teacherId);
 
@@ -373,7 +412,7 @@ export const TeacherStudentService = {
       update: { token, expiresAt, used: false },
     });
 
-    const inviteLink = `${process.env.CLIENT_URL}/invite/accept?token=${token}`;
+    const inviteLink = `${process.env.CLIENT_URL}invite/accept?token=${token}`;
 
     await sendMail({
       to: email,
@@ -448,7 +487,7 @@ export const TeacherStudentService = {
       update: { token, expiresAt, used: false, groupId },
     });
 
-    const inviteLink = `${process.env.CLIENT_URL}/invite/accept?token=${token}`;
+    const inviteLink = `${process.env.CLIENT_URL}invite/accept?token=${token}`;
     await sendMail({
       to: email,
       subject: `Join ${group.name} on NeuroViz`,
