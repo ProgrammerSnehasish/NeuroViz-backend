@@ -309,6 +309,7 @@ NeuroViz-backend/
 │       └── util.ts
 │
 ├── .env                             # Not committed
+├── .env.example                           
 ├── .gitignore
 ├── .yarnrc.yml
 ├── LICENSE                          # MIT License
