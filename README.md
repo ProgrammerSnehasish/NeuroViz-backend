@@ -187,7 +187,7 @@ NeuroViz-backend/
 │
 ├── prisma/
 │   ├── schema.prisma
-│   └── migrations/                 # Not committed
+│   └── migrations/
 │
 ├── src/
 │   ├── app.ts
@@ -691,19 +691,46 @@ Thanks to the open-source community and all the contributors to this repo! 💜
 ## 👥 Team
 
 ### Author
-**Snehasish Das**
-> Developer • Cyber Security Enthusiast • NeuroViz Project Member
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/ProgrammerSnehasish">
+        <img src="https://github.com/ProgrammerSnehasish.png" width="60"/><br/>
+        <b>Snehasish Das</b><br/>
+        <sub>Full Stack Developer • Cyber Security Enthusiast • NeuroViz Project Member</sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
 ### Collaborators
 
-**Rounak Saha**
-> Backend Developer • Cyber Security Enthusiast • NeuroViz Project Lead
-
-**Puskar Sarkar**
-> App Developer and Tester • Cyber Security Enthusiast • NeuroViz Project Member
-
-**Sagnika Mitra**
-> Frontend Web Developer • Cyber Security Enthusiast • NeuroViz Project Member
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/Rounakgithub22">
+        <img src="https://github.com/Rounakgithub22.png" width="60"/><br/>
+        <b>Rounak Saha</b><br/>
+        <sub>Backend Developer • Cyber Security Enthusiast • NeuroViz Project Lead</sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Puskar-Sarkar">
+        <img src="https://github.com/Puskar-Sarkar.png" width="60"/><br/>
+        <b>Puskar Sarkar</b><br/>
+        <sub>Full Stack Developer and Tester • Cyber Security Enthusiast • NeuroViz Project Member</sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/SagnikaMitra">
+        <img src="https://github.com/SagnikaMitra.png" width="60"/><br/>
+        <b>Sagnika Mitra</b><br/>
+        <sub>Frontend Web Developer • Cyber Security Enthusiast • NeuroViz Project Member</sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
 ---
 
