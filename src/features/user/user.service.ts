@@ -6,6 +6,7 @@ import { IUserDetails } from "./user.interface";
 import prisma from "../../config/database";
 import { hash } from "bcrypt";
 import { userRole } from "../../config/core";
+import { uploadProfilePhoto } from "../../utils/uploadPhoto";
 
 export class UserService {
   static async createUser(data: SignupDto): Promise<string> {
@@ -40,12 +41,11 @@ export class UserService {
     return getUserResponse(user);
   }
 
-  async updateUser(data: UpdateUserDto, userId: string): Promise<IUserDetails> {
+  async updateUser(data: UpdateUserDto, userId: string, fileBuffer?: Buffer): Promise<IUserDetails> {
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw createHttpError(404, "User does not exist");
 
-    // update basic user fields
     const updateData: Record<string, any> = { updatedBy: userId };
     if (data.firstName) updateData.firstName = data.firstName;
     if (data.middleName !== undefined) updateData.middleName = data.middleName;
@@ -55,95 +55,91 @@ export class UserService {
     if (data.homeTown) updateData.homeTown = data.homeTown;
     if (data.currentCity) updateData.currentCity = data.currentCity;
     if (data.gender) updateData.gender = data.gender;
-    if (data.profilePhoto) updateData.profilePhoto = data.profilePhoto;
     if (data.password) updateData.password = await hash(data.password, 10);
+
+    // ── Upload photo if file provided, otherwise use DTO url if sent ──
+    if (fileBuffer) {
+      updateData.profilePhoto = await uploadProfilePhoto(fileBuffer, userId);
+    } else if (data.profilePhoto) {
+      updateData.profilePhoto = data.profilePhoto;
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
     });
 
-    // now update linked profile based on role
     if (updatedUser.role === userRole.Student && data.studentProfile) {
-  const studentProfileData: Record<string, any> = {};
+      const studentProfileData: Record<string, any> = {};
+      const studentProfileInfo = data.studentProfile;
 
-  const studentProfileInfo = data.studentProfile;
+      if (studentProfileInfo.education)
+        studentProfileData.education = studentProfileInfo.education;
+      if (studentProfileInfo.affiliation)
+        studentProfileData.affiliation = studentProfileInfo.affiliation;
+      if (studentProfileInfo.instituteName)
+        studentProfileData.instituteName = studentProfileInfo.instituteName;
+      if (studentProfileInfo.guardianName)
+        studentProfileData.guardianName = studentProfileInfo.guardianName;
+      if (studentProfileInfo.guardianEmail)
+        studentProfileData.guardianEmail = studentProfileInfo.guardianEmail;
+      if (studentProfileInfo.guardianPhone)
+        studentProfileData.guardianPhone = studentProfileInfo.guardianPhone;
+      if (studentProfileInfo.neuroProblemType)
+        studentProfileData.neuroProblemType = studentProfileInfo.neuroProblemType;
 
-  if (studentProfileInfo.education)
-    studentProfileData.education = studentProfileInfo.education;
-
-  if (studentProfileInfo.affiliation)
-    studentProfileData.affiliation = studentProfileInfo.affiliation;
-
-  if (studentProfileInfo.instituteName)
-    studentProfileData.instituteName = studentProfileInfo.instituteName;
-
-  if (studentProfileInfo.guardianName)
-    studentProfileData.guardianName = studentProfileInfo.guardianName;
-
-  if (studentProfileInfo.guardianEmail)
-    studentProfileData.guardianEmail = studentProfileInfo.guardianEmail;
-
-  if (studentProfileInfo.guardianPhone)
-    studentProfileData.guardianPhone = studentProfileInfo.guardianPhone;
-
-  if (studentProfileInfo.neuroProblemType)
-    studentProfileData.neuroProblemType = studentProfileInfo.neuroProblemType;
-
-  if (Object.keys(studentProfileData).length > 0) {
-    await prisma.studentProfile.upsert({
-      where: { userId },
-      update: studentProfileData,
-      create: { userId, ...studentProfileData },
-    });
-  }
-}
+      if (Object.keys(studentProfileData).length > 0) {
+        await prisma.studentProfile.upsert({
+          where: { userId },
+          update: studentProfileData,
+          create: { userId, ...studentProfileData },
+        });
+      }
+    }
 
     if (updatedUser.role === userRole.Teacher && data.teacherProfile) {
-  const teacherProfileData: Record<string, any> = {};
-  const t = data.teacherProfile;
+      const teacherProfileData: Record<string, any> = {};
+      const t = data.teacherProfile;
 
-  if (t.qualification) teacherProfileData.qualification = t.qualification;
-  if (t.experienceYears !== undefined)
-    teacherProfileData.experienceYears = t.experienceYears;
-  if (t.experienceDetails)
-    teacherProfileData.experienceDetails = t.experienceDetails;
-  if (t.specialization)
-    teacherProfileData.specialization = t.specialization;
-  if (t.subjects) teacherProfileData.subjects = t.subjects;
-  if (t.languages) teacherProfileData.languages = t.languages;
-  if (t.instituteName)
-    teacherProfileData.instituteName = t.instituteName;
-  if (t.bio) teacherProfileData.bio = t.bio;
-  if (t.phone) teacherProfileData.phone = t.phone;
-  if (t.hourlyRate !== undefined)
-    teacherProfileData.hourlyRate = t.hourlyRate;
-  if (t.availability)
-    teacherProfileData.availability = t.availability;
-  if (t.certifications)
-    teacherProfileData.certifications = t.certifications;
+      if (t.qualification) teacherProfileData.qualification = t.qualification;
+      if (t.experienceYears !== undefined)
+        teacherProfileData.experienceYears = t.experienceYears;
+      if (t.experienceDetails)
+        teacherProfileData.experienceDetails = t.experienceDetails;
+      if (t.specialization)
+        teacherProfileData.specialization = t.specialization;
+      if (t.subjects) teacherProfileData.subjects = t.subjects;
+      if (t.languages) teacherProfileData.languages = t.languages;
+      if (t.instituteName)
+        teacherProfileData.instituteName = t.instituteName;
+      if (t.bio) teacherProfileData.bio = t.bio;
+      if (t.phone) teacherProfileData.phone = t.phone;
+      if (t.hourlyRate !== undefined)
+        teacherProfileData.hourlyRate = t.hourlyRate;
+      if (t.availability)
+        teacherProfileData.availability = t.availability;
+      if (t.certifications)
+        teacherProfileData.certifications = t.certifications;
 
-  if (Object.keys(teacherProfileData).length > 0) {
-    await prisma.teacherProfile.upsert({
-      where: { userId },
-      update: teacherProfileData,
-      create: { userId, ...teacherProfileData },
+      if (Object.keys(teacherProfileData).length > 0) {
+        await prisma.teacherProfile.upsert({
+          where: { userId },
+          update: teacherProfileData,
+          create: { userId, ...teacherProfileData },
+        });
+      }
+    }
+
+    const finalUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        studentProfile: true,
+        teacherProfile: true,
+      },
     });
+
+    return getUserResponse(finalUser!);
   }
-}
-
-  // finally return updated full user details
-  const finalUser = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      studentProfile: true,
-      teacherProfile: true,
-    },
-  });
-
-  return getUserResponse(finalUser!);
-}
-
 
   async deleteUser(userId: string): Promise < void> {
 

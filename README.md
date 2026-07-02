@@ -207,6 +207,7 @@ NeuroViz-backend/
 │   │
 │   ├── config/
 │   │   ├── core.ts
+│   │   ├── cloudinary.ts
 │   │   └── database.ts
 │   │
 │   ├── features/
@@ -290,7 +291,8 @@ NeuroViz-backend/
 │   │   ├── errorHandler.ts
 │   │   ├── jwtVerifiction.ts
 │   │   ├── requireAuth.ts
-│   │   └── responseHandler.ts
+│   │   ├── responseHandler.ts
+│   │   └── upload.ts
 │   │
 │   ├── sockets/
 │   │   └── room.socket.ts
@@ -304,8 +306,10 @@ NeuroViz-backend/
 │       ├── env.ts
 │       ├── getUserDetailsbyRole.ts
 │       ├── mailer.ts
+│       ├── passwordGenerator.ts
 │       ├── resolveUserFromToken.ts
 │       ├── tokenCleanup.ts
+│       ├── uploadPhoto.ts
 │       └── util.ts
 │
 ├── .env                             # Not committed

@@ -15,8 +15,8 @@ export class UserController {
   public async getUserDetailsById(id: string): Promise<IUserDetails>{
     return await this.userService.getUserById(id);
   }
-  public async updateUser(data:UpdateUserDto, userId: string):Promise<IUserDetails>{
-    return await this.userService.updateUser(data, userId)
+  public async updateUser(data:UpdateUserDto, userId: string, fileBuffer?: Buffer):Promise<IUserDetails>{
+    return await this.userService.updateUser(data, userId, fileBuffer);
   }
   public async deleteUser(userId: string): Promise<void>{
     return await this.userService.deleteUser(userId);

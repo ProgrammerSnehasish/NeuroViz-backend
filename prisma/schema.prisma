@@ -136,6 +136,12 @@ enum SiteFeedbackStatus {
   DISMISSED
 }
 
+enum NewsletterStatus {
+  DRAFT
+  SENT
+  FAILED
+}
+
 /* ─────────────────────────────
    USER MODEL
 ────────────────────────────── */
@@ -187,6 +193,7 @@ model User {
   teacherStudents TeacherStudent[] @relation("TeacherToStudents")
   studentTeachers TeacherStudent[] @relation("StudentToTeachers")
   siteFeedbacks     SiteFeedback[]    @relation("UserSiteFeedbacks")
+  sentNewsletters Newsletter[] @relation("NewsletterSender")
   activityLogs ActivityLog[]
   behaviorEvents BehaviorEvent[]
 }
@@ -572,4 +579,44 @@ model SiteFeedback {
   updatedAt DateTime             @updatedAt
 
   user      User                 @relation("UserSiteFeedbacks", fields: [userId], references: [id])
+}
+
+/*─────────────────────────────
+ NEWSLETTER MODEL
+──────────────────────────────*/
+model Newsletter {
+  id          String             @id @default(uuid())
+  title       String
+  content     String
+  sentBy      String
+  status      NewsletterStatus   @default(DRAFT)
+  sentAt      DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  sender      User               @relation("NewsletterSender", fields: [sentBy], references: [id])
+  subscribers NewsletterSubscriber[]
+  logs        NewsletterLog[]
+}
+
+model NewsletterSubscriber {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  name           String?
+  isSubscribed   Boolean   @default(true)
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+
+  newsletters    Newsletter[]
+}
+
+model NewsletterLog {
+  id             String    @id @default(uuid())
+  newsletterId   String
+  email          String
+  status         NewsletterStatus @default(DRAFT)    // SENT | FAILED
+  error          String?
+  sentAt         DateTime  @default(now())
+
+  newsletter     Newsletter @relation(fields: [newsletterId], references: [id])
 }

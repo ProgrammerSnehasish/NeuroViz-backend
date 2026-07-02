@@ -4,6 +4,8 @@ import { UserController } from "./user.controller";
 import createHttpError from "http-errors";
 import { dtoValidation } from "../../middlewares/dtoValidation";
 import { UpdateUserDto } from "./user.dto";
+import multer from "multer";
+import { upload } from "../../middlewares/upload";
 
 export const userRouter = Router();
 const userController = new UserController()
@@ -51,6 +53,7 @@ userRouter.get(
 userRouter.put(
   "/update",
   verifyToken,
+  upload.single("profilePhoto"), // must run before dtoValidation, since it parses multipart form data
   dtoValidation(UpdateUserDto),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -63,7 +66,9 @@ userRouter.put(
         throw createHttpError(401, "Unauthorized - Missing user ID in token");
       }
 
-      const result = await userController.updateUser(req.body, userId);
+      const fileBuffer = req.file?.buffer;
+
+      const result = await userController.updateUser(req.body, userId, fileBuffer);
 
       res.status(200).json({
         success: true,
