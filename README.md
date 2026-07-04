@@ -247,6 +247,12 @@ NeuroViz-backend/
 │   │   │   ├── mindmap.router.ts
 │   │   │   └── mindmap.type.ts
 │   │   │
+│   │   ├── newsletter/
+│   │   │   ├── newsletter.controller.ts
+│   │   │   ├── newsletter.dto.ts
+│   │   │   ├── newsletter.router.ts
+│   │   │   └── newsletter.service.ts
+│   │   │
 │   │   ├── nlp/
 │   │   │   ├── nlp.controller.ts
 │   │   │   ├── nlp.dto.ts
@@ -305,6 +311,7 @@ NeuroViz-backend/
 │   └── utils/
 │       ├── env.ts
 │       ├── getUserDetailsbyRole.ts
+│       ├── HMACtoken.ts
 │       ├── mailer.ts
 │       ├── passwordGenerator.ts
 │       ├── resolveUserFromToken.ts
@@ -480,6 +487,28 @@ NeuroViz-backend/
 |---|---|---|
 | GET | `/teacher/mail-logs` | Get recent mail logs for teacher |
 | GET | `/teacher/mail-log/:mailId` | Get specific mail log by ID |
+
+### 📰 Newsletter Routes
+
+**Public**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `POST` | `/newsletter/subscribe` | None | Subscribe to the newsletter |
+| `POST` | `/newsletter/unsubscribe` | None | Unsubscribe from the newsletter |
+
+**Admin**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `POST` | `/newsletter/createDraft` | Admin | Create a new newsletter draft |
+| `GET` | `/newsletter/fetchAll` | Admin | Get all newsletters |
+| `GET` | `/newsletter/subscribers` | Admin | Get all subscribers |
+| `GET` | `/newsletter/:newsletterId` | Admin | Get a specific newsletter by ID |
+| `PATCH` | `/newsletter/:newsletterId` | Admin | Update a draft newsletter |
+| `DELETE` | `/newsletter/:newsletterId` | Admin | Delete a draft newsletter |
+| `POST` | `/newsletter/:newsletterId/send` | Admin | Send newsletter to subscribers |
+| `GET` | `/newsletter/:newsletterId/logs` | Admin | Get send logs for a newsletter |
 
 ---
 

@@ -41,8 +41,8 @@ export const sendMail = async ({
     // Log mail as SENT
     await prisma.mailLog.create({
       data: {
-        senderId: teacherId,        // Always the teacher
-        recipientId: studentId ?? null, // Student if known
+        senderId: teacherId || null,        // Always the teacher
+        recipientId: studentId || null, // Student if known
         to,
         subject,
         body,
@@ -55,7 +55,7 @@ export const sendMail = async ({
     // Log mail as FAILED
     await prisma.mailLog.create({
       data: {
-        senderId: teacherId,
+        senderId: teacherId || null,
         recipientId: studentId ?? null,
         to,
         subject,
