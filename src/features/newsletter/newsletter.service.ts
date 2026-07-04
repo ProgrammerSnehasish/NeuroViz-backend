@@ -1,9 +1,9 @@
 import createHttpError from "http-errors";
 import prisma from "../../config/database";
-import { sendMail } from "../../utils/mailer";
 import { NewsletterStatus } from "@prisma/client";
 import { generateUnsubscribeToken, verifyUnsubscribeToken } from "../../utils/HMACtoken";
 import sanitizeHtml from "sanitize-html";
+import { sendNewsletterMail } from "../../utils/newsletterMailer";
 
 type CreateNewsletterInput = { title: string; content: string };
 type UpdateNewsletterInput = { title?: string; content?: string };
@@ -156,7 +156,7 @@ export const NewsletterService = {
       recipients.map(async (email) => {
         const unsubToken = generateUnsubscribeToken(email);
         try {
-          await sendMail({
+          await sendNewsletterMail({
             to: email,
             subject: newsletter.title,
             html: `
@@ -172,7 +172,7 @@ export const NewsletterService = {
                 </a>
               </p>
             `,
-            teacherId: adminId,
+            sentBy: adminId,
           });
 
           await prisma.newsletterLog.create({
@@ -260,7 +260,7 @@ export const NewsletterService = {
 
     const unsubToken = generateUnsubscribeToken(email);
 
-    await sendMail({
+    await sendNewsletterMail({
       to: email,
       subject: "You're subscribed to NeuroViz Newsletter!",
       html: `
@@ -275,7 +275,7 @@ export const NewsletterService = {
           </a>
         </p>
       `,
-      teacherId: ""
+      sentBy: null, // system mail
     });
 
     return { message: "Subscribed successfully.", subscriber };

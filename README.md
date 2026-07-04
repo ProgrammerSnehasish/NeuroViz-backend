@@ -313,6 +313,7 @@ NeuroViz-backend/
 │       ├── getUserDetailsbyRole.ts
 │       ├── HMACtoken.ts
 │       ├── mailer.ts
+│       ├── newsletterMailer.ts
 │       ├── passwordGenerator.ts
 │       ├── resolveUserFromToken.ts
 │       ├── tokenCleanup.ts
