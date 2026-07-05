@@ -1,28 +1,27 @@
 import { Request, Response, NextFunction } from "express";
 import { userRole } from "../config/core";
+import { resolveUserFromToken } from "../utils/resolveUserFromToken";
+import createHttpError from "http-errors";
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    role: string;
-    [key: string]: any; // any other user properties
-  };
-}
-
-export function enforceAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export const enforceAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, message: "User not authenticated" });
-    }
+    const found = await resolveUserFromToken(req);
 
-    if (req.user.role !== userRole.Admin) {
-      return res.status(403).json({ success: false, message: "Admins only" });
-    }
+    if (found.role !== userRole.Admin)
+      throw createHttpError(403, "Admins only.");
 
-    // User is authenticated and is an admin
+    if (!found.isActive)
+      throw createHttpError(403, "Your account has been deactivated. Please contact support.");
+
+    res.locals.adminId = found.id;
+    res.locals.userId  = found.id;
+
     next();
-  } catch (error) {
-    console.error("Error in enforceAdmin middleware:", error);
-    res.status(500).json({ message: "Internal server error" });
+  } catch (err) {
+    next(err);
   }
-}
+};

@@ -424,9 +424,9 @@ mindmapRouter.get("/:id/jpeg", MindmapExportController.downloadJPEG);
 // MINDMAP FEEDBACK Routes
 // ─────────────────────────────────────────────────────────────────────────────
 
-mindmapRouter.post("/feedback",               MindmapFeedbackController.giveFeedback);
-mindmapRouter.get("/my/feedbacks",              MindmapFeedbackController.getMyFeedbacks);
-mindmapRouter.get("/:mapId/all/feedbacks",      MindmapFeedbackController.getFeedbacksForMindmap);
-mindmapRouter.get("/:mapId/my/feedback",       MindmapFeedbackController.getMyFeedbackForMindmap);
-mindmapRouter.patch("/:feedbackId",   MindmapFeedbackController.updateFeedback);
-mindmapRouter.delete("/:feedbackId",  MindmapFeedbackController.deleteFeedback);
+mindmapRouter.post("/feedback", MindmapFeedbackController.giveFeedback);
+mindmapRouter.get("/my/feedbacks", MindmapFeedbackController.getMyFeedbacks);
+mindmapRouter.get("/:mapId/all/feedbacks", MindmapFeedbackController.getFeedbacksForMindmap);
+mindmapRouter.get("/:mapId/my/feedback", MindmapFeedbackController.getMyFeedbackForMindmap);
+mindmapRouter.patch("/:feedbackId", MindmapFeedbackController.updateFeedback);
+mindmapRouter.delete("/:feedbackId", MindmapFeedbackController.deleteFeedback);

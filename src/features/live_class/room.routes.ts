@@ -5,12 +5,12 @@ import { verifyToken } from '../../middlewares/jwtVerifiction';
 import prisma from '../../config/database';
 import { dtoValidation } from '../../middlewares/dtoValidation';
 import { CreateClassdto } from './liveClass.dto';
-import { enforceTeacher } from '../../middlewares/enforceTeacher';
+import { enforceVerifiedTeacher } from '../../middlewares/enforeceVerifiedTeacher';
 
 const roomRouter = Router();
 
 // POST /rooms — Create a new room
-roomRouter.post('/', verifyToken, dtoValidation(CreateClassdto), enforceTeacher,async (req: Request, res: Response) => {
+roomRouter.post('/', verifyToken, dtoValidation(CreateClassdto), enforceVerifiedTeacher,async (req: Request, res: Response) => {
   const { name, scheduledAt, maxParticipants } = req.body;
   const hostId = req.user.userId;
 

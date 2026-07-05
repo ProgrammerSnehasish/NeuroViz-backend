@@ -16,6 +16,42 @@ async function logActivity(
   }
 }
 
+function parseAIJson(response: string) {
+  try {
+    const cleaned = response
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .replace(/^Here is the JSON output:\s*/i, "")
+      .replace(/^Here is the JSON:\s*/i, "")
+      .trim();
+
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+
+    if (start === -1 || end === -1) {
+      throw new Error("No JSON found");
+    }
+
+    return JSON.parse(cleaned.substring(start, end + 1));
+  } catch (err) {
+    return {
+      error: "Failed to parse AI response",
+      raw: response,
+    };
+  }
+}
+
+function sanitizeAIResponse(text: string) {
+  return text
+    .replace(/```[\s\S]*?```/g, "")          // remove code blocks
+    .replace(/\*\*/g, "")                    // remove bold
+    .replace(/#{1,6}\s*/g, "")               // remove markdown headings
+    .replace(/\n{3,}/g, "\n\n")              // collapse blank lines
+    .replace(/\s+/g, " ")
+    .replace(/\n /g, "\n")
+    .trim();
+}
+
 export const TeacherDashboardService = {
   // ─── Validate teacher role ────────────────────────────────────────────────
   async validateTeacher(userId: string) {
@@ -285,7 +321,8 @@ export const TeacherDashboardService = {
       suggest 3 personalized teaching strategies.
     `;
 
-    const strategies = await NLPService.generate(prompt);
+    const aiResponse = await NLPService.generate(prompt);
+    const strategies = sanitizeAIResponse(aiResponse);
     await logActivity(teacherId, "GET_STUDENT_STRATEGY", `studentId=${studentId}`);
     return { strategies };
   },
@@ -304,7 +341,8 @@ export const TeacherDashboardService = {
       Suggest adaptive pacing or grouping strategies.
     `;
 
-    const strategies = await NLPService.generate(prompt);
+    const aiResponse = await NLPService.generate(prompt);
+    const strategies = sanitizeAIResponse(aiResponse);
     await logActivity(teacherId, "GET_CLASS_STRATEGY", `students=${studentIds.length}`);
     return { strategies };
   },
@@ -336,13 +374,44 @@ export const TeacherDashboardService = {
     });
 
     const prompt = `
-      Compare and summarize these students' performance based on attention,
-      focus duration, and feedback averages:
-      ${JSON.stringify(studentComparisons, null, 2)}.
-      Highlight top performers, improvement areas, and any overall class trends.
-    `;
+You are an educational performance analyst.
 
-    const aiSummary = await NLPService.summarize(prompt);
+Analyze these students.
+
+${JSON.stringify(studentComparisons, null, 2)}
+
+Return ONLY JSON.
+
+{
+  "classSummary": "...",
+  "topPerformers": [
+    {
+      "name": "",
+      "reason": ""
+    }
+  ],
+  "needsAttention": [
+    {
+      "name": "",
+      "reason": ""
+    }
+  ],
+  "recommendations": [
+    "...",
+    "...",
+    "..."
+  ]
+}
+
+Rules:
+- Compare attention, focus duration, and feedback.
+- Ignore missing values instead of treating them as zero.
+- Mention if insufficient data exists.
+- Keep recommendations practical.
+`;
+
+    const aiResponse = await NLPService.generate(prompt);
+    const aiSummary = parseAIJson(aiResponse);
     await logActivity(teacherId, "COMPARE_STUDENTS", `students=${students.length}`);
     return { students: studentComparisons, aiSummary };
   },
@@ -351,16 +420,49 @@ export const TeacherDashboardService = {
   async getAdaptiveTeachingInsights(teacherId: string) {
     const overview = await this.getDashboardOverview(teacherId);
 
-    const input = `
-      The class has ${overview.totalStudents} students.
-      The average feedback score is ${overview.avgFeedback}.
-      The average attention score is ${overview.avgAttention}.
-      The average focus duration is ${overview.avgFocusDuration} seconds.
-      Emotion distribution: ${JSON.stringify(overview.emotionDistribution)}.
-      Generate short insights and adaptive strategies for improving teaching effectiveness.
-    `;
+    const prompt = `
+You are an AI teaching assistant.
 
-    const insights = await NLPService.summarize(input);
+Analyze the classroom analytics below and generate practical teaching insights.
+
+Class Data:
+- Total Students: ${overview.totalStudents}
+- Average Feedback Rating: ${overview.avgFeedback}/5
+- Average Attention Score: ${overview.avgAttention}/5
+- Average Focus Duration: ${overview.avgFocusDuration} seconds
+- Emotion Distribution:
+${JSON.stringify(overview.emotionDistribution)}
+
+Return ONLY JSON in the following format:
+
+{
+  "overallPerformance": "...",
+  "strengths": [
+    "...",
+    "..."
+  ],
+  "concerns": [
+    "...",
+    "..."
+  ],
+  "recommendations": [
+    "...",
+    "...",
+    "..."
+  ],
+  "teacherAction": "...",
+  "priority": "Low | Medium | High"
+}
+
+Rules:
+- Do not repeat the numbers.
+- Interpret what they mean.
+- Give actionable recommendations.
+- Keep each point under 20 words.
+`;
+
+    const aiResponse = await NLPService.generate(prompt);
+    const insights = parseAIJson(aiResponse);
     await logActivity(teacherId, "GET_ADAPTIVE_TEACHING_INSIGHTS", `classSize=${overview.totalStudents}`);
     return { insights, metrics: overview };
   },

@@ -7,6 +7,7 @@ import prisma from "../../config/database";
 import { hash } from "bcrypt";
 import { userRole } from "../../config/core";
 import { uploadProfilePhoto } from "../../utils/uploadPhoto";
+import { uploadCertification } from "../../utils/uploadCertification";
 
 export class UserService {
   static async createUser(data: SignupDto): Promise<string> {
@@ -41,7 +42,12 @@ export class UserService {
     return getUserResponse(user);
   }
 
-  async updateUser(data: UpdateUserDto, userId: string, fileBuffer?: Buffer): Promise<IUserDetails> {
+  async updateUser(
+    data: UpdateUserDto,
+    userId: string,
+    fileBuffer?: Buffer,
+    certificationFiles?: Express.Multer.File[]
+  ): Promise<IUserDetails> {
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw createHttpError(404, "User does not exist");
@@ -57,7 +63,6 @@ export class UserService {
     if (data.gender) updateData.gender = data.gender;
     if (data.password) updateData.password = await hash(data.password, 10);
 
-    // ── Upload photo if file provided, otherwise use DTO url if sent ──
     if (fileBuffer) {
       updateData.profilePhoto = await uploadProfilePhoto(fileBuffer, userId);
     } else if (data.profilePhoto) {
@@ -71,22 +76,15 @@ export class UserService {
 
     if (updatedUser.role === userRole.Student && data.studentProfile) {
       const studentProfileData: Record<string, any> = {};
-      const studentProfileInfo = data.studentProfile;
+      const s = data.studentProfile;
 
-      if (studentProfileInfo.education)
-        studentProfileData.education = studentProfileInfo.education;
-      if (studentProfileInfo.affiliation)
-        studentProfileData.affiliation = studentProfileInfo.affiliation;
-      if (studentProfileInfo.instituteName)
-        studentProfileData.instituteName = studentProfileInfo.instituteName;
-      if (studentProfileInfo.guardianName)
-        studentProfileData.guardianName = studentProfileInfo.guardianName;
-      if (studentProfileInfo.guardianEmail)
-        studentProfileData.guardianEmail = studentProfileInfo.guardianEmail;
-      if (studentProfileInfo.guardianPhone)
-        studentProfileData.guardianPhone = studentProfileInfo.guardianPhone;
-      if (studentProfileInfo.neuroProblemType)
-        studentProfileData.neuroProblemType = studentProfileInfo.neuroProblemType;
+      if (s.education) studentProfileData.education = s.education;
+      if (s.affiliation) studentProfileData.affiliation = s.affiliation;
+      if (s.instituteName) studentProfileData.instituteName = s.instituteName;
+      if (s.guardianName) studentProfileData.guardianName = s.guardianName;
+      if (s.guardianEmail) studentProfileData.guardianEmail = s.guardianEmail;
+      if (s.guardianPhone) studentProfileData.guardianPhone = s.guardianPhone;
+      if (s.neuroProblemType) studentProfileData.neuroProblemType = s.neuroProblemType;
 
       if (Object.keys(studentProfileData).length > 0) {
         await prisma.studentProfile.upsert({
@@ -97,29 +95,41 @@ export class UserService {
       }
     }
 
-    if (updatedUser.role === userRole.Teacher && data.teacherProfile) {
+    if (updatedUser.role === userRole.Teacher && (data.teacherProfile || (certificationFiles && certificationFiles.length > 0))) {
       const teacherProfileData: Record<string, any> = {};
-      const t = data.teacherProfile;
+      const t = data.teacherProfile ?? {};
 
       if (t.qualification) teacherProfileData.qualification = t.qualification;
-      if (t.experienceYears !== undefined)
-        teacherProfileData.experienceYears = t.experienceYears;
-      if (t.experienceDetails)
-        teacherProfileData.experienceDetails = t.experienceDetails;
-      if (t.specialization)
-        teacherProfileData.specialization = t.specialization;
+      if (t.experienceYears !== undefined) teacherProfileData.experienceYears = t.experienceYears;
+      if (t.experienceDetails) teacherProfileData.experienceDetails = t.experienceDetails;
+      if (t.specialization) teacherProfileData.specialization = t.specialization;
       if (t.subjects) teacherProfileData.subjects = t.subjects;
       if (t.languages) teacherProfileData.languages = t.languages;
-      if (t.instituteName)
-        teacherProfileData.instituteName = t.instituteName;
+      if (t.instituteName) teacherProfileData.instituteName = t.instituteName;
       if (t.bio) teacherProfileData.bio = t.bio;
       if (t.phone) teacherProfileData.phone = t.phone;
-      if (t.hourlyRate !== undefined)
-        teacherProfileData.hourlyRate = t.hourlyRate;
-      if (t.availability)
-        teacherProfileData.availability = t.availability;
-      if (t.certifications)
+      if (t.hourlyRate !== undefined) teacherProfileData.hourlyRate = t.hourlyRate;
+      if (t.availability) teacherProfileData.availability = t.availability;
+
+      if (certificationFiles && certificationFiles.length > 0) {
+        const uploadedUrls = await Promise.all(
+          certificationFiles.map((file) =>
+            uploadCertification(file.buffer, userId, file.originalname)
+          )
+        );
+
+        const existing = await prisma.teacherProfile.findUnique({
+          where: { userId },
+          select: { certifications: true },
+        });
+
+        teacherProfileData.certifications = [
+          ...(existing?.certifications ?? []),
+          ...uploadedUrls,
+        ];
+      } else if (t.certifications) {
         teacherProfileData.certifications = t.certifications;
+      }
 
       if (Object.keys(teacherProfileData).length > 0) {
         await prisma.teacherProfile.upsert({
@@ -132,50 +142,47 @@ export class UserService {
 
     const finalUser = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        studentProfile: true,
-        teacherProfile: true,
-      },
+      include: { studentProfile: true, teacherProfile: true },
     });
 
     return getUserResponse(finalUser!);
   }
 
-  async deleteUser(userId: string): Promise < void> {
+  async deleteUser(userId: string): Promise<void> {
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if(!user) throw createHttpError(404, "User not found.");
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw createHttpError(404, "User not found.");
 
-  // Delete dependent (child) entities first
-  await prisma.$transaction([
-    prisma.studentProfile.deleteMany({ where: { userId } }),
-    prisma.teacherProfile.deleteMany({ where: { userId } }),
-    prisma.cognitiveProfile.deleteMany({ where: { userId } }),
-    prisma.emotionLog.deleteMany({ where: { userId } }),
-    prisma.feedback.deleteMany({ where: { userId } }),
-    prisma.mindmap.deleteMany({ where: { userId } }),
-    prisma.adaptationLog.deleteMany({ where: { userId } }),
-    prisma.notification.deleteMany({
-      where: { OR: [{ teacherId: userId }, { studentId: userId }] },
-    }),
-    prisma.mailLog.deleteMany({
-      where: { OR: [{ senderId: userId }, { recipientId: userId }] },
-    }),
-    prisma.teacherFeedback.deleteMany({
-      where: { OR: [{ teacherId: userId }, { studentId: userId }] },
-    }),
-    prisma.assignmentStudent.deleteMany({ where: { studentId: userId } }),
-    prisma.assignmentSubmission.deleteMany({ where: { studentId: userId } }),
-    prisma.assignment.deleteMany({ where: { teacherId: userId } }),
-    prisma.groupMember.deleteMany({ where: { userId } }),
-    prisma.group.deleteMany({ where: { teacherId: userId } }),
-    prisma.studentInvite.deleteMany({ where: { teacherId: userId } }),
-    prisma.teacherStudent.deleteMany({
-      where: { OR: [{ teacherId: userId }, { studentId: userId }] },
-    }),
-  ]);
+    // Delete dependent (child) entities first
+    await prisma.$transaction([
+      prisma.studentProfile.deleteMany({ where: { userId } }),
+      prisma.teacherProfile.deleteMany({ where: { userId } }),
+      prisma.cognitiveProfile.deleteMany({ where: { userId } }),
+      prisma.emotionLog.deleteMany({ where: { userId } }),
+      prisma.feedback.deleteMany({ where: { userId } }),
+      prisma.mindmap.deleteMany({ where: { userId } }),
+      prisma.adaptationLog.deleteMany({ where: { userId } }),
+      prisma.notification.deleteMany({
+        where: { OR: [{ teacherId: userId }, { studentId: userId }] },
+      }),
+      prisma.mailLog.deleteMany({
+        where: { OR: [{ senderId: userId }, { recipientId: userId }] },
+      }),
+      prisma.teacherFeedback.deleteMany({
+        where: { OR: [{ teacherId: userId }, { studentId: userId }] },
+      }),
+      prisma.assignmentStudent.deleteMany({ where: { studentId: userId } }),
+      prisma.assignmentSubmission.deleteMany({ where: { studentId: userId } }),
+      prisma.assignment.deleteMany({ where: { teacherId: userId } }),
+      prisma.groupMember.deleteMany({ where: { userId } }),
+      prisma.group.deleteMany({ where: { teacherId: userId } }),
+      prisma.studentInvite.deleteMany({ where: { teacherId: userId } }),
+      prisma.teacherStudent.deleteMany({
+        where: { OR: [{ teacherId: userId }, { studentId: userId }] },
+      }),
+    ]);
 
-  // Finally delete the user
-  await prisma.user.delete({ where: { id: userId } });
-}
+    // Finally delete the user
+    await prisma.user.delete({ where: { id: userId } });
+  }
 }

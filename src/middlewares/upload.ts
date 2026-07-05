@@ -1,14 +1,19 @@
 import multer from "multer";
 
-// Store in memory, not disk — we stream directly to Cloudinary
 export const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (_, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
+    const allowed = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
+    ];
+    if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Only image files are allowed."));
+      cb(new Error("Only images and PDFs are allowed."));
     }
   },
 });

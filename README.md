@@ -211,6 +211,12 @@ NeuroViz-backend/
 │   │   └── database.ts
 │   │
 │   ├── features/
+│   │   ├── admin/
+│   │   │   ├── admin.controller.ts
+│   │   │   ├── admin.dto.ts
+│   │   │   ├── admin.router.ts
+│   │   │   └── admin.service.ts
+│   │   │
 │   │   ├── general_feedback/
 │   │   │   ├── feedback.controller.ts
 │   │   │   ├── feedback.dto.ts
@@ -275,7 +281,8 @@ NeuroViz-backend/
 │   │   │   │   ├── teacher.mail-log.service.ts
 │   │   │   │   ├── teacher.review.service.ts
 │   │   │   │   ├── teacher.service.ts
-│   │   │   │   └── teacher.student.service.ts
+│   │   │   │   ├── teacher.student.service.ts
+│   │   │   │   └── teacher.verification.service.ts
 │   │   │   ├── teacher.controller.ts
 │   │   │   ├── teacher.dto.ts
 │   │   │   └── teacher.router.ts
@@ -294,6 +301,7 @@ NeuroViz-backend/
 │   │   ├── enforceTeacher.ts
 │   │   ├── enforceTeacherorStudent.ts
 │   │   ├── enforceTeacherStudentRelation.ts
+│   │   ├── enforceVerifiedTeacher.ts
 │   │   ├── errorHandler.ts
 │   │   ├── jwtVerifiction.ts
 │   │   ├── requireAuth.ts
@@ -317,6 +325,7 @@ NeuroViz-backend/
 │       ├── passwordGenerator.ts
 │       ├── resolveUserFromToken.ts
 │       ├── tokenCleanup.ts
+│       ├── uploadCertification.ts
 │       ├── uploadPhoto.ts
 │       └── util.ts
 │
@@ -425,6 +434,12 @@ NeuroViz-backend/
 
 ### 🧑‍🏫 Teacher Routes
 
+**Pre Publish**
+| Method | Route | Description |
+|---|---|---|
+| GET | `/teacher/verification/submit` | Submit Profile for Verification and Publish |
+| GET | `/teacher/verification/status` | Get Verification Status |
+
 **Analytics & Performance**
 
 | Method | Route | Description |
@@ -489,30 +504,6 @@ NeuroViz-backend/
 | GET | `/teacher/mail-logs` | Get recent mail logs for teacher |
 | GET | `/teacher/mail-log/:mailId` | Get specific mail log by ID |
 
-### 📰 Newsletter Routes
-
-**Public**
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| `POST` | `/newsletter/subscribe` | None | Subscribe to the newsletter |
-| `POST` | `/newsletter/unsubscribe` | None | Unsubscribe from the newsletter |
-
-**Admin**
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| `POST` | `/newsletter/createDraft` | Admin | Create a new newsletter draft |
-| `GET` | `/newsletter/fetchAll` | Admin | Get all newsletters |
-| `GET` | `/newsletter/subscribers` | Admin | Get all subscribers |
-| `GET` | `/newsletter/:newsletterId` | Admin | Get a specific newsletter by ID |
-| `PATCH` | `/newsletter/:newsletterId` | Admin | Update a draft newsletter |
-| `DELETE` | `/newsletter/:newsletterId` | Admin | Delete a draft newsletter |
-| `POST` | `/newsletter/:newsletterId/send` | Admin | Send newsletter to subscribers |
-| `GET` | `/newsletter/:newsletterId/logs` | Admin | Get send logs for a newsletter |
-
----
-
 ### 📊 Teacher Dashboard Routes
 
 **Overview & Heatmap**
@@ -545,7 +536,7 @@ NeuroViz-backend/
 | Method | Route | Description |
 |---|---|---|
 | GET | `/teacher/dashboard/notifications` | Get all notifications for teacher |
-| POST | `/teacher/dashboard/notifications` | Post a new notification to students |
+| POST | `/teacher/dashboard/notification/post` | Post a new notification to students |
 | PATCH | `/teacher/dashboard/notifications/:id/read` | Mark a notification as read |
 | PATCH | `/teacher/dashboard/notifications/read-all` | Mark all notifications as read |
 | POST | `/teacher/dashboard/broadcast` | Broadcast an announcement to all students |
@@ -556,6 +547,130 @@ NeuroViz-backend/
 |---|---|---|
 | POST | `/teacher/dashboard/feedback` | Submit feedback for a student |
 | GET | `/teacher/dashboard/feedback/overview` | Get feedback overview |
+
+---
+
+### 📰 Newsletter Routes
+
+**Public**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `POST` | `/newsletter/subscribe` | None | Subscribe to the newsletter |
+| `POST` | `/newsletter/unsubscribe` | None | Unsubscribe from the newsletter |
+
+**Admin**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `POST` | `/newsletter/createDraft` | Admin | Create a new newsletter draft |
+| `GET` | `/newsletter/fetchAll` | Admin | Get all newsletters |
+| `GET` | `/newsletter/subscribers` | Admin | Get all subscribers |
+| `GET` | `/newsletter/:newsletterId` | Admin | Get a specific newsletter by ID |
+| `PATCH` | `/newsletter/:newsletterId` | Admin | Update a draft newsletter |
+| `DELETE` | `/newsletter/:newsletterId` | Admin | Delete a draft newsletter |
+| `POST` | `/newsletter/:newsletterId/send` | Admin | Send newsletter to subscribers |
+| `GET` | `/newsletter/:newsletterId/logs` | Admin | Get send logs for a newsletter |
+
+---
+
+### 🛠️ Admin Dashboard(Routes)
+
+**System Overview**
+
+| Method | Route                  | Description                             |
+| ------ | ---------------------- | --------------------------------------- |
+| GET    | `/admin/overview`      | Get complete admin dashboard overview   |
+| GET    | `/admin/health`        | Get system health status                |
+| GET    | `/admin/activity/logs` | Get recent administrative activity logs |
+
+---
+
+**👥 User Management**
+
+| Method | Route                       | Description                           |
+| ------ | --------------------------- | ------------------------------------- |
+| GET    | `/admin/users`              | Get all registered users              |
+| GET    | `/admin/user/:userId`       | Get details of a specific user        |
+| PATCH  | `/admin/user/status`        | Update user account status            |
+| DELETE | `/admin/user/:userId`       | Delete a user account                 |
+| DELETE | `/admin/user/:userId/reset` | Reset all data associated with a user |
+
+---
+
+**💬 Feedback Management**
+
+| Method | Route                                | Description                      |
+| ------ | ------------------------------------ | -------------------------------- |
+| GET    | `/admin/feedback`                    | Get all user feedback            |
+| GET    | `/admin/feedback/stats`              | Get feedback statistics          |
+| GET    | `/admin/feedback/:feedbackId`        | Get details of specific feedback |
+| PATCH  | `/admin/feedback/:feedbackId/status` | Update feedback review status    |
+| DELETE | `/admin/feedback/:feedbackId`        | Delete a feedback entry          |
+
+---
+
+**📧 Mail Logs**
+
+| Method | Route                     | Description                        |
+| ------ | ------------------------- | ---------------------------------- |
+| GET    | `/admin/mail/logs`        | Get all mail logs                  |
+| GET    | `/admin/mail/log/:mailId` | Get details of a specific mail log |
+| GET    | `/admin/mail/stats`       | Get mail delivery statistics       |
+
+---
+
+**📰 Newsletter**
+
+| Method | Route                     | Description                            |
+| ------ | ------------------------- | -------------------------------------- |
+| GET    | `/admin/newsletter/stats` | Get newsletter subscription statistics |
+
+---
+
+**👨‍🏫 Teacher–Student Management**
+
+| Method | Route                                | Description                            |
+| ------ | ------------------------------------ | -------------------------------------- |
+| GET    | `/admin/teacher-students`            | Get all teacher–student relationships  |
+| GET    | `/admin/teacher/:teacherId/students` | Get all students assigned to a teacher |
+
+---
+
+**👥 Group Management**
+
+| Method | Route                   | Description                     |
+| ------ | ----------------------- | ------------------------------- |
+| GET    | `/admin/groups`         | Get all platform groups         |
+| GET    | `/admin/group/:groupId` | Get details of a specific group |
+| DELETE | `/admin/group/:groupId` | Delete a group                  |
+
+---
+
+**🔔 Notifications**
+
+| Method | Route                           | Description                           |
+| ------ | ------------------------------- | ------------------------------------- |
+| POST   | `/admin/notification/broadcast` | Broadcast a notification to all users |
+
+---
+
+**📈 Analytics**
+
+| Method | Route                        | Description              |
+| ------ | ---------------------------- | ------------------------ |
+| GET    | `/admin/analytics/cognitive` | Get cognitive analytics  |
+| GET    | `/admin/analytics/emotions`  | Get emotion analytics    |
+| GET    | `/admin/analytics/behavior`  | Get behavioral analytics |
+
+---
+
+**✅ Teacher Verification**
+
+| Method | Route                                   | Description                                      |
+| ------ | --------------------------------------- | ------------------------------------------------ |
+| GET    | `/admin/verification/requests`          | Get all pending teacher verification requests    |
+| PATCH  | `/admin/verification/:teacherId/review` | Approve or reject a teacher verification request |
 
 ---
 
@@ -572,18 +687,6 @@ NeuroViz-backend/
 
 <details>
 <summary>🚧 Planned Routes (Admin, Behavior, Cognitive/Emotion Profiling, etc.)</summary>
-
-**Admin Routes**
-
-| Method | Route | Description |
-|---|---|---|
-| GET | `/admin/overview` | Brief overview of system usage |
-| GET | `/admin/health` | Brief overview of system health |
-| GET | `/admin/activity/logs` | Fetch details of recent activity logs |
-| GET | `/admin/users` | Fetch brief details of each user (incl. admin) |
-| POST | `/admin/user/status` | Change user's status to activate/deactivate |
-| DELETE | `/admin/user/:userId` | Delete a user from the application database |
-| DELETE | `/admin/user/:userId/reset` | Reset a user's details |
 
 **Behavior Tracking**
 

@@ -13,7 +13,7 @@ export const resolveUserFromToken = async (req: Request) => {
 
   const found = await prisma.user.findUnique({
     where: { id: tokenUserId },
-    select: { id: true, role: true },
+    select: { id: true, role: true, isActive: true },
   });
 
   if (!found) throw createHttpError(401, "Invalid token user");

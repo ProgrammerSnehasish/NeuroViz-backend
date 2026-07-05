@@ -142,6 +142,12 @@ enum NewsletterStatus {
   FAILED
 }
 
+enum TeacherVerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 /* ─────────────────────────────
    USER MODEL
 ────────────────────────────── */
@@ -196,6 +202,8 @@ model User {
   sentNewsletters Newsletter[] @relation("NewsletterSender")
   activityLogs ActivityLog[]
   behaviorEvents BehaviorEvent[]
+  verificationRequest  TeacherVerificationRequest? @relation("TeacherVerificationRequests")
+  verificationReviews  TeacherVerificationRequest[] @relation("AdminVerificationReviews")
 }
 
 /* ─────────────────────────────
@@ -223,6 +231,8 @@ model TeacherProfile {
   id               String         @id @default(uuid())  
   userId           String         @unique  
   user             User           @relation(fields: [userId], references: [id])
+  isVerified   Boolean  @default(false)
+  isPublished  Boolean  @default(false)
   qualification    Qualification  @default(NOT_MENTIONED)
   experienceYears  Int?
   experienceDetails String?
@@ -241,6 +251,18 @@ model TeacherProfile {
   updatedAt        DateTime       @updatedAt
 }
 
+model TeacherVerificationRequest {
+  id          String                     @id @default(uuid())
+  teacherId   String                     @unique
+  status      TeacherVerificationStatus  @default(PENDING)
+  adminNote   String?
+  reviewedBy  String?
+  submittedAt DateTime                   @default(now())
+  reviewedAt  DateTime?
+
+  teacher     User   @relation("TeacherVerificationRequests", fields: [teacherId], references: [id])
+  reviewer    User?  @relation("AdminVerificationReviews", fields: [reviewedBy], references: [id])
+}
 /* ─────────────────────────────
 OTP Model
 ──────────────────────────────*/

@@ -1,9 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { EvaluationMode } from "../../config/core";
 import {
-  PostNotificationDto,
-  BroadcastAnnouncementDto,
-  GiveFeedbackDto,
   RegisterStudentDto,
   InviteStudentDto,
   SearchStudentsDto,
@@ -17,7 +14,6 @@ import {
   ReviewSubmissionDto,
   ReviewMindmapDto,
   MindmapFilterDto,
-  StudentStrategyDto,
 } from "./teacher.dto";
 import { TeacherDashboardService } from "./Dashboard/teacher.dashboard.service";
 import { TeacherAssignmentService } from "./Services/teacher.assignment.service";
@@ -25,24 +21,43 @@ import { MailLogService } from "./Services/teacher.mail-log.service";
 import { TeacherReviewService } from "./Services/teacher.review.service";
 import { TeacherService } from "./Services/teacher.service";
 import { TeacherStudentService } from "./Services/teacher.student.service";
+import { TeacherVerificationService } from "./Services/teacher.verification.service";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const getTeacherId = (req: Request): string =>
-  (req.user as any)?.id ||
-  (req.user as any)?.userId ||
-  (req.user as any)?._id;
+// ✅ Read from res.locals — set by enforceTeacher / enforceVerifiedTeacher
+const getTeacherId = (res: Response): string => res.locals.teacherId;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STUDENT CONTROLLERS
+// TEACHER CONTROLLER
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const TeacherController = {
 
+  // ── Verification ───────────────────────────────────────────────────────────
+
+  /** POST /teacher/verification/submit */
+  submitForVerification: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await TeacherVerificationService.submitForVerification(getTeacherId(res));
+      res.status(201).json({ success: true, data });
+    } catch (err) { next(err); }
+  },
+
+  /** GET /teacher/verification/status */
+  getVerificationStatus: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await TeacherVerificationService.getVerificationStatus(getTeacherId(res));
+      res.json({ success: true, data });
+    } catch (err) { next(err); }
+  },
+
+  // ── Students ───────────────────────────────────────────────────────────────
+
   /** GET /teacher/students */
   getStudentManagementOverview: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherStudentService.getStudentManagementOverview(getTeacherId(req));
+      const data = await TeacherStudentService.getStudentManagementOverview(getTeacherId(res));
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
@@ -51,7 +66,7 @@ export const TeacherController = {
   searchStudents: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { query } = SearchStudentsDto.parse(req.query);
-      const data = await TeacherStudentService.searchStudents(getTeacherId(req), query);
+      const data = await TeacherStudentService.searchStudents(getTeacherId(res), query);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
@@ -60,7 +75,7 @@ export const TeacherController = {
   registerStudent: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const studentData = RegisterStudentDto.parse(req.body);
-      const data = await TeacherStudentService.registerStudent(getTeacherId(req), studentData);
+      const data = await TeacherStudentService.registerStudent(getTeacherId(res), studentData);
       res.status(201).json({ success: true, data });
     } catch (err) { next(err); }
   },
@@ -69,7 +84,7 @@ export const TeacherController = {
   unregisterStudent: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await TeacherStudentService.unregisterStudent(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.studentId as string
       );
       res.json({ success: true, data });
@@ -80,7 +95,7 @@ export const TeacherController = {
   inviteStudent: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email } = InviteStudentDto.parse(req.body);
-      const data = await TeacherStudentService.inviteStudent(getTeacherId(req), email);
+      const data = await TeacherStudentService.inviteStudent(getTeacherId(res), email);
       res.status(201).json({ success: true, data });
     } catch (err) { next(err); }
   },
@@ -88,7 +103,7 @@ export const TeacherController = {
   /** GET /teacher/students/:studentId/analytics */
   getStudentAnalytics: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherService.getStudentAnalytics(getTeacherId(req), req.params.studentId as string);
+      const data = await TeacherService.getStudentAnalytics(getTeacherId(res), req.params.studentId as string);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
@@ -96,7 +111,7 @@ export const TeacherController = {
   /** GET /teacher/students/:studentId/summary */
   summarizeStudentPerformance: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherService.summarizeStudentPerformance(getTeacherId(req), req.params.studentId as string);
+      const data = await TeacherService.summarizeStudentPerformance(getTeacherId(res), req.params.studentId as string);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
@@ -104,63 +119,76 @@ export const TeacherController = {
   /** GET /teacher/students/:studentId/progress */
   getStudentProgress: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherDashboardService.getStudentProgress(getTeacherId(req), req.params.studentId as string);
+      const data = await TeacherDashboardService.getStudentProgress(getTeacherId(res), req.params.studentId as string);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // GROUP CONTROLLERS
-  // ─────────────────────────────────────────────────────────────────────────────
+  /** GET /teacher/students/:studentId/submissions */
+  getSubmissionsForStudent: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await TeacherAssignmentService.getSubmissionsForStudent(
+        getTeacherId(res),
+        req.params.studentId as string
+      );
+      res.json({ success: true, data });
+    } catch (err) { next(err); }
+  },
 
-  /** GET /teacher/students/groups */
+  // ── Groups ─────────────────────────────────────────────────────────────────
+
+  /** GET /teacher/groups */
   getGroups: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherStudentService.getGroups(getTeacherId(req));
+      const data = await TeacherStudentService.getGroups(getTeacherId(res));
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** POST /teacher/students/groups */
+  /** POST /teacher/group/create */
   createGroup: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { name, description } = CreateGroupDto.parse(req.body);
-      const data = await TeacherStudentService.createGroup(getTeacherId(req), name, description);
+      const data = await TeacherStudentService.createGroup(getTeacherId(res), name, description);
       res.status(201).json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** PATCH /teacher/students/groups/:groupId */
+  /** PATCH /teacher/group/:groupId */
   updateGroup: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const updateData = UpdateGroupDto.parse(req.body);
-      const data = await TeacherStudentService.updateGroup(getTeacherId(req), req.params.groupId as string, updateData);
+      const data = await TeacherStudentService.updateGroup(getTeacherId(res), req.params.groupId as string, updateData);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** DELETE /teacher/students/groups/:groupId */
+  /** DELETE /teacher/group/:groupId */
   deleteGroup: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherStudentService.deleteGroup(getTeacherId(req), req.params.groupId as string);
+      const data = await TeacherStudentService.deleteGroup(getTeacherId(res), req.params.groupId as string);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** POST /teacher/students/groups/:groupId/members */
+  /** POST /teacher/students/group/:groupId/members/add */
   addMembersToGroup: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { studentIds } = AddMembersToGroupDto.parse(req.body);
-      const data = await TeacherStudentService.addMembersToGroup(getTeacherId(req), req.params.groupId as string, studentIds);
+      const data = await TeacherStudentService.addMembersToGroup(
+        getTeacherId(res),
+        req.params.groupId as string,
+        studentIds
+      );
       res.status(201).json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** POST /teacher/students/groups/:groupId/members/:studentId */
+  /** POST /teacher/student/group/:groupId/member/:studentId/add */
   addStudentToGroup: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await TeacherStudentService.addStudentToGroup(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.groupId as string,
         req.params.studentId as string
       );
@@ -168,11 +196,11 @@ export const TeacherController = {
     } catch (err) { next(err); }
   },
 
-  /** DELETE /teacher/students/groups/:groupId/members/:studentId */
+  /** DELETE /teacher/student/group/:groupId/member/:studentId */
   removeStudentFromGroup: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await TeacherStudentService.removeStudentFromGroup(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.groupId as string,
         req.params.studentId as string
       );
@@ -180,38 +208,36 @@ export const TeacherController = {
     } catch (err) { next(err); }
   },
 
-  /** POST /teacher/students/groups/:groupId/invite */
+  /** POST /teacher/student/group/:groupId/invite */
   inviteStudentToGroup: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email } = InviteStudentToGroupDto.parse(req.body);
       const data = await TeacherStudentService.inviteStudentToGroup(
-        getTeacherId(req),
+        getTeacherId(res),
         email,
-        req.params.groupId as string
+        req.params.groupId  as string
       );
       res.status(201).json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // ASSIGNMENT CONTROLLERS
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ── Assignments ────────────────────────────────────────────────────────────
 
   /** GET /teacher/assignments */
   getAssignmentManagementOverview: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherAssignmentService.getAssignmentManagementOverview(getTeacherId(req));
+      const data = await TeacherAssignmentService.getAssignmentManagementOverview(getTeacherId(res));
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** POST /teacher/assignments */
+  /** POST /teacher/assignment */
   createAssignment: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { title, description, dueDate, studentIds, groupIds, evaluationMode } =
         CreateAssignmentDto.parse(req.body);
       const data = await TeacherAssignmentService.createAssignment(
-        getTeacherId(req),
+        getTeacherId(res),
         title,
         description,
         { studentIds, groupIds, evaluationMode, dueDate }
@@ -220,23 +246,23 @@ export const TeacherController = {
     } catch (err) { next(err); }
   },
 
-  /** GET /teacher/assignments/:assignmentId */
+  /** GET /teacher/assignment/:assignmentId */
   getAssignmentDetails: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await TeacherAssignmentService.getAssignmentDetails(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.assignmentId as string
       );
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** PATCH /teacher/assignments/:assignmentId */
+  /** PATCH /teacher/assignment/:assignmentId */
   updateAssignment: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const updateData = UpdateAssignmentDto.parse(req.body);
       const data = await TeacherAssignmentService.updateAssignment(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.assignmentId as string,
         updateData
       );
@@ -244,23 +270,23 @@ export const TeacherController = {
     } catch (err) { next(err); }
   },
 
-  /** DELETE /teacher/assignments/:assignmentId */
+  /** DELETE /teacher/assignment/:assignmentId */
   deleteAssignment: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await TeacherAssignmentService.deleteAssignment(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.assignmentId as string
       );
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** POST /teacher/assignments/:assignmentId/evaluate/:submissionId */
+  /** POST /teacher/assignment/:assignmentId/evaluate/:submissionId */
   evaluateSubmission: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { mode, grade, feedback } = EvaluateSubmissionDto.parse(req.body);
       const data = await TeacherAssignmentService.evaluateSubmission(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.submissionId as string,
         mode === "MANUAL" ? EvaluationMode.Manual : EvaluationMode.Auto,
         { grade, feedback }
@@ -269,24 +295,12 @@ export const TeacherController = {
     } catch (err) { next(err); }
   },
 
-  /** GET /teacher/assignments/student/:studentId/submissions */
-  getSubmissionsForStudent: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const data = await TeacherAssignmentService.getSubmissionsForStudent(
-        getTeacherId(req),
-        req.params.studentId as string
-      );
-      res.json({ success: true, data });
-    } catch (err) { next(err); }
-  },
-  // ─────────────────────────────────────────────────────────────────────────────
-  // REVIEW CONTROLLERS
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ── Review ─────────────────────────────────────────────────────────────────
 
   /** GET /teacher/review/submissions */
   getAllSubmissions: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherReviewService.getSubmissionsForTeacher(getTeacherId(req));
+      const data = await TeacherReviewService.getSubmissionsForTeacher(getTeacherId(res));
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
@@ -294,7 +308,7 @@ export const TeacherController = {
   /** GET /teacher/review/submissions/pending */
   getPendingSubmissions: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherReviewService.getPendingSubmissions(getTeacherId(req));
+      const data = await TeacherReviewService.getPendingSubmissions(getTeacherId(res));
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
@@ -303,7 +317,7 @@ export const TeacherController = {
   getSubmissionById: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await TeacherReviewService.getSubmissionById(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.submissionId as string
       );
       res.json({ success: true, data });
@@ -315,7 +329,7 @@ export const TeacherController = {
     try {
       const { grade, feedback } = ReviewSubmissionDto.parse(req.body);
       const data = await TeacherReviewService.reviewSubmission(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.submissionId as string,
         grade,
         feedback
@@ -328,8 +342,8 @@ export const TeacherController = {
   bulkReviewSubmissions: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await TeacherReviewService.bulkReviewSubmissions(
-        getTeacherId(req),
-        req.params.assignmentId as string
+        getTeacherId(res),
+        req.params.assignmentId as string,
       );
       res.json({ success: true, data });
     } catch (err) { next(err); }
@@ -339,32 +353,30 @@ export const TeacherController = {
   regenerateSummary: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await TeacherReviewService.regenerateSummary(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.submissionId as string
       );
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // MINDMAP CONTROLLERS
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ── Mindmaps ───────────────────────────────────────────────────────────────
 
   /** GET /teacher/mindmaps */
   getMindmapManagementOverview: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const filter = MindmapFilterDto.parse(req.query);
-      const data = await TeacherService.getMindmapManagementOverview(getTeacherId(req), filter);
+      const data = await TeacherService.getMindmapManagementOverview(getTeacherId(res), filter);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** POST /teacher/mindmaps/:mindmapId/review */
+  /** POST /teacher/mindmap/:mindmapId/review */
   reviewMindmap: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { approval, comment } = ReviewMindmapDto.parse(req.body);
       const data = await TeacherService.reviewMindmap(
-        getTeacherId(req),
+        getTeacherId(res),
         req.params.mindmapId as string,
         approval,
         comment
@@ -373,34 +385,31 @@ export const TeacherController = {
     } catch (err) { next(err); }
   },
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // MAIL LOG CONTROLLERS
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ── Mail Logs ──────────────────────────────────────────────────────────────
+
   /** GET /teacher/mail-logs */
   getMailLogs: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const limit = req.query.limit ? Number(req.query.limit) : 50;
-      const data = await MailLogService.getTeacherMailLogs(getTeacherId(req), limit);
+      const data = await MailLogService.getTeacherMailLogs(getTeacherId(res), limit);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  /** GET /teacher/mail-logs/:mailId */
+  /** GET /teacher/mail-log/:mailId */
   getMailLogById: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await MailLogService.getMailLogById(getTeacherId(req), req.params.mailId as string);
+      const data = await MailLogService.getMailLogById(getTeacherId(res), req.params.mailId as string);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // CLASS OVERVIEW CONTROLLERS
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ── Class Overview ─────────────────────────────────────────────────────────
 
   /** GET /teacher/class-overview */
   getClassOverview: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await TeacherService.getClassOverview(getTeacherId(req));
+      const data = await TeacherService.getClassOverview(getTeacherId(res));
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },

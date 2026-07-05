@@ -7,6 +7,7 @@ import teacherRouter from "../features/teachers/teacher.router";
 import roomRouter from "../features/live_class/room.routes";
 import feedbackRouter from "../features/general_feedback/feedback.router";
 import newsletterRouter from "../features/newsletter/newsletter.router";
+import adminRouter from "../features/admin/admin.router";
 
 const mainRouter = Router()
 
@@ -19,12 +20,13 @@ mainRouter.use("/rooms", roomRouter);
 mainRouter.use("/teacher", teacherRouter);
 mainRouter.use("/feedback", feedbackRouter);
 mainRouter.use("/newsletter", newsletterRouter);
+mainRouter.use("/admin", adminRouter);
 // mainRouter.use("/cognitive", cognitiveProfileRouter);
 // mainRouter.use("/behavior", behaviorRouter);
 // mainRouter.use("/emotion", emotionRouter);
 // mainRouter.use("/adapt", adaptRouter);
 // mainRouter.use("/content", contentRouter);
-// mainRouter.use("/admin", adminRouter);
+
 
 
 export default mainRouter

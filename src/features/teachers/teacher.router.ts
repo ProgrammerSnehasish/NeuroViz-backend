@@ -1,17 +1,24 @@
 import { verifyToken } from "../../middlewares/jwtVerifiction";
 import { enforceTeacher } from "../../middlewares/enforceTeacher";
+import { enforceVerifiedTeacher } from "../../middlewares/enforeceVerifiedTeacher";
 import { Router } from "express";
 import { TeacherDashboardController } from "./Dashboard/teacher.dashboard.controller";
 import { TeacherController } from "./teacher.controller";
 
 const teacherRouter = Router();
 
-// Apply auth + teacher role guard to every route in this file
-teacherRouter.use(verifyToken, enforceTeacher);
+// ─────────────────────────────────────────────────────────────────────────────
+// VERIFICATION — enforceTeacher only
+// ─────────────────────────────────────────────────────────────────────────────
+teacherRouter.post("/verification/submit", verifyToken, enforceTeacher, TeacherController.submitForVerification);
+teacherRouter.get("/verification/status", verifyToken, enforceTeacher, TeacherController.getVerificationStatus);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DASHBOARD  ·  /teacher/dashboard
+// All routes below require verified teacher
 // ─────────────────────────────────────────────────────────────────────────────
+teacherRouter.use(verifyToken, enforceVerifiedTeacher);
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 teacherRouter.get("/dashboard", TeacherDashboardController.getDashboardOverview);
 teacherRouter.get("/dashboard/analytics", TeacherDashboardController.getAnalyticsOverview);
 teacherRouter.get("/dashboard/heatmap", TeacherDashboardController.getClassHeatmap);
@@ -23,39 +30,34 @@ teacherRouter.get("/student/:studentId/strategy", TeacherDashboardController.get
 teacherRouter.get("/student/:studentId/report", TeacherDashboardController.getStudentReport);
 teacherRouter.get("/student/:studentId/progress", TeacherDashboardController.getStudentProgress);
 
-// Notifications
+// ── Notifications ─────────────────────────────────────────────────────────────
 teacherRouter.get("/dashboard/notifications", TeacherDashboardController.getNotifications);
 teacherRouter.patch("/dashboard/notifications/read-all", TeacherDashboardController.markAllNotificationsRead);
 teacherRouter.patch("/dashboard/notifications/:id/read", TeacherDashboardController.markNotificationRead);
-teacherRouter.post("/dashboard/notifications", TeacherDashboardController.postNotification);
+teacherRouter.post("/dashboard/notification/post", TeacherDashboardController.postNotification);
 teacherRouter.post("/dashboard/broadcast", TeacherDashboardController.broadcastAnnouncement);
 
-// Feedback
+// ── Feedback ──────────────────────────────────────────────────────────────────
 teacherRouter.post("/dashboard/feedback", TeacherDashboardController.giveFeedback);
 teacherRouter.get("/dashboard/feedback/overview", TeacherDashboardController.getFeedbackOverview);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CLASS OVERVIEW  ·  /teacher/class-overview
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Class Overview ────────────────────────────────────────────────────────────
 teacherRouter.get("/class-overview", TeacherController.getClassOverview);
-// ─────────────────────────────────────────────────────────────────────────────
-// STUDENTS  ·  /teacher/students
-// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Students ──────────────────────────────────────────────────────────────────
 teacherRouter.get("/students", TeacherController.getStudentManagementOverview);
 teacherRouter.get("/students/search", TeacherController.searchStudents);
 teacherRouter.post("/students/register", TeacherController.registerStudent);
 teacherRouter.delete("/students/:studentId/unregister", TeacherController.unregisterStudent);
 teacherRouter.post("/students/invite", TeacherController.inviteStudent);
 
-// Per-student analytics
+// ── Per-student analytics ─────────────────────────────────────────────────────
 teacherRouter.get("/students/:studentId/analytics", TeacherController.getStudentAnalytics);
 teacherRouter.get("/students/:studentId/summary", TeacherController.summarizeStudentPerformance);
 teacherRouter.get("/students/:studentId/progress", TeacherController.getStudentProgress);
 teacherRouter.get("/students/:studentId/submissions", TeacherController.getSubmissionsForStudent);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GROUPS  ·  /teacher/students/groups
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Groups ────────────────────────────────────────────────────────────────────
 teacherRouter.get("/groups", TeacherController.getGroups);
 teacherRouter.post("/group/create", TeacherController.createGroup);
 teacherRouter.patch("/group/:groupId", TeacherController.updateGroup);
@@ -65,9 +67,7 @@ teacherRouter.post("/student/group/:groupId/member/:studentId/add", TeacherContr
 teacherRouter.delete("/student/group/:groupId/member/:studentId", TeacherController.removeStudentFromGroup);
 teacherRouter.post("/student/group/:groupId/invite", TeacherController.inviteStudentToGroup);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ASSIGNMENTS  ·  /teacher/assignments
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Assignments ───────────────────────────────────────────────────────────────
 teacherRouter.get("/assignments", TeacherController.getAssignmentManagementOverview);
 teacherRouter.post("/assignment", TeacherController.createAssignment);
 teacherRouter.get("/assignment/:assignmentId", TeacherController.getAssignmentDetails);
@@ -75,9 +75,7 @@ teacherRouter.patch("/assignment/:assignmentId", TeacherController.updateAssignm
 teacherRouter.delete("/assignment/:assignmentId", TeacherController.deleteAssignment);
 teacherRouter.post("/assignment/:assignmentId/evaluate/:submissionId", TeacherController.evaluateSubmission);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// REVIEW  ·  /teacher/review
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Review ────────────────────────────────────────────────────────────────────
 teacherRouter.get("/review/submissions", TeacherController.getAllSubmissions);
 teacherRouter.get("/review/submissions/pending", TeacherController.getPendingSubmissions);
 teacherRouter.get("/review/submissions/:submissionId", TeacherController.getSubmissionById);
@@ -85,15 +83,11 @@ teacherRouter.post("/review/:submissionId", TeacherController.reviewSubmission);
 teacherRouter.post("/review/bulk/:assignmentId", TeacherController.bulkReviewSubmissions);
 teacherRouter.post("/review/:submissionId/regenerate", TeacherController.regenerateSummary);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MINDMAPS  ·  /teacher/mindmaps
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Mindmaps ──────────────────────────────────────────────────────────────────
 teacherRouter.get("/mindmaps", TeacherController.getMindmapManagementOverview);
 teacherRouter.post("/mindmap/:mindmapId/review", TeacherController.reviewMindmap);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIL LOGS  ·  /teacher/mail-logs
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Mail Logs ─────────────────────────────────────────────────────────────────
 teacherRouter.get("/mail-logs", TeacherController.getMailLogs);
 teacherRouter.get("/mail-log/:mailId", TeacherController.getMailLogById);
 
