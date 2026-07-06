@@ -148,6 +148,13 @@ enum TeacherVerificationStatus {
   REJECTED
 }
 
+enum SubmissionContentType {
+  TEXT
+  MINDMAP
+  DOCUMENT
+  MIXED
+}
+
 /* ─────────────────────────────
    USER MODEL
 ────────────────────────────── */
@@ -343,6 +350,7 @@ model Mindmap {
   approval     Boolean  @default(false)
   comments     String?  @default("No comments added.")
   feedbacks Feedback[]
+  submissions AssignmentSubmission[] @relation("SubmissionMindmap")
 }
 
 /* ─────────────────────────────
@@ -444,19 +452,25 @@ model AssignmentStudent {
 }
 
 model AssignmentSubmission {
-  id             String   @id @default(uuid())
+  id             String                @id @default(uuid())
   assignmentId   String
   studentId      String
-  content        String
-  status         String   @default("SUBMITTED")
+  contentType    SubmissionContentType @default(TEXT)
+  textContent    String?               // plain text answer
+  mindmapId      String?               // reference to Mindmap model
+  documentUrl    String?               // Cloudinary URL for uploaded doc
+  documentName   String?               // original filename
+  status         String                @default("SUBMITTED")
   grade          Float?
   feedback       String?
   sentiment      String?
   sentimentScore Float?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  assignment     Assignment @relation("AssignmentToSubmissions", fields: [assignmentId], references: [id])
-  student        User       @relation("StudentSubmissions", fields: [studentId], references: [id])
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  assignment     Assignment            @relation("AssignmentToSubmissions", fields: [assignmentId], references: [id])
+  student        User                  @relation("StudentSubmissions", fields: [studentId], references: [id])
+  mindmap        Mindmap?              @relation("SubmissionMindmap", fields: [mindmapId], references: [id])
 }
 
 /* ─────────────────────────────
