@@ -10,6 +10,8 @@ const getTeacherId = (req: Request): string => {
   );
 };
 
+const getVerifiedTeacherId = (res: Response): string => res.locals.teacherId;
+
 export const TeacherDashboardController = {
   // Dashboard Overview
   getDashboardOverview: async (req: Request, res: Response, next: NextFunction) => {
@@ -168,13 +170,15 @@ export const TeacherDashboardController = {
 
   postNotification: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const teacherId = getTeacherId(req);
-      const { title, message } = req.body;
-      const data = await TeacherDashboardService.postNotification(teacherId, title, message);
-      res.json({ success: true, message: "Notification posted successfully", data });
-    } catch (err) {
-      next(err);
-    }
+      const { title, message, studentIds } = req.body;
+      const data = await TeacherDashboardService.postNotification(
+        getVerifiedTeacherId(res),
+        title,
+        message,
+        studentIds ?? [],  // optional — if empty sends to all linked students
+      );
+      res.json({ success: true, data });
+    } catch (err) { next(err); }
   },
 
   markAllNotificationsRead: async (req: Request, res: Response, next: NextFunction) => {

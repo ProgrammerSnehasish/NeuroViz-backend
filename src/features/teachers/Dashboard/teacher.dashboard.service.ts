@@ -582,16 +582,54 @@ Rules:
     return { message: "All notifications marked as read." };
   },
 
-  async postNotification(teacherId: string, title: string, message: string) {
+  async postNotification(teacherId: string, title: string, message: string, studentIds?: string[]) {
     if (!title || !message)
       throw createHttpError(400, "Notification title and message are required.");
 
-    const notification = await prisma.notification.create({
-      data: { teacherId, title, message, isRead: false },
-    });
+    // ── If no studentIds provided, send to all students under this teacher ──
+    let recipients: string[] = [];
 
-    await logActivity(teacherId, "POST_NOTIFICATION", `notificationId=${notification.id}`);
-    return notification;
+    if (studentIds && studentIds.length > 0) {
+      recipients = studentIds;
+    } else {
+      const linkedStudents = await prisma.teacherStudent.findMany({
+        where: { teacherId },
+        select: { studentId: true },
+      });
+
+      if (linkedStudents.length === 0)
+        throw createHttpError(404, "No students found under this teacher.");
+
+      recipients = linkedStudents.map((s) => s.studentId);
+    }
+
+    // ── Create a notification for each recipient ──
+    const notifications = await Promise.all(
+      recipients.map((studentId) =>
+        prisma.notification.create({
+          data: {
+            teacherId,
+            studentId,  // ← link to specific student
+            title,
+            message,
+            type: "INFO",
+            isRead: false,
+          },
+        })
+      )
+    );
+
+    await logActivity(
+      teacherId,
+      "POST_NOTIFICATION",
+      `sent to ${notifications.length} student(s)`
+    );
+
+    return {
+      message: `Notification sent to ${notifications.length} student(s).`,
+      count: notifications.length,
+      notifications,
+    };
   },
 
   /**
