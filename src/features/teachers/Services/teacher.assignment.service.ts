@@ -44,9 +44,11 @@ export const TeacherAssignmentService = {
           },
         },
         assignmentGroups: {
-          include: { group: {
-            include: { _count: { select: { members: true } } }
-          } },
+          include: {
+            group: {
+              include: { _count: { select: { members: true } } }
+            }
+          },
         },
         submissions: true,
       },
@@ -97,8 +99,8 @@ export const TeacherAssignmentService = {
     const avgCompletion =
       enriched.length > 0
         ? Math.round(
-            enriched.reduce((acc, a) => acc + a.completionPct, 0) / enriched.length
-          )
+          enriched.reduce((acc, a) => acc + a.completionPct, 0) / enriched.length
+        )
         : 0;
 
     await logActivity(teacherId, "VIEW_ASSIGNMENT_MANAGEMENT_OVERVIEW", `assignments=${assignments.length}`);
@@ -242,7 +244,7 @@ ${summary?.summary ?? "No summary available."}
 Tone: ${sentiment?.label}
 Toxicity: ${(toxicityScore * 100).toFixed(2)}%
 Final AI Grade: ${score}/100.
-    `.trim();
+  `.trim();
 
     await logActivity(
       null,
@@ -270,17 +272,24 @@ Final AI Grade: ${score}/100.
 
     const submission = await prisma.assignmentSubmission.findUnique({
       where: { id: submissionId },
-      include: { assignment: true },
+      include: {
+        assignment: true,
+        mindmap: { select: { id: true, title: true, structure: true } },
+      },
     });
 
     if (!submission || submission.assignment.teacherId !== teacherId)
       throw createHttpError(403, "Unauthorized to evaluate this submission.");
+
+    if (submission.status === "EVALUATED")
+      throw createHttpError(400, "This submission has already been evaluated.");
 
     let result;
 
     if (evaluationMode === EvaluationMode.Manual) {
       if (manual.grade === undefined || !manual.feedback)
         throw createHttpError(400, "Manual evaluation requires grade and feedback.");
+
       result = {
         score: manual.grade,
         sentiment: null,
@@ -289,24 +298,76 @@ Final AI Grade: ${score}/100.
         feedback: manual.feedback,
       };
     } else {
-      result = await this.evaluateAssignment(submission.content, EvaluationMode.Auto);
+      // ── Resolve evaluatable content based on contentType ──
+      switch (submission.contentType) {
+        case "TEXT":
+          if (!submission.textContent)
+            throw createHttpError(400, "No text content found for auto evaluation.");
+
+          result = await this.evaluateAssignment(
+            submission.textContent,
+            EvaluationMode.Auto
+          );
+          break;
+
+        case "MINDMAP":
+          if (!submission.mindmap)
+            throw createHttpError(400, "No mindmap found for auto evaluation.");
+
+          // ── Serialize mindmap structure as text for NLP evaluation ──
+          const mindmapText = `Title: ${submission.mindmap.title}. Structure: ${JSON.stringify(submission.mindmap.structure)}`;
+
+          result = await this.evaluateAssignment(
+            mindmapText,
+            EvaluationMode.Auto
+          );
+          break;
+
+        case "DOCUMENT":
+          // ── Documents can't be auto-evaluated — force manual ──
+          throw createHttpError(400, "Document submissions cannot be auto-evaluated. Please use manual evaluation.");
+
+        case "MIXED":
+          // ── Use textContent for NLP, note mindmap presence ──
+          const mixedText = [
+            submission.textContent ?? "",
+            submission.mindmap
+              ? `Mindmap: ${submission.mindmap.title} — ${JSON.stringify(submission.mindmap.structure)}`
+              : "",
+          ].filter(Boolean).join("\n\n");
+
+          if (!mixedText.trim())
+            throw createHttpError(400, "No evaluatable content found in mixed submission.");
+
+          result = await this.evaluateAssignment(
+            mixedText,
+            EvaluationMode.Auto
+          );
+          break;
+
+        default:
+          throw createHttpError(400, "Unknown submission content type.");
+      }
     }
 
+    // ── Update submission ──
     await prisma.assignmentSubmission.update({
       where: { id: submissionId },
       data: {
         grade: result.score ?? undefined,
-        feedback: result.feedback,
+        feedback: result.feedback ?? undefined,
         sentiment: result.sentiment?.label ?? undefined,
         sentimentScore: result.sentiment?.score ?? undefined,
+        status: "EVALUATED",
       },
     });
 
     await logActivity(
       teacherId,
       "EVALUATE_SUBMISSION",
-      `submissionId=${submissionId}, evaluationMode=${evaluationMode}, score=${result.score}`
+      `submissionId=${submissionId}, mode=${evaluationMode}, type=${submission.contentType}, score=${result.score}`
     );
+
     return { message: "Evaluation completed.", result };
   },
 

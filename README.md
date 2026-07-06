@@ -20,6 +20,7 @@
 - [Overview](#-project-overview)
 - [Core Capabilities](#-core-capabilities)
 - [Tech Stack](#️-tech-stack)
+- [Hosting & External Platforms](#-hosting--external-platforms)
 - [Prerequisites](#-prerequisites)
 - [Project Setup](#-project-setup)
 - [Scripts](#-scripts)
@@ -78,17 +79,36 @@ It also drives AI-based mind map generation, NLP processing, cognitive & emotion
 ---
 
 ## 🏗️ Tech Stack
-
+ 
 | Category | Technology |
 |---|---|
 | Language | TypeScript |
 | Framework | Express.js |
 | ORM | Prisma |
-| Database | PostgreSQL (NeonDB) |
-| NLP | wink-nlp and others (local Python, HuggingFace models) |
+| Auth Strategy | JWT (custom) + Google OAuth2 |
+| Real-time / Live Room | Socket.io, LiveKit SDK |
+| NLP (local) | wink-nlp |
+| NLP (remote inference) | Hugging Face Models, Python microservices (summarizer, toxicity, sentiment, keywords, classify, NER) |
+| Email Sending | Nodemailer (or similar SMTP client) |
+| File Uploads | Cloudinary SDK |
 | Environment Management | dotenv |
-| Build Tool | tsc (TypeScript Compiler) |
+| Build Tool | tsc |
 | Dev Runner | ts-node-dev |
+ 
+## ☁️ Hosting & External Platforms
+ 
+| Category | Platform / Service |
+|---|---|
+| Database Hosting | NeonDB (PostgreSQL) |
+| Auth Provider | Google Cloud Console (OAuth Client) |
+| Python Microservice Hosting | Custom deploy (Render / Railway / Fly.io, etc.) |
+| ML Inference Provider | Hugging Face Inference API |
+| ML Inference Provider (optional) | OpenAI API |
+| Email Delivery | SMTP Provider (Mailtrap / Gmail / SendGrid) |
+| Live Video/Audio Infra | LiveKit Cloud |
+| Media Storage/CDN | Cloudinary |
+| App Hosting (Backend) | Render |
+| Frontend Hosting | Vercel |
 
 ---
 

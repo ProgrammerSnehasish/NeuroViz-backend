@@ -91,18 +91,58 @@ export const TeacherReviewService = {
 
     const submission = await prisma.assignmentSubmission.findUnique({
       where: { id: submissionId },
-      include: { assignment: true },
+      include: {
+        assignment: true,
+        mindmap: { select: { title: true, structure: true } },
+      },
     });
 
-    if (!submission) throw createHttpError(404, "Submission not found.");
+    if (!submission)
+      throw createHttpError(404, "Submission not found.");
     if (submission.assignment.teacherId !== teacherId)
       throw createHttpError(403, "Unauthorized: not your student's submission.");
 
-    // Use AI summary as fallback feedback
+    // ── Use AI summary as fallback feedback ──
     let finalFeedback = feedback;
+
     if (!finalFeedback) {
-      const summary = await NLPService.summarize(submission.content);
-      finalFeedback = `AI Feedback: ${summary?.summary ?? "No summary generated."}`;
+
+      // ── DOCUMENT type — no auto summary ──
+      if (submission.contentType === "DOCUMENT") {
+        finalFeedback = "Document submission reviewed manually.";
+      } else {
+
+        // ── Resolve evaluatable text ──
+        let evaluatableText = "";
+
+        switch (submission.contentType) {
+          case "TEXT":
+            evaluatableText = submission.textContent ?? "";
+            break;
+
+          case "MINDMAP":
+            evaluatableText = submission.mindmap
+              ? `Title: ${submission.mindmap.title}. Structure: ${JSON.stringify(submission.mindmap.structure)}`
+              : "";
+            break;
+
+          case "MIXED":
+            evaluatableText = [
+              submission.textContent ?? "",
+              submission.mindmap
+                ? `Mindmap: ${submission.mindmap.title} — ${JSON.stringify(submission.mindmap.structure)}`
+                : "",
+            ].filter(Boolean).join("\n\n");
+            break;
+        }
+
+        if (evaluatableText.trim()) {
+          const summary = await NLPService.summarize(evaluatableText);
+          finalFeedback = `AI Feedback: ${summary?.summary ?? "No summary generated."}`;
+        } else {
+          finalFeedback = "No content available for auto feedback.";
+        }
+      }
     }
 
     const updated = await prisma.assignmentSubmission.update({
@@ -110,7 +150,7 @@ export const TeacherReviewService = {
       data: {
         grade,
         feedback: finalFeedback,
-        status: "REVIEWED",
+        status: "EVALUATED",
       },
       include: {
         student: { select: { id: true, firstName: true, lastName: true } },
@@ -121,8 +161,9 @@ export const TeacherReviewService = {
     await logActivity(
       teacherId,
       "REVIEW_SUBMISSION",
-      `submissionId=${submissionId}, grade=${grade}`
+      `submissionId=${submissionId}, grade=${grade}, type=${submission.contentType}`
     );
+
     return { message: "Submission reviewed successfully.", data: updated };
   },
 
@@ -145,6 +186,9 @@ export const TeacherReviewService = {
 
     const pendingSubmissions = await prisma.assignmentSubmission.findMany({
       where: { assignmentId, status: "SUBMITTED", grade: null },
+      include: {
+        mindmap: { select: { title: true, structure: true } },
+      },
     });
 
     if (!pendingSubmissions.length)
@@ -152,18 +196,76 @@ export const TeacherReviewService = {
 
     const results = await Promise.all(
       pendingSubmissions.map(async (sub) => {
+
+        // ── Skip DOCUMENT type — can't auto-evaluate ──
+        if (sub.contentType === "DOCUMENT") {
+          return prisma.assignmentSubmission.update({
+            where: { id: sub.id },
+            data: {
+              status: "PENDING_MANUAL_REVIEW",
+              feedback: "Document submission requires manual review.",
+            },
+          });
+        }
+
+        // ── Resolve evaluatable text based on contentType ──
+        let evaluatableText = "";
+
+        switch (sub.contentType) {
+          case "TEXT":
+            evaluatableText = sub.textContent ?? "";
+            break;
+
+          case "MINDMAP":
+            evaluatableText = sub.mindmap
+              ? `Title: ${sub.mindmap.title}. Structure: ${JSON.stringify(sub.mindmap.structure)}`
+              : "";
+            break;
+
+          case "MIXED":
+            evaluatableText = [
+              sub.textContent ?? "",
+              sub.mindmap
+                ? `Mindmap: ${sub.mindmap.title} — ${JSON.stringify(sub.mindmap.structure)}`
+                : "",
+            ].filter(Boolean).join("\n\n");
+            break;
+        }
+
+        // ── Skip if nothing to evaluate ──
+        if (!evaluatableText.trim()) {
+          return prisma.assignmentSubmission.update({
+            where: { id: sub.id },
+            data: {
+              status: "PENDING_MANUAL_REVIEW",
+              feedback: "No evaluatable content found. Manual review required.",
+            },
+          });
+        }
+
+        // ── Run NLP ──
         const [sentiment, toxicity, summary] = await Promise.all([
-          NLPService.sentiment(sub.content),
-          NLPService.detectToxicity(sub.content),
-          NLPService.summarize(sub.content),
+          NLPService.sentiment(evaluatableText),
+          NLPService.detectToxicity(evaluatableText),
+          NLPService.summarize(evaluatableText),
         ]);
+
+        let toxicityScore = toxicity?.score ?? 0;
+        if (evaluatableText.length < 10) toxicityScore = 0;
+        if (!/[a-zA-Z]/.test(evaluatableText)) toxicityScore = 0;
+        if (toxicityScore > 0.95 && !/\s/.test(evaluatableText)) toxicityScore = 0;
 
         let score = 70;
         if (sentiment?.label?.includes("POSITIVE")) score += 10;
         if (sentiment?.label?.includes("NEGATIVE")) score -= 10;
-        if ((toxicity?.score ?? 0) > 0.5) score -= 20;
+        if (toxicityScore > 0.5) score -= 20;
 
-        const feedback = `AI Grade: ${score}/100. ${summary?.summary ?? ""}`.trim();
+        const feedback = `
+${summary?.summary ?? "No summary available."}
+Tone: ${sentiment?.label}
+Toxicity: ${(toxicityScore * 100).toFixed(2)}%
+Final AI Grade: ${score}/100.
+      `.trim();
 
         return prisma.assignmentSubmission.update({
           where: { id: sub.id },
@@ -172,20 +274,26 @@ export const TeacherReviewService = {
             feedback,
             sentiment: sentiment?.label ?? undefined,
             sentimentScore: sentiment?.score ?? undefined,
-            status: "REVIEWED",
+            status: "EVALUATED",
           },
         });
       })
     );
 
+    const evaluated = results.filter((r) => r.status === "EVALUATED").length;
+    const pendingManualReview = results.filter((r) => r.status === "PENDING_MANUAL_REVIEW").length;
+
     await logActivity(
       teacherId,
       "BULK_REVIEW_SUBMISSIONS",
-      `assignmentId=${assignmentId}, count=${results.length}`
+      `assignmentId=${assignmentId}, evaluated=${evaluated}, pendingManual=${pendingManualReview}`
     );
+
     return {
-      message: `${results.length} submission(s) reviewed successfully.`,
-      reviewed: results.length,
+      message: `Bulk review completed.`,
+      total: results.length,
+      evaluated,
+      pendingManualReview,
     };
   },
 
@@ -195,21 +303,57 @@ export const TeacherReviewService = {
 
     const submission = await prisma.assignmentSubmission.findUnique({
       where: { id: submissionId },
-      include: { assignment: true },
+      include: {
+        assignment: true,
+        mindmap: { select: { title: true, structure: true } },
+      },
     });
 
-    if (!submission) throw createHttpError(404, "Submission not found.");
+    if (!submission)
+      throw createHttpError(404, "Submission not found.");
     if (submission.assignment.teacherId !== teacherId)
       throw createHttpError(403, "Unauthorized access.");
 
-    const summary = await NLPService.summarize(submission.content);
+    // ── DOCUMENT type can't be summarized ──
+    if (submission.contentType === "DOCUMENT")
+      throw createHttpError(400, "Document submissions cannot be auto-summarized.");
+
+    // ── Resolve evaluatable text ──
+    let evaluatableText = "";
+
+    switch (submission.contentType) {
+      case "TEXT":
+        evaluatableText = submission.textContent ?? "";
+        break;
+
+      case "MINDMAP":
+        evaluatableText = submission.mindmap
+          ? `Title: ${submission.mindmap.title}. Structure: ${JSON.stringify(submission.mindmap.structure)}`
+          : "";
+        break;
+
+      case "MIXED":
+        evaluatableText = [
+          submission.textContent ?? "",
+          submission.mindmap
+            ? `Mindmap: ${submission.mindmap.title} — ${JSON.stringify(submission.mindmap.structure)}`
+            : "",
+        ].filter(Boolean).join("\n\n");
+        break;
+    }
+
+    if (!evaluatableText.trim())
+      throw createHttpError(400, "No evaluatable content found to summarize.");
+
+    const summary = await NLPService.summarize(evaluatableText);
     const feedback = `AI Summary: ${summary?.summary ?? "No summary available."}`;
 
     await logActivity(
       teacherId,
       "REGENERATE_SUBMISSION_SUMMARY",
-      `submissionId=${submissionId}`
+      `submissionId=${submissionId}, type=${submission.contentType}`
     );
+
     return prisma.assignmentSubmission.update({
       where: { id: submissionId },
       data: { feedback },
