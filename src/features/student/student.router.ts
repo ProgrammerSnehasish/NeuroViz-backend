@@ -28,6 +28,8 @@ studentRouter.use(verifyToken, enforceStudent);
 
 // ── Profile ────────────────────────────────────────────────────────────────
 studentRouter.get("/me", StudentController.getMyProfile);
+// ── Get Teachers ─────────────────────────────────────────────────────────────
+studentRouter.get("/my-teachers", verifyToken, enforceStudent, StudentController.getMyTeachers);
 
 // ── Assignments ────────────────────────────────────────────────────────────
 studentRouter.get("/assignments", StudentController.getMyAssignments);

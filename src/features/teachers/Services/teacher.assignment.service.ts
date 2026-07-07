@@ -2,6 +2,7 @@ import createHttpError from "http-errors";
 import prisma from "../../../config/database";
 import { NLPService } from "../../nlp/nlp.service";
 import { EvaluationMode, userRole } from "../../../config/core";
+import { TeacherStudentService } from "./teacher.student.service";
 
 async function logActivity(
   userId: string | null | undefined,
@@ -135,13 +136,22 @@ export const TeacherAssignmentService = {
       throw createHttpError(400, "You must assign to at least one student or group.");
     }
 
+    // ── Only registered students can be assigned homework directly ──
+    if (options?.studentIds?.length) {
+      await TeacherStudentService.validateStudentsRegistered(teacherId, options.studentIds);
+    }
+
+    // ── Groups themselves are already guaranteed registered-only (enforced at add-time) ──
+    if (options?.groupIds?.length) {
+      const groups = await prisma.group.findMany({
+        where: { id: { in: options.groupIds }, teacherId },
+      });
+      if (groups.length !== options.groupIds.length)
+        throw createHttpError(400, "One or more groups not found or unauthorized.");
+    }
+
     const assignment = await prisma.assignment.create({
-      data: {
-        title,
-        description,
-        teacherId,
-        dueDate: options.dueDate,
-      },
+      data: { title, description, teacherId, dueDate: options.dueDate },
     });
 
     if (options?.studentIds?.length) {
@@ -454,6 +464,9 @@ Final AI Grade: ${score}/100.
     });
 
     if (updateData.studentIds) {
+      if (updateData.studentIds.length > 0) {
+        await TeacherStudentService.validateStudentsRegistered(teacherId, updateData.studentIds);
+      }
       await prisma.assignmentStudent.deleteMany({ where: { assignmentId } });
       if (updateData.studentIds.length > 0) {
         await prisma.assignmentStudent.createMany({

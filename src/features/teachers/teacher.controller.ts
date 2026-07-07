@@ -54,6 +54,15 @@ export const TeacherController = {
 
   // ── Students ───────────────────────────────────────────────────────────────
 
+  /** GET /teacher/my-students */
+  getMyStudents: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const teacherId = res.locals.userId;
+      const data = await TeacherService.getMyStudents(teacherId);
+      res.json({ success: true, data });
+    } catch (err) { next(err); }
+  },
+
   /** GET /teacher/students */
   getStudentManagementOverview: async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -215,7 +224,7 @@ export const TeacherController = {
       const data = await TeacherStudentService.inviteStudentToGroup(
         getTeacherId(res),
         email,
-        req.params.groupId  as string
+        req.params.groupId as string
       );
       res.status(201).json({ success: true, data });
     } catch (err) { next(err); }

@@ -24,6 +24,7 @@ teacherRouter.get("/dashboard/analytics", TeacherDashboardController.getAnalytic
 teacherRouter.get("/dashboard/heatmap", TeacherDashboardController.getClassHeatmap);
 teacherRouter.get("/dashboard/teaching/insights", TeacherDashboardController.getAdaptiveTeachingInsights);
 teacherRouter.get("/dashboard/assignments/insights", TeacherDashboardController.getAssignmentInsights);
+teacherRouter.get("/my-students", verifyToken, TeacherController.getMyStudents);
 teacherRouter.get("/student/compare", TeacherDashboardController.compareStudents);
 teacherRouter.get("/class/strategy", TeacherDashboardController.getClassStrategy);
 teacherRouter.get("/student/:studentId/strategy", TeacherDashboardController.getStudentStrategy);

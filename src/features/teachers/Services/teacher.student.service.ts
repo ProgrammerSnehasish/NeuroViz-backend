@@ -41,6 +41,27 @@ export const TeacherStudentService = {
     return user;
   },
 
+  // ─── Validate that students are registered under this teacher ─────────────
+  async validateStudentsRegistered(teacherId: string, studentIds: string[]) {
+    const uniqueIds = [...new Set(studentIds)];
+
+    const links = await prisma.teacherStudent.findMany({
+      where: { teacherId, studentId: { in: uniqueIds } },
+      select: { studentId: true },
+    });
+
+    const registeredIds = new Set(links.map((l) => l.studentId));
+    const unregistered = uniqueIds.filter((id) => !registeredIds.has(id));
+
+    if (unregistered.length > 0) {
+      throw createHttpError(
+        400,
+        `The following students are not registered under you: ${unregistered.join(", ")}. Please register them first.`
+      );
+    }
+
+    return true;
+  },
   // ─── STUDENT MANAGEMENT PAGE ──────────────────────────────────────────────
   /**
    * Returns the 4 KPI cards + the student table rows needed for the
@@ -214,6 +235,8 @@ export const TeacherStudentService = {
     });
     if (!students.length) throw createHttpError(400, "No valid students provided.");
 
+    await this.validateStudentsRegistered(teacherId, students.map((s) => s.id));
+
     await logActivity(teacherId, "GROUP_ADD_MEMBERS", `groupId=${groupId}, count=${students.length}`);
     return prisma.$transaction(
       students.map((s) =>
@@ -236,6 +259,8 @@ export const TeacherStudentService = {
       where: { id: studentId, role: userRole.Student },
     });
     if (!student) throw createHttpError(404, "Student not found.");
+
+    await this.validateStudentsRegistered(teacherId, [studentId]);
 
     await logActivity(teacherId, "GROUP_ADD_STUDENT", `groupId=${groupId}, studentId=${studentId}`);
     return prisma.groupMember.upsert({
@@ -432,32 +457,41 @@ export const TeacherStudentService = {
   },
 
   async inviteStudentToGroup(teacherId: string, email: string, groupId: string) {
-    await this.validateTeacher(teacherId);
+  await this.validateTeacher(teacherId);
 
-    const group = await prisma.group.findUnique({
-      where: { id: groupId },
-      include: { teacher: true },
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    include: { teacher: true },
+  });
+  if (!group || group.teacherId !== teacherId)
+    throw createHttpError(404, "Group not found or unauthorized.");
+
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+
+  if (existingUser) {
+    if (existingUser.role !== userRole.Student)
+      throw createHttpError(400, "This email belongs to a non-student user.");
+
+    // ── Ensure the student is registered under this teacher first ──
+    const alreadyLinked = await prisma.teacherStudent.findUnique({
+      where: { UniqueTeacherStudent: { teacherId, studentId: existingUser.id } },
     });
-    if (!group || group.teacherId !== teacherId)
-      throw createHttpError(404, "Group not found or unauthorized.");
+    if (!alreadyLinked) {
+      await prisma.teacherStudent.create({ data: { teacherId, studentId: existingUser.id } });
+      await logActivity(teacherId, "STUDENT_AUTO_REGISTERED_VIA_GROUP_INVITE", `studentId=${existingUser.id}`);
+    }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const membership = await prisma.groupMember.findUnique({
+      where: { compositeId: { groupId, userId: existingUser.id } },
+    });
+    if (membership)
+      return {
+        message: "Student already a member of the group.",
+        added: false,
+        user: { id: existingUser.id, email: existingUser.email },
+      };
 
-    if (existingUser) {
-      if (existingUser.role !== userRole.Student)
-        throw createHttpError(400, "This email belongs to a non-student user.");
-
-      const membership = await prisma.groupMember.findUnique({
-        where: { compositeId: { groupId, userId: existingUser.id } },
-      });
-      if (membership)
-        return {
-          message: "Student already a member of the group.",
-          added: false,
-          user: { id: existingUser.id, email: existingUser.email },
-        };
-
-      await prisma.groupMember.create({ data: { groupId, userId: existingUser.id } });
+    await prisma.groupMember.create({ data: { groupId, userId: existingUser.id } });
       const inviteLink = `${process.env.CLIENT_URL}/group/${groupId}`;
       await sendMail({
         to: existingUser.email,

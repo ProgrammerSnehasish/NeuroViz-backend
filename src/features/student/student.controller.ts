@@ -33,6 +33,15 @@ export const StudentController = {
     } catch (err) { next(err); }
   },
 
+  /** GET /student/my-teachers */
+  getMyTeachers: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const studentId = res.locals.userId;
+      const data = await StudentService.getMyTeachers(studentId);
+      res.json({ success: true, data });
+    } catch (err) { next(err); }
+  },
+
   // ─────────────────────────────────────────────
   // ASSIGNMENTS
   // ─────────────────────────────────────────────

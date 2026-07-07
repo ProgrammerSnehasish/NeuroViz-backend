@@ -16,6 +16,19 @@ async function logActivity(
   }
 }
 
+type StudentSummary = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profilePhoto: string | null;
+};
+
+type StudentMapEntry = {
+  student: StudentSummary;
+  groups: { id: string; name: string }[];
+};
+
 export const TeacherService = {
   // ─── Validate teacher ─────────────────────────────────────────────────────
   async validateTeacher(userId: string) {
@@ -158,42 +171,55 @@ export const TeacherService = {
     });
   },
 
-  // ─── GENERATE MINDMAP (teacher-initiated) ─────────────────────────────────
-  /**
-   * Let the teacher generate a new mindmap for a student using NLP.
-   * Maps to the "+ Generate New Mindmap" button.
-   */
-  // async generateMindmap(teacherId: string, studentId: string, topic: string) {
-  //   await this.validateTeacher(teacherId);
-  //   await this.validateStudent(studentId);
+  // ─── GET STUDENTS FOR TEACHER ─────────────────────────────────────────────
+  async getMyStudents(teacherId: string) {
+    await this.validateTeacher(teacherId);
 
-  //   const prompt = `
-  //     Generate a detailed mindmap outline for the topic: "${topic}".
-  //     Return a JSON object with:
-  //     - title: string
-  //     - nodes: Array<{ id: string, label: string, children?: string[] }>
-  //   `;
+    const relations = await prisma.teacherStudent.findMany({
+      where: { teacherId },
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            profilePhoto: true,
+          },
+        },
+      },
+    });
 
-  //   const generated = await NLPService.generate(prompt);
+    if (!relations.length) return [];
 
-  //   const mindmap = await prisma.mindmap.create({
-  //     data: {
-  //       title: topic,
-  //       userId: studentId,
-  //       content: typeof generated === "string" ? generated : JSON.stringify(generated),
-  //       reviewedById: teacherId,
-  //       approval: false, // pending review by default
-  //     },
-  //   });
+    const studentIds = relations.map((r) => r.studentId);
 
-  //   await logActivity(
-  //     teacherId,
-  //     "GENERATE_MINDMAP",
-  //     `mindmapId=${mindmap.id}, studentId=${studentId}, topic=${topic}`
-  //   );
-  //   return { message: "Mindmap generated successfully.", mindmap };
-  // },
+    // ── Pull groups (belonging to this teacher) that these students are in ──
+    const memberships = await prisma.groupMember.findMany({
+      where: {
+        userId: { in: studentIds },
+        group: { teacherId }, // only this teacher's groups
+      },
+      select: {
+        userId: true,
+        group: { select: { id: true, name: true } },
+      },
+    });
 
+    // ── Map studentId -> groups[] ──
+    const groupsByStudent = new Map<string, { id: string; name: string }[]>();
+    for (const m of memberships) {
+      if (!groupsByStudent.has(m.userId)) groupsByStudent.set(m.userId, []);
+      groupsByStudent.get(m.userId)!.push(m.group);
+    }
+
+    // ── Merge: every registered student appears, groups[] is [] if not in any group ──
+    return relations.map((r) => ({
+      ...r.student,
+      groups: groupsByStudent.get(r.studentId) ?? [],
+    }));
+  },
+  
   // ─── STUDENT ANALYTICS ───────────────────────────────────────────────────
   async getStudentAnalytics(
     teacherId: string,

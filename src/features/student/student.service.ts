@@ -1,6 +1,7 @@
 import createHttpError from "http-errors";
 import { hash } from "bcrypt";
 import prisma from "../../config/database";
+import { userRole } from "../../config/core";
 
 export const StudentService = {
   /**
@@ -100,6 +101,59 @@ export const StudentService = {
 
     if (!user) throw createHttpError(404, "Student not found.");
     return user;
+  },
+
+  /* get teachers for a student */
+  async getMyTeachers(studentId: string) {
+    const student = await prisma.user.findFirst({
+      where: { id: studentId, role: userRole.Student },
+    });
+    if (!student) throw createHttpError(404, "Student not found.");
+
+    const relations = await prisma.teacherStudent.findMany({
+      where: { studentId },
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            profilePhoto: true,
+            // add currentCity here later for your "nearby teachers" feature
+          },
+        },
+      },
+    });
+
+    if (!relations.length) return [];
+
+    const teacherIds = relations.map((r) => r.teacherId);
+
+    // ── Pull groups (belonging to each teacher) that this student is in ──
+    const memberships = await prisma.groupMember.findMany({
+      where: {
+        userId: studentId,
+        group: { teacherId: { in: teacherIds } },
+      },
+      select: {
+        group: { select: { id: true, name: true, teacherId: true } },
+      },
+    });
+
+    // ── Map teacherId -> groups[] ──
+    const groupsByTeacher = new Map<string, { id: string; name: string }[]>();
+    for (const m of memberships) {
+      const tId = m.group.teacherId;
+      if (!groupsByTeacher.has(tId)) groupsByTeacher.set(tId, []);
+      groupsByTeacher.get(tId)!.push({ id: m.group.id, name: m.group.name });
+    }
+
+    // ── Merge: every registered teacher appears, groups[] is [] if not in any group ──
+    return relations.map((r) => ({
+      ...r.teacher,
+      groups: groupsByTeacher.get(r.teacherId) ?? [],
+    }));
   },
 
   /**
@@ -242,8 +296,8 @@ export const StudentService = {
     const avg =
       grades.length > 0
         ? Math.round(
-            grades.reduce((acc, g) => acc + (g.grade ?? 0), 0) / grades.length
-          )
+          grades.reduce((acc, g) => acc + (g.grade ?? 0), 0) / grades.length
+        )
         : null;
 
     return { grades, averageGrade: avg, totalReviewed: grades.length };

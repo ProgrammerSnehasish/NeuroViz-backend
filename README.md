@@ -499,6 +499,7 @@ NeuroViz-backend/
 
 | Method | Route | Description |
 |---|---|---|
+| GET | `/teacher/my-students` | Get all students under a teacher. |
 | GET | `/teacher/students` | Get student management overview |
 | GET | `/teacher/students/search` | Search students by name or email |
 | POST | `/teacher/students/register` | Register a new student under the teacher |
@@ -584,6 +585,7 @@ NeuroViz-backend/
 | Method | Route | Auth | Description |
 |---|---|---|---|
 | `GET` | `/student/me` | Student | Get own profile |
+| GET | `/student/my-teachers` | Get all teachers for a student |
 
 **Assignments**
 
