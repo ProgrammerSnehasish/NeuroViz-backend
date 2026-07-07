@@ -571,6 +571,96 @@ NeuroViz-backend/
 
 ---
 
+### 🎓 Student Routes
+
+**Public**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `POST` | `/student/invite/accept` | None | Accept a teacher invite |
+
+**Profile**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `GET` | `/student/me` | Student | Get own profile |
+
+**Assignments**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `GET` | `/student/assignments` | Student | Get all assigned assignments |
+| `GET` | `/student/assignment/:assignmentId` | Student | Get a specific assignment |
+| `POST` | `/student/assignment/submit` | Student | Submit an assignment |
+
+**Request Body for `POST /student/assignment/submit`**
+
+For `TEXT` — `raw JSON`:
+```json
+{
+  "assignmentId": "uuid",
+  "contentType": "TEXT",
+  "textContent": "My answer..."
+}
+```
+
+For `MINDMAP` — `raw JSON`:
+```json
+{
+  "assignmentId": "uuid",
+  "contentType": "MINDMAP",
+  "mindmapId": "mindmap-uuid"
+}
+```
+
+For `DOCUMENT` — `form-data`:
+
+| Key | Type |
+|---|---|
+| `assignmentId` | Text |
+| `contentType` | Text (`DOCUMENT`) |
+| `document` | File |
+
+For `MIXED` — `form-data`:
+
+| Key | Type |
+|---|---|
+| `assignmentId` | Text |
+| `contentType` | Text (`MIXED`) |
+| `textContent` | Text |
+| `mindmapId` | Text |
+| `document` | File (optional) |
+
+**Submissions**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `GET` | `/student/submissions` | Student | Get all own submissions |
+| `GET` | `/student/submission/:submissionId` | Student | Get a specific submission |
+
+**Grades & Feedback**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `GET` | `/student/grades` | Student | Get own grades |
+| `GET` | `/student/teacher-feedbacks` | Student | Get feedbacks from teachers |
+
+**Groups**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `GET` | `/student/groups` | Student | Get all groups student belongs to |
+| `GET` | `/student/group/:groupId` | Student | Get a specific group |
+
+**Notifications**
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| `GET` | `/student/notifications` | Student | Get all notifications |
+| `PATCH` | `/student/notification/:notificationId/read` | Student | Mark a notification as read |
+
+---
+
 ### 📰 Newsletter Routes
 
 **Public**
