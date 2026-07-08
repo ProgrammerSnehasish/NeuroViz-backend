@@ -4,6 +4,8 @@ import crypto, { randomBytes } from "crypto";
 import bcrypt from "bcrypt";
 import { sendMail } from "../../../utils/mailer";
 import { userRole } from "../../../config/core";
+import { ChatService } from "../../chat/chat.service";
+import { getIO } from "../../../sockets/socket.instance";
 
 async function logActivity(
   userId: string | null | undefined,
@@ -238,7 +240,8 @@ export const TeacherStudentService = {
     await this.validateStudentsRegistered(teacherId, students.map((s) => s.id));
 
     await logActivity(teacherId, "GROUP_ADD_MEMBERS", `groupId=${groupId}, count=${students.length}`);
-    return prisma.$transaction(
+
+    const result = await prisma.$transaction(
       students.map((s) =>
         prisma.groupMember.upsert({
           where: { compositeId: { groupId, userId: s.id } },
@@ -247,6 +250,10 @@ export const TeacherStudentService = {
         })
       )
     );
+
+    await ChatService.syncAddMembersToGroupChat(groupId, students.map((s) => s.id));
+
+    return result;
   },
 
   async addStudentToGroup(teacherId: string, groupId: string, studentId: string) {
@@ -263,11 +270,15 @@ export const TeacherStudentService = {
     await this.validateStudentsRegistered(teacherId, [studentId]);
 
     await logActivity(teacherId, "GROUP_ADD_STUDENT", `groupId=${groupId}, studentId=${studentId}`);
-    return prisma.groupMember.upsert({
+    const result = await prisma.groupMember.upsert({
       where: { compositeId: { groupId, userId: studentId } },
       create: { groupId, userId: studentId },
       update: {},
     });
+
+    await ChatService.syncAddMembersToGroupChat(groupId, [studentId]);
+
+    return result;
   },
 
   async removeStudentFromGroup(teacherId: string, groupId: string, studentId: string) {
@@ -289,6 +300,15 @@ export const TeacherStudentService = {
     await prisma.groupMember.delete({
       where: { compositeId: { groupId, userId: studentId } },
     });
+
+    await ChatService.syncRemoveMemberFromGroupChat(groupId, studentId);
+
+    // inside removeStudentFromGroup, after syncRemoveMemberFromGroupChat:
+    const chatRoom = await prisma.chatRoom.findUnique({ where: { groupId } });
+    if (chatRoom) {
+      getIO().to(chatRoom.id).emit("member_removed", { chatRoomId: chatRoom.id, userId: studentId });
+    }
+    
     await logActivity(teacherId, "GROUP_REMOVE_STUDENT", `groupId=${groupId}, studentId=${studentId}`);
     return { message: "Student removed from group successfully." };
   },
@@ -457,41 +477,41 @@ export const TeacherStudentService = {
   },
 
   async inviteStudentToGroup(teacherId: string, email: string, groupId: string) {
-  await this.validateTeacher(teacherId);
+    await this.validateTeacher(teacherId);
 
-  const group = await prisma.group.findUnique({
-    where: { id: groupId },
-    include: { teacher: true },
-  });
-  if (!group || group.teacherId !== teacherId)
-    throw createHttpError(404, "Group not found or unauthorized.");
-
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-
-  if (existingUser) {
-    if (existingUser.role !== userRole.Student)
-      throw createHttpError(400, "This email belongs to a non-student user.");
-
-    // ── Ensure the student is registered under this teacher first ──
-    const alreadyLinked = await prisma.teacherStudent.findUnique({
-      where: { UniqueTeacherStudent: { teacherId, studentId: existingUser.id } },
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      include: { teacher: true },
     });
-    if (!alreadyLinked) {
-      await prisma.teacherStudent.create({ data: { teacherId, studentId: existingUser.id } });
-      await logActivity(teacherId, "STUDENT_AUTO_REGISTERED_VIA_GROUP_INVITE", `studentId=${existingUser.id}`);
-    }
+    if (!group || group.teacherId !== teacherId)
+      throw createHttpError(404, "Group not found or unauthorized.");
 
-    const membership = await prisma.groupMember.findUnique({
-      where: { compositeId: { groupId, userId: existingUser.id } },
-    });
-    if (membership)
-      return {
-        message: "Student already a member of the group.",
-        added: false,
-        user: { id: existingUser.id, email: existingUser.email },
-      };
+    const existingUser = await prisma.user.findUnique({ where: { email } });
 
-    await prisma.groupMember.create({ data: { groupId, userId: existingUser.id } });
+    if (existingUser) {
+      if (existingUser.role !== userRole.Student)
+        throw createHttpError(400, "This email belongs to a non-student user.");
+
+      // ── Ensure the student is registered under this teacher first ──
+      const alreadyLinked = await prisma.teacherStudent.findUnique({
+        where: { UniqueTeacherStudent: { teacherId, studentId: existingUser.id } },
+      });
+      if (!alreadyLinked) {
+        await prisma.teacherStudent.create({ data: { teacherId, studentId: existingUser.id } });
+        await logActivity(teacherId, "STUDENT_AUTO_REGISTERED_VIA_GROUP_INVITE", `studentId=${existingUser.id}`);
+      }
+
+      const membership = await prisma.groupMember.findUnique({
+        where: { compositeId: { groupId, userId: existingUser.id } },
+      });
+      if (membership)
+        return {
+          message: "Student already a member of the group.",
+          added: false,
+          user: { id: existingUser.id, email: existingUser.email },
+        };
+
+      await prisma.groupMember.create({ data: { groupId, userId: existingUser.id } });
       const inviteLink = `${process.env.CLIENT_URL}/group/${groupId}`;
       await sendMail({
         to: existingUser.email,

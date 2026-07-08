@@ -155,6 +155,19 @@ enum SubmissionContentType {
   MIXED
 }
 
+enum ChatType {
+  GROUP
+  DIRECT
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  VOICE
+  SYSTEM
+}
+
 /* ─────────────────────────────
    USER MODEL
 ────────────────────────────── */
@@ -207,6 +220,9 @@ model User {
   studentTeachers TeacherStudent[] @relation("StudentToTeachers")
   siteFeedbacks     SiteFeedback[]    @relation("UserSiteFeedbacks")
   sentNewsletters Newsletter[] @relation("NewsletterSender")
+  chatRooms    ChatRoomMember[] @relation("UserChatRooms")
+  messages     Message[]        @relation("UserMessages")
+  messageReads MessageRead[]    @relation("UserMessageReads")
   activityLogs ActivityLog[]
   behaviorEvents BehaviorEvent[]
   verificationRequest  TeacherVerificationRequest? @relation("TeacherVerificationRequests")
@@ -485,6 +501,7 @@ model Group {
   members     GroupMember[] @relation("GroupMembersRelation")
   assignments AssignmentGroup[] 
   invites     StudentInvite[] @relation("GroupInvites")
+  chatRoom    ChatRoom?  @relation("GroupChatRoom")
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
@@ -655,4 +672,66 @@ model NewsletterLog {
   sentAt         DateTime  @default(now())
 
   newsletter     Newsletter @relation(fields: [newsletterId], references: [id])
+}
+
+/*─────────────────────────────
+ CHAT MODEL
+──────────────────────────────*/
+
+model ChatRoom {
+  id          String     @id @default(uuid())
+  type        ChatType
+  name        String?                          // only for GROUP type
+  groupId     String?    @unique               // linked to existing Group
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  group       Group?     @relation("GroupChatRoom", fields: [groupId], references: [id])
+  members     ChatRoomMember[]
+  messages    Message[]
+}
+
+model ChatRoomMember {
+  id           String    @id @default(uuid())
+  chatRoomId   String
+  userId       String
+  joinedAt     DateTime  @default(now())
+  lastReadAt   DateTime? // for unread count
+
+  chatRoom     ChatRoom  @relation(fields: [chatRoomId], references: [id])
+  user         User      @relation("UserChatRooms", fields: [userId], references: [id])
+
+  @@unique([chatRoomId, userId], name: "UniqueChatMember")
+}
+
+model Message {
+  id           String      @id @default(uuid())
+  chatRoomId   String
+  senderId     String
+  type         MessageType @default(TEXT)
+  content      String?     // text content
+  fileUrl      String?     // Cloudinary URL for image/doc/voice
+  fileName     String?     // original file name
+  fileMimeType String?     // mime type
+  duration     Int?        // voice message duration in seconds
+  isEdited     Boolean     @default(false)
+  isDeleted    Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  chatRoom     ChatRoom    @relation(fields: [chatRoomId], references: [id])
+  sender       User        @relation("UserMessages", fields: [senderId], references: [id])
+  readBy       MessageRead[]
+}
+
+model MessageRead {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message   Message  @relation(fields: [messageId], references: [id])
+  user      User     @relation("UserMessageReads", fields: [userId], references: [id])
+
+  @@unique([messageId, userId])
 }

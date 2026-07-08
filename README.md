@@ -237,6 +237,12 @@ NeuroViz-backend/
 │   │   │   ├── admin.router.ts
 │   │   │   └── admin.service.ts
 │   │   │
+│   │   ├── chat/
+│   │   │   ├── chat.controller.ts
+│   │   │   ├── chat.dto.ts
+│   │   │   ├── chat.router.ts
+│   │   │   └── chat.service.ts
+│   │   │
 │   │   ├── general_feedback/
 │   │   │   ├── feedback.controller.ts
 │   │   │   ├── feedback.dto.ts
@@ -329,7 +335,9 @@ NeuroViz-backend/
 │   │   └── upload.ts
 │   │
 │   ├── sockets/
-│   │   └── room.socket.ts
+│   │   ├── chat.gateway.ts
+│   │   ├── room.socket.ts
+│   │   └── socket.instance.ts
 │   │
 │   ├── types/
 │   │   ├── express.d.ts
@@ -337,6 +345,7 @@ NeuroViz-backend/
 │   │   └── whisper-node.d.ts
 │   │
 │   └── utils/
+│       ├── deleteChatFile.ts
 │       ├── env.ts
 │       ├── getUserDetailsbyRole.ts
 │       ├── HMACtoken.ts
@@ -346,6 +355,7 @@ NeuroViz-backend/
 │       ├── resolveUserFromToken.ts
 │       ├── tokenCleanup.ts
 │       ├── uploadCertification.ts
+│       ├── uploadChatFile.ts
 │       ├── uploadPhoto.ts
 │       ├── uploadSubmission.ts
 │       └── util.ts
@@ -441,6 +451,21 @@ NeuroViz-backend/
 | POST | `/rooms/:roomId/join` | Join a room, get LiveKit token |
 | POST | `/rooms/:roomId/end` | Host ends the class |
 | GET | `/rooms/:roomId/participants` | Get participants by room id |
+
+### Chat System
+
+| Method | API Route                          | Purpose                                                        |
+|--------|-------------------------------------|-----------------------------------------------------------------|
+| GET    | `/chat/rooms`                       | Get all chat rooms (group + direct) for the logged-in user      |
+| POST   | `/chat/direct/:targetUserId`        | Get or create a direct (1-to-1) chat room with another user     |
+| POST   | `/chat/group/:groupId`              | Get or create a group chat room linked to an existing Group     |
+| GET    | `/chat/room/:chatRoomId/messages`   | Fetch paginated messages for a chat room                        |
+| POST   | `/chat/room/:chatRoomId/message`    | Send a text message in a chat room                              |
+| POST   | `/chat/room/:chatRoomId/file`       | Send a file message (image, document, or voice) in a chat room  |
+| PATCH  | `/chat/message/:messageId`          | Edit a previously sent text message                              |
+| DELETE | `/chat/message/:messageId`          | Delete a message (soft-delete in DB, hard-delete file on Cloudinary) |
+| POST   | `/chat/room/:chatRoomId/read`       | Mark messages as read (specific ids, or all unread if none given) |
+| GET    | `/chat/room/:chatRoomId/unread`     | Get unread message count for a chat room                        |
 
 ### 📝 NLP
 
