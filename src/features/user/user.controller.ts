@@ -53,6 +53,17 @@ export const UserController = {
     } catch (err) { next(err); }
   },
 
+  /** DELETE /user/profile-photo */
+  removeProfilePhoto: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) throw { status: 401, message: "Unauthorized - Missing user ID in token" };
+
+      const data = await UserService.removeProfilePhoto(userId);
+      res.json({ success: true, message: "Profile photo removed successfully", data });
+    } catch (err) { next(err); }
+  },
+
   /** DELETE /user/delete/:userId */
   deleteUser: async (req: Request, res: Response, next: NextFunction) => {
     try {

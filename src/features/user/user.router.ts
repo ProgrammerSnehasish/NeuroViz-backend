@@ -33,6 +33,13 @@ userRouter.put(
   UserController.updateUser
 );
 
+/** DELETE /user/profile-photo */
+userRouter.delete(
+  "/profile-photo",
+  verifyToken,
+  UserController.removeProfilePhoto
+);
+
 /** DELETE /user/delete/:userId */
 userRouter.delete(
   "/delete/:userId",

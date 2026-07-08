@@ -8,6 +8,7 @@ import { hash } from "bcrypt";
 import { userRole } from "../../config/core";
 import { uploadProfilePhoto } from "../../utils/uploadPhoto";
 import { uploadCertification } from "../../utils/uploadCertification";
+import { deleteProfilePhoto } from "../../utils/deleteProfilePhoto";
 
 export class UserService {
   static async createUser(data: SignupDto): Promise<string> {
@@ -146,6 +147,26 @@ export class UserService {
     });
 
     return getUserResponse(finalUser!);
+  }
+
+  async removeProfilePhoto(userId: string): Promise<IUserDetails> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw createHttpError(404, "User does not exist");
+
+    if (!user.profilePhoto) {
+      throw createHttpError(400, "No profile photo to remove");
+    }
+
+    // Best-effort delete from Cloudinary — won't throw even if it fails
+    await deleteProfilePhoto(userId);
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { profilePhoto: null, updatedBy: userId },
+      include: { studentProfile: true, teacherProfile: true },
+    });
+
+    return getUserResponse(updatedUser);
   }
 
   async deleteUser(userId: string): Promise<void> {

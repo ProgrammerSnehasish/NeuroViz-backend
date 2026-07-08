@@ -346,6 +346,7 @@ NeuroViz-backend/
 │   │
 │   └── utils/
 │       ├── deleteChatFile.ts
+│       ├── deleteProfilePhoto.ts
 │       ├── env.ts
 │       ├── getUserDetailsbyRole.ts
 │       ├── HMACtoken.ts
@@ -407,6 +408,7 @@ NeuroViz-backend/
 | GET | `/users/:id` | Get user by id |
 | PUT | `/users/update` | Update user details |
 | DELETE | `/users/delete/:id` | Delete user by id |
+| DELETE | `users/profile-photo` | Delete Profile Photo of a user |
 
 ### 🗺️ Mindmap
 
