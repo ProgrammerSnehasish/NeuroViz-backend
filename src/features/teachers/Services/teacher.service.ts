@@ -42,6 +42,21 @@ export const TeacherService = {
     return user;
   },
 
+  // ─── SHARED HELPER ──────────────────────────────────────────────────────────
+  async getRegisteredStudentIds(teacherId: string): Promise<string[]> {
+    const students = await prisma.user.findMany({
+      where: {
+        role: userRole.Student,
+        OR: [
+          { createdBy: teacherId },
+          { studentTeachers: { some: { teacherId } } },
+        ],
+      },
+      select: { id: true },
+    });
+    return students.map((s) => s.id);
+  },
+
   async validateStudent(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -61,43 +76,48 @@ export const TeacherService = {
    *
    * Optional filter: status = "APPROVED" | "PENDING" | "REJECTED" | undefined (all)
    */
+  // ─── MINDMAP MANAGEMENT OVERVIEW ────────────────────────────────────────────
   async getMindmapManagementOverview(
     teacherId: string,
     filter?: { status?: string; search?: string }
   ) {
     await this.validateTeacher(teacherId);
 
-    // Fetch all students linked to this teacher
-    const students = await prisma.user.findMany({
-      where: {
-        role: userRole.Student,
-        OR: [
-          { createdBy: teacherId },
-          { studentTeachers: { some: { teacherId } } },
-        ],
-      },
-      select: { id: true },
-    });
-    const studentIds = students.map((s) => s.id);
+    const studentIds = await this.getRegisteredStudentIds(teacherId);
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     // Build where clause with optional status / search filters
     const where: any = { userId: { in: studentIds } };
-    if (filter?.status) where.approval = filter.status === "APPROVED";
+
+    if (filter?.status === "PENDING") {
+      where.reviewedById = null;
+    } else if (filter?.status === "APPROVED") {
+      where.reviewedById = { not: null };
+      where.approval = true;
+    } else if (filter?.status === "REJECTED") {
+      where.reviewedById = { not: null };
+      where.approval = false;
+    }
+
     if (filter?.search) {
-      where.OR = [
-        { title: { contains: filter.search, mode: "insensitive" } },
-        { user: { firstName: { contains: filter.search, mode: "insensitive" } } },
-        { user: { lastName: { contains: filter.search, mode: "insensitive" } } },
+      where.AND = [
+        ...(where.AND ?? []),
+        {
+          OR: [
+            { title: { contains: filter.search, mode: "insensitive" } },
+            { user: { firstName: { contains: filter.search, mode: "insensitive" } } },
+            { user: { lastName: { contains: filter.search, mode: "insensitive" } } },
+          ],
+        },
       ];
     }
 
     const [allMindmaps, mindmaps] = await Promise.all([
-      // All (for KPI counts, unfiltered)
+      // All (for KPI counts, unfiltered by status/search — but still scoped to this teacher's students)
       prisma.mindmap.findMany({
         where: { userId: { in: studentIds } },
-        select: { id: true, approval: true, createdAt: true },
+        select: { id: true, approval: true, reviewedById: true, createdAt: true },
       }),
       // Filtered list
       prisma.mindmap.findMany({
@@ -110,9 +130,10 @@ export const TeacherService = {
     ]);
 
     const totalMindmaps = allMindmaps.length;
-    // approval === null  → pending review
-    const pendingReview = allMindmaps.filter((m) => m.approval === null).length;
-    const approved = allMindmaps.filter((m) => m.approval === true).length;
+    const pendingReview = allMindmaps.filter((m) => m.reviewedById === null).length;
+    const approved = allMindmaps.filter(
+      (m) => m.reviewedById !== null && m.approval === true
+    ).length;
     const thisWeek = allMindmaps.filter(
       (m) => new Date(m.createdAt) >= sevenDaysAgo
     ).length;
@@ -122,10 +143,10 @@ export const TeacherService = {
       title: m.title,
       student: `${m.user.firstName} ${m.user.lastName}`,
       studentId: m.user.id,
-      topics: (m as any).topics ?? [],        // adjust to your schema field
+      topics: (m.structure as any)?.topics ?? [], // pull from Json structure if present
       date: m.createdAt,
       status: m.reviewedById === null ? "Pending" : m.approval === true ? "Approved" : "Rejected",
-      comments: (m as any).comments ?? null,
+      comments: m.comments,
     }));
 
     await logActivity(
@@ -154,6 +175,15 @@ export const TeacherService = {
 
     const mindmap = await prisma.mindmap.findUnique({ where: { id: mindmapId } });
     if (!mindmap) throw createHttpError(404, "Mindmap not found");
+
+    // Authorization: teacher may only review mindmaps belonging to their registered students
+    const studentIds = await this.getRegisteredStudentIds(teacherId);
+    if (!studentIds.includes(mindmap.userId)) {
+      throw createHttpError(
+        403,
+        "You are not authorized to review this student's mindmap"
+      );
+    }
 
     await logActivity(
       teacherId,
@@ -219,7 +249,7 @@ export const TeacherService = {
       groups: groupsByStudent.get(r.studentId) ?? [],
     }));
   },
-  
+
   // ─── STUDENT ANALYTICS ───────────────────────────────────────────────────
   async getStudentAnalytics(
     teacherId: string,
