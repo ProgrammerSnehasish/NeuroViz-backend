@@ -243,6 +243,14 @@ NeuroViz-backend/
 │   │   │   ├── chat.router.ts
 │   │   │   └── chat.service.ts
 │   │   │
+│   │   ├── chatbot/
+│   │   │   ├── chatbot.client.ts
+│   │   │   ├── chatbot.controller.ts
+│   │   │   ├── chatbot.dto.ts
+│   │   │   ├── chatbot.router.ts
+│   │   │   ├── chatbot.service.ts
+│   │   │   └── chatbot.types.ts
+│   │   │
 │   │   ├── general_feedback/
 │   │   │   ├── feedback.controller.ts
 │   │   │   ├── feedback.dto.ts
@@ -336,6 +344,7 @@ NeuroViz-backend/
 │   │
 │   ├── sockets/
 │   │   ├── chat.gateway.ts
+│   │   ├── chatbot.gateway.ts
 │   │   ├── room.socket.ts
 │   │   └── socket.instance.ts
 │   │
