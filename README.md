@@ -966,11 +966,8 @@ On **`Ctrl+C`** or stop signal:
 ## 🧭 Future Enhancements
 
 - [ ] Attribute-Based Access Control (for Admin login)
-- [ ] Role-Based Access Control (RBAC)
-- [ ] AI-based mindmap generation
 - [ ] Caching and performance optimization
 - [ ] GraphQL API support
-- [ ] Real-time video lecture room
 - [ ] Calendar sync
 - [ ] Voice assistant support
 - [ ] Integration with Learning Management Systems (LMS)
