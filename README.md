@@ -405,7 +405,7 @@ NeuroViz-backend/
 | POST | `/auth/password/forgot` | Forgot password |
 | POST | `/auth/password/verify-otp` | Verify OTP for password reset |
 | POST | `/auth/password/reset` | Reset password |
-| POST | `/auth/google` | Google OAuth Signin/Signup *(TODO)* |
+| POST | `/auth/google` | Google OAuth Signin/Signup |
 | POST | `` | Passkey-based Signin *(TODO)* |
 | POST | `/auth/signout` | Signout |
 
