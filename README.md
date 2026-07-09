@@ -825,6 +825,17 @@ For `MIXED` — `form-data`:
 | GET | `/feedback/fetch/:feedbackId` | Get a specific own feedback |
 | DELETE | `/feedback/:feedbackId` | Delete own feedback (only if PENDING) |
 
+## Chatbot Router
+ **base route** : `https://neuroviz-chatbot.onrender.com/api`
+
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| POST | `/chatbot/message` | Send a text message to the chatbot and get a reply. Creates a session if `sessionId` isn't provided. |
+| POST | `/chatbot/message/image` | Send a message with an attached image (max 8MB) for OCR-assisted response. |
+| GET | `/chatbot/sessions` | List all chatbot sessions belonging to the authenticated user. |
+| GET | `/chatbot/:sessionId/history` | Get the full message history for a given session. |
+| DELETE | `/chatbot/:sessionId` | Delete a session and its associated messages. |
+
 <details>
 <summary>🚧 Planned Routes (Admin, Behavior, Cognitive/Emotion Profiling, etc.)</summary>
 

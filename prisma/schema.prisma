@@ -224,6 +224,7 @@ model User {
   messages     Message[]        @relation("UserMessages")
   messageReads MessageRead[]    @relation("UserMessageReads")
   activityLogs ActivityLog[]
+  chatbotSessions ChatbotSession[]
   behaviorEvents BehaviorEvent[]
   verificationRequest  TeacherVerificationRequest? @relation("TeacherVerificationRequests")
   verificationReviews  TeacherVerificationRequest[] @relation("AdminVerificationReviews")
@@ -734,4 +735,31 @@ model MessageRead {
   user      User     @relation("UserMessageReads", fields: [userId], references: [id])
 
   @@unique([messageId, userId])
+}
+
+/*─────────────────────────────
+ CHATBOT MODEL
+──────────────────────────────*/
+
+model ChatbotSession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages  ChatbotMessage[]
+
+  @@index([userId, updatedAt])
+}
+
+model ChatbotMessage {
+  id        String         @id @default(uuid())
+  sessionId String
+  session   ChatbotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String         // "user" | "bot"
+  content   String
+  createdAt DateTime       @default(now())
+
+  @@index([sessionId, createdAt])
 }
