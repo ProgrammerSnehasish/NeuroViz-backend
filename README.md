@@ -386,6 +386,10 @@ NeuroViz-backend/
 
 ## 🔄 Backend Dataflow Diagram (Till Now)
 
+**NeuroViz Flow Diagram**
+
+![NeuroViz System](./Image/Neuroviz%20Backend%20Flow%20Diagram.jpg)
+
 **Data Flow Diagram Level 0 - Context Level**
 
 ![NeuroViz DFD0](./Image/DFD0.jpg)
