@@ -403,6 +403,7 @@ NeuroViz-backend/
 ## 🌐 API Endpoints
 
 > **Base Route (Backend):** `https://neuroviz-backend.onrender.com/api`
+> **Front End Route:** `https://neuroviz-app.vercel.app/`
 
 ### 🔐 Authentication
 
